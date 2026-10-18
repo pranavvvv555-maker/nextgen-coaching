@@ -1,0 +1,213 @@
+@page "/about"
+
+<PageTitle>@L["About Us · NextGen Graduate IT Coaching"]</PageTitle>
+
+<div class="about-page">
+<section class="journey-hero" data-career-hero aria-labelledby="journey-title">
+    <div class="ng-container">
+        <div class="journey-layout">
+            <div class="journey-copy" data-hero-enter>
+                <span class="journey-eyebrow">@L["OUR STORY. YOUR POSSIBILITIES."]</span>
+                <h1 id="journey-title"><span class="journey-brand">NextGen —</span><span class="journey-dreams">@L["Big dreams."]</span><span class="journey-futures">@L["Brighter futures."]</span></h1>
+                <p>@L["Build real-world skills. Learn with industry mentors. Work towards your dream role and package."]</p>
+                <div class="journey-actions"><a href="/about#our-approach" class="btn-primary">@L["Discover our approach"] <span aria-hidden="true">→</span></a><a href="/courses" class="journey-secondary">@L["Explore programs"] <span aria-hidden="true">↗</span></a></div>
+                <div class="journey-values"><span><i aria-hidden="true">✦</i> @L["Real skills"]</span><span><i aria-hidden="true">✦</i> @L["Personal guidance"]</span><span><i aria-hidden="true">✦</i> @L["New possibilities"]</span></div>
+            </div>
+            <div class="journey-art" data-hero-enter><CareerJourneyScene /></div>
+        </div>
+        <div class="journey-stats about-stats" aria-label="@L["NextGen in numbers"]">
+            <article class="journey-stat journey-stat-peach" data-hero-enter data-hero-hover><span class="journey-stat-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="19" r="10" fill="currentColor"/><circle cx="12" cy="28" r="7" fill="#536bff"/><circle cx="52" cy="28" r="7" fill="#536bff"/><path d="M15 55V45a17 17 0 0 1 34 0v10H15Z" fill="currentColor"/><path d="M2 55V43a10 10 0 0 1 11-10M62 55V43a10 10 0 0 0-11-10" stroke="#536bff" stroke-width="8" stroke-linejoin="round"/></svg></span><div><strong>5,000</strong><span>@L["Students Placed"]</span></div></article>
+            <article class="journey-stat journey-stat-lilac" data-hero-enter data-hero-hover><span class="journey-stat-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><rect x="5" y="38" width="12" height="20" rx="4" fill="#8b68fa"/><rect x="25" y="28" width="12" height="30" rx="4" fill="#ad8afb"/><rect x="45" y="17" width="12" height="41" rx="4" fill="currentColor"/><path d="M6 27L29 17 48 5M36 5h13v12" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><div><strong>₹35 <small>LPA</small></strong><span>@L["Highest CTC"]</span></div></article>
+            <article class="journey-stat journey-stat-blue" data-hero-enter data-hero-hover><span class="journey-stat-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M5 28l12-15 15 8 15-8 12 15-13 21-14-5-14 5L5 28Z" fill="currentColor"/><path d="M20 21l14-8 14 8-11 12-7-6-6 7" fill="#b1de4d" stroke="#91c849" stroke-width="3" stroke-linejoin="round"/><path d="M21 38l14 14M27 32l15 15" stroke="#d5e6ff" stroke-width="4" stroke-linecap="round"/></svg></span><div><strong>200+</strong><span>@L["Hiring Partners"]</span></div></article>
+            <article class="journey-stat journey-stat-lime" data-hero-enter data-hero-hover><span class="journey-stat-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none"><path d="M10 8h44a5 5 0 0 1 5 5v32a5 5 0 0 1-5 5H28L14 60V50h-4a5 5 0 0 1-5-5V13a5 5 0 0 1 5-5Z" fill="#5b78ff"/><path d="m32 15 5 10 11 2-8 8 2 11-10-5-10 5 2-11-8-8 11-2 5-10Z" fill="currentColor"/></svg></span><div><strong>4.6 <small>/ 5</small></strong><span>@L["Alumni Rating"]</span></div></article>
+        </div>
+    </div>
+</section>
+
+<!-- OUR MISSION & THE INDUSTRY DILEMMA -->
+<section id="our-approach" class="about-section about-approach">
+    <div class="about-approach-grid">
+        <div class="about-approach-copy" data-motion="fade-up">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-semibold uppercase tracking-wider mb-3">
+                @L["The Reality of Tech Hiring"]
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+                @L["Why standard college degrees fail the modern data and cloud test."]
+            </h2>
+            <p class="mt-4 text-base text-slate-600 leading-relaxed">
+                @L["Every year, hundreds of thousands of bright graduates enter the job market with degrees in Computer Science, IT, Commerce, and Engineering. Yet, hiring managers struggle to fill entry-level analytics and cloud engineering desks."]
+            </p>
+            <p class="mt-3 text-base text-slate-600 leading-relaxed">
+                @L["The problem isn't intelligence — it's"] <strong class="text-slate-900 font-semibold">@L["production disconnect"]</strong>@L[". University syllabi teach toy SQL queries and 10-year-old textbooks. Today’s high-paying employers demand live Snowflake data warehouses, automated Azure Data Factory pipelines, production Git branching, and business-focused Power BI storytelling."]
+            </p>
+
+            <div class="mt-6 space-y-3">
+                <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">✓</div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-slate-900">@L["Zero Toy Projects"]</h4>
+                        <p class="text-xs text-slate-500 mt-0.5">@L["We don't do generic Iris or Titanic datasets. You build enterprise e-commerce churn pipelines and fintech credit risk models."]</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">✓</div>
+                    <div>
+                        <h4 class="text-sm font-semibold text-slate-900">@L["Inclusive for Non-CS Graduates"]</h4>
+                        <p class="text-xs text-slate-500 mt-0.5">@L["Over 42% of our successfully placed alumni hold degrees in B.Com, B.Sc, BCA, or non-CS Engineering streams."]</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Contrast Card -->
+        <div data-motion="fade-up" class="about-comparison relative">
+            <div class="absolute -inset-2 bg-gradient-to-r from-brand-primary to-brand-cyan rounded-3xl blur-xl opacity-30"></div>
+            <div class="relative bg-slate-900 rounded-2xl p-8 border border-white/10 shadow-2xl text-white">
+                <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-brand-cyan animate-pulse"></span>
+                    @L["Academia vs. NextGen Accelerator"]
+                </h3>
+
+                <div class="space-y-4">
+                    <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <div class="text-xs font-semibold text-rose-400 uppercase tracking-wider mb-1">@L["Traditional College"]</div>
+                        <div class="text-sm text-slate-300">@L["Pen-and-paper theoretical exams, outdated C/C++ or basic Java, no version control, and passive campus placement pools."]</div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-gradient-to-r from-brand-primary/20 to-brand-cyan/15 border border-brand-cyan/40">
+                        <div class="text-xs font-semibold text-brand-cyan uppercase tracking-wider mb-1">@L["The NextGen Ecosystem"]</div>
+                        <div class="text-sm text-white font-medium">
+                            @L["Live weekend war rooms, code reviews on GitHub, cloud deployments on AWS/Azure, AI-assisted portfolio creation, and 1-on-1 mock interviews until you're placed."]
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                    <span>@L["Average time to first offer:"]</span>
+                    <span class="font-bold text-brand-cyan text-sm">@L["4.2 Months"]</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- COMPANY SHOWCASE -->
+<CompanyLogoShowcase />
+
+<!-- MENTORS & INDUSTRY LEADERS -->
+<section class="about-section about-mentors">
+    <div class="text-center max-w-3xl mx-auto mb-16" data-motion="fade-up">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-semibold uppercase tracking-wider mb-3">
+            @L["World-Class Mentorship"]
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+            @L["Learn From Engineers Who Build at Scale"]
+        </h2>
+        <p class="mt-3 text-slate-600 text-base">
+            @L["You are never taught by fresh college tutors. Our instructors and mentors bring decades of combined experience at industry leaders."]
+        </p>
+    </div>
+
+    <div class="about-mentor-grid">
+        <div data-motion="fade-up" data-tilt class="card card-hover p-6 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+            <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-tr from-brand-primary to-brand-cyan text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+                RN
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Rajesh Nair</h3>
+            <p class="text-xs font-semibold text-brand-primary">@L["Principal Cloud Architect"]</p>
+            <p class="text-xs text-slate-500 mt-1">@L["Ex-Amazon · 14+ yrs experience"]</p>
+            <p class="mt-3 text-xs text-slate-600 leading-relaxed">@L["Specialist in petabyte-scale data lakes, Snowflake, and distributed query performance tuning."]</p>
+        </div>
+
+        <div data-motion="fade-up" data-tilt class="card card-hover p-6 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+            <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-tr from-brand-purple to-pink-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+                SK
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Sneha Kulkarni</h3>
+            <p class="text-xs font-semibold text-brand-purple">@L["Lead BI Consultant"]</p>
+            <p class="text-xs text-slate-500 mt-1">@L["Ex-Microsoft Partner · 10+ yrs"]</p>
+            <p class="mt-3 text-xs text-slate-600 leading-relaxed">@L["Authored enterprise Power BI DAX patterns for Fortune 500 financial institutions."]</p>
+        </div>
+
+        <div data-motion="fade-up" data-tilt class="card card-hover p-6 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+            <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-tr from-brand-cyan to-blue-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+                VS
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Vikramaditya Sen</h3>
+            <p class="text-xs font-semibold text-brand-cyan">@L["Staff Data Engineer"]</p>
+            <p class="text-xs text-slate-500 mt-1">@L["Ex-Walmart Labs · 11+ yrs"]</p>
+            <p class="mt-3 text-xs text-slate-600 leading-relaxed">@L["Mentor for real-time streaming architectures, Azure Data Factory, and PySpark."]</p>
+        </div>
+
+        <div data-motion="fade-up" data-tilt class="card card-hover p-6 rounded-2xl bg-white border border-slate-200 shadow-sm text-center">
+            <div class="w-20 h-20 rounded-full mx-auto mb-4 bg-gradient-to-tr from-amber-500 to-rose-500 text-white flex items-center justify-center text-2xl font-bold shadow-lg">
+                PD
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">Priya Deshmukh</h3>
+            <p class="text-xs font-semibold text-amber-600">@L["Head of Talent & Placements"]</p>
+            <p class="text-xs text-slate-500 mt-1">@L["Ex-Tier 1 IT Recruiter · 8+ yrs"]</p>
+            <p class="mt-3 text-xs text-slate-600 leading-relaxed">@L["Personally guided over 1,000+ candidates through technical HR rounds and salary negotiations."]</p>
+        </div>
+    </div>
+</section>
+
+<!-- OUR JOURNEY TIMELINE -->
+<section class="about-growth bg-slate-900 text-white relative overflow-hidden">
+    <div class="pointer-events-none absolute -bottom-32 -left-32 w-96 h-96 bg-brand-primary/20 rounded-full blur-[120px]"></div>
+    <div class="about-section-container relative z-10">
+        <div class="text-center max-w-2xl mx-auto mb-16" data-motion="fade-up">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-brand-cyan text-xs font-semibold uppercase tracking-wider mb-3">
+                @L["Milestones"]
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">@L["Our Growth Story"]</h2>
+            <p class="mt-3 text-slate-300 text-sm">@L["How a focused coaching experiment evolved into a premier tech talent launchpad."]</p>
+        </div>
+
+        <div class="about-growth-grid">
+            <div data-motion="fade-up" class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div class="text-brand-cyan font-bold text-sm">2022</div>
+                <h4 class="text-lg font-semibold text-white mt-1">@L["The First Cohort"]</h4>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">@L["Launched in Bengaluru with 15 aspiring data analysts. 100% placed within 90 days of graduation."]</p>
+            </div>
+
+            <div data-motion="fade-up" class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div class="text-brand-cyan font-bold text-sm">2023</div>
+                <h4 class="text-lg font-semibold text-white mt-1">@L["Crossed 250 Placements"]</h4>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">@L["Expanded specialized tracks into Snowflake and Azure Data Factory. Opened Mumbai & Hyderabad regional hubs."]</p>
+            </div>
+
+            <div data-motion="fade-up" class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div class="text-brand-cyan font-bold text-sm">2024</div>
+                <h4 class="text-lg font-semibold text-white mt-1">@L["120+ Hiring Partners"]</h4>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">@L["Formed direct recruitment channels with leading IT services and product analytics teams."]</p>
+            </div>
+
+            <div data-motion="fade-up" class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <div class="text-brand-cyan font-bold text-sm">@L["2026 & Beyond"]</div>
+                <h4 class="text-lg font-semibold text-white mt-1">@L["5,000 Alumni Network"]</h4>
+                <p class="text-xs text-slate-400 mt-2 leading-relaxed">@L["Proudly sustaining a 4.6/5 satisfaction rate and the most transparent placement guarantee in the industry."]</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CLOSING CALL TO ACTION -->
+<section class="about-section about-closing text-center" data-motion="fade-up">
+    <div class="relative bg-gradient-to-r from-brand-navy via-brand-navy-light to-brand-navy rounded-3xl p-10 sm:p-14 overflow-hidden shadow-2xl border border-white/10 text-white">
+        <div class="pointer-events-none absolute -top-24 -right-24 w-80 h-80 bg-brand-cyan/20 rounded-full blur-[100px]"></div>
+        <div class="relative z-10 max-w-2xl mx-auto">
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">@L["Ready to Take Your First Big Step?"]</h2>
+            <p class="mt-4 text-base text-brand-sky-100">
+                @L["Book a confidential 15-minute profile assessment with our senior career advisors. We'll map your current skills to open industry roles."]
+            </p>
+            <div class="mt-8 flex flex-wrap justify-center gap-4">
+                <a href="/contact" class="btn-gradient px-8 py-3.5 text-base shadow-glow-cyan">@L["Schedule Free Profile Review"]</a>
+                <a href="/webinar" class="btn-glass px-8 py-3.5 text-base">@L["Attend Live Masterclass"]</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+</div>

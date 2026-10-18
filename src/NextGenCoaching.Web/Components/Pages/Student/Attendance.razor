@@ -1,0 +1,71 @@
+@page "/student/attendance"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+
+<PageTitle>Attendance · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Attendance"]</h1>
+    <p class="text-caption text-text-secondary">Your session attendance across all enrolled batches.</p>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_data is null || _data.TotalSessions == 0)
+{
+    <div class="card p-8 text-center">
+        <div class="text-3xl mb-2">🗓️</div>
+        <p class="text-body font-medium">No attendance recorded yet</p>
+        <p class="text-caption text-text-secondary">Your attendance shows up here once instructors mark sessions.</p>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="card p-4 text-center"><div class="text-h2 text-brand-primary">@_data.PercentPresent%</div><div class="text-meta text-text-secondary">@L["Attendance"]</div></div>
+        <div class="card p-4 text-center"><div class="text-h2 text-status-success">@_data.Present</div><div class="text-meta text-text-secondary">Present</div></div>
+        <div class="card p-4 text-center"><div class="text-h2 text-status-warning">@_data.Late</div><div class="text-meta text-text-secondary">Late</div></div>
+        <div class="card p-4 text-center"><div class="text-h2 text-status-danger">@_data.Absent</div><div class="text-meta text-text-secondary">Absent</div></div>
+    </div>
+
+    <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted text-text-secondary text-caption">
+                <tr><th class="text-left px-4 py-3">Session</th><th class="text-left px-4 py-3">Course</th><th class="text-left px-4 py-3">Date</th><th class="text-left px-4 py-3">@L["Status"]</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var i in _data.Items)
+                {
+                    <tr class="border-t border-border-base">
+                        <td class="px-4 py-3 font-medium">@i.SessionTitle</td>
+                        <td class="px-4 py-3 text-text-secondary">@i.CourseTitle</td>
+                        <td class="px-4 py-3">@i.ScheduledAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="px-4 py-3"><span class="pill @StatusClass(i.Status)">@i.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private StudentAttendanceDto? _data;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _data = await StudentApi.GetAttendanceAsync();
+        _loading = false;
+    }
+
+    private string StatusClass(string s) => s switch
+    {
+        "Present" => "text-status-success",
+        "Late" => "text-status-warning",
+        "Absent" => "text-status-danger",
+        _ => ""
+    };
+}

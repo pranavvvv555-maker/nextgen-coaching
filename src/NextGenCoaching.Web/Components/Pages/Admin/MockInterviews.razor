@@ -1,0 +1,238 @@
+@page "/admin/mock-interviews"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Mock interviews · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Mock interviews"]</h1>
+        <p class="text-caption text-text-secondary">Schedule practice interviews and record feedback for students.</p>
+    </div>
+    <button class="btn-primary" @onclick="() => _showSchedule = !_showSchedule">@(_showSchedule ? "Cancel" : "Schedule interview")</button>
+</div>
+
+@if (_showSchedule)
+{
+    <div class="card p-5 mb-5">
+        <h2 class="text-h3 mb-4">Schedule a mock interview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="md:col-span-2">
+                <label class="text-caption text-text-secondary mb-1 block">Student enrollment *</label>
+                <select @bind="_schedule.EnrollmentId" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                    <option value="@Guid.Empty">— Select —</option>
+                    @if (_enrollments is not null)
+                    {
+                        @foreach (var e in _enrollments)
+                        {
+                            <option value="@e.Id">@e.Label — @e.Sublabel</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Interviewer</label>
+                <select @bind="_interviewerId" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                    <option value="">— Unassigned —</option>
+                    @if (_interviewers is not null)
+                    {
+                        @foreach (var i in _interviewers)
+                        {
+                            <option value="@i.Id">@i.Label</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Round</label>
+                <input @bind="_schedule.RoundNumber" type="number" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Date &amp; time (UTC) *</label>
+                <input @bind="_scheduledLocal" type="datetime-local" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Duration (min)</label>
+                <input @bind="_schedule.DurationMinutes" type="number" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-caption text-text-secondary mb-1 block">Meeting URL</label>
+                <input @bind="_schedule.MeetingUrl" placeholder="https://meet…" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="text-sm text-status-danger mt-3">@_error</p>
+        }
+        <div class="mt-4">
+            <button class="btn-primary" disabled="@_saving" @onclick="ScheduleAsync">@(_saving ? "Scheduling…" : "Schedule")</button>
+        </div>
+    </div>
+}
+
+<div class="card p-4 mb-4">
+    <div class="flex gap-3 items-end">
+        <div class="w-48">
+            <label class="text-caption text-text-secondary mb-1 block">@L["Status"]</label>
+            <select @bind="_statusFilter" @bind:after="LoadList" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                <option value="">All</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="NoShow">No show</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_items is null || _items.Count == 0)
+{
+    <div class="card p-8 text-center text-text-secondary">No mock interviews found.</div>
+}
+else
+{
+    <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted text-text-secondary text-caption">
+                <tr>
+                    <th class="text-left px-4 py-3">@L["Student"]</th>
+                    <th class="text-left px-4 py-3">Course</th>
+                    <th class="text-left px-4 py-3">Round</th>
+                    <th class="text-left px-4 py-3">When (UTC)</th>
+                    <th class="text-left px-4 py-3">Interviewer</th>
+                    <th class="text-left px-4 py-3">@L["Status"]</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in _items)
+                {
+                    <tr class="border-t border-border-base">
+                        <td class="px-4 py-3 font-medium">@m.StudentName</td>
+                        <td class="px-4 py-3 text-text-secondary">@m.CourseTitle</td>
+                        <td class="px-4 py-3">@m.RoundNumber</td>
+                        <td class="px-4 py-3">@m.ScheduledAtUtc.ToString("dd MMM yyyy HH:mm")</td>
+                        <td class="px-4 py-3">@(m.InterviewerName ?? "—")</td>
+                        <td class="px-4 py-3"><span class="pill">@m.Status</span>@(m.OverallRating.HasValue ? $" · {m.OverallRating}/5" : "")</td>
+                        <td class="px-4 py-3 text-right">
+                            <button class="text-brand-primary" @onclick="() => OpenFeedback(m)">Record feedback</button>
+                        </td>
+                    </tr>
+                    @if (_feedbackId == m.Id)
+                    {
+                        <tr class="border-t border-border-base bg-surface-muted">
+                            <td colspan="7" class="px-4 py-4">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                    <div>
+                                        <label class="text-caption text-text-secondary mb-1 block">@L["Status"]</label>
+                                        <select @bind="_feedback.Status" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                                            <option value="Completed">Completed</option>
+                                            <option value="NoShow">No show</option>
+                                            <option value="Cancelled">Cancelled</option>
+                                        </select>
+                                    </div>
+                                    <div><label class="text-caption text-text-secondary mb-1 block">Technical /5</label><input @bind="_feedback.TechnicalRating" type="number" min="0" max="5" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" /></div>
+                                    <div><label class="text-caption text-text-secondary mb-1 block">Communication /5</label><input @bind="_feedback.CommunicationRating" type="number" min="0" max="5" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" /></div>
+                                    <div><label class="text-caption text-text-secondary mb-1 block">Problem solving /5</label><input @bind="_feedback.ProblemSolvingRating" type="number" min="0" max="5" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" /></div>
+                                    <div><label class="text-caption text-text-secondary mb-1 block">Overall /5</label><input @bind="_feedback.OverallRating" type="number" min="0" max="5" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" /></div>
+                                    <div class="md:col-span-3"><label class="text-caption text-text-secondary mb-1 block">Recording URL</label><input @bind="_feedback.RecordingUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" /></div>
+                                    <div class="md:col-span-2"><label class="text-caption text-text-secondary mb-1 block">Strengths</label><textarea @bind="_feedback.Strengths" rows="2" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea></div>
+                                    <div class="md:col-span-2"><label class="text-caption text-text-secondary mb-1 block">Areas to improve</label><textarea @bind="_feedback.AreasToImprove" rows="2" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea></div>
+                                    <div class="md:col-span-4"><label class="text-caption text-text-secondary mb-1 block">Recommended next steps</label><textarea @bind="_feedback.RecommendedNextSteps" rows="2" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea></div>
+                                </div>
+                                <div class="mt-3 flex gap-2">
+                                    <button class="btn-primary" disabled="@_saving" @onclick="SaveFeedback">@(_saving ? "Saving…" : "Save feedback")</button>
+                                    <button class="btn-outline" @onclick="() => _feedbackId = null">@L["Close"]</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private bool _showSchedule;
+    private bool _saving;
+    private string? _error;
+    private string _statusFilter = string.Empty;
+
+    private IReadOnlyList<AdminMockInterviewListItemDto>? _items;
+    private IReadOnlyList<SelectOptionDto>? _enrollments;
+    private IReadOnlyList<SelectOptionDto>? _interviewers;
+
+    private ScheduleMockInterviewRequest _schedule = new() { ScheduledAtUtc = DateTime.UtcNow.AddDays(1) };
+    private string _interviewerId = string.Empty;
+    private DateTime _scheduledLocal = DateTime.UtcNow.AddDays(1);
+
+    private Guid? _feedbackId;
+    private RecordMockInterviewFeedbackRequest _feedback = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _enrollments = await AdminApi.GetMockEnrollmentsAsync();
+        _interviewers = await AdminApi.GetInstructorsLookupAsync();
+        await LoadList();
+    }
+
+    private async Task LoadList()
+    {
+        _loading = true;
+        _items = await AdminApi.GetMockInterviewsAsync(string.IsNullOrWhiteSpace(_statusFilter) ? null : _statusFilter);
+        _loading = false;
+    }
+
+    private async Task ScheduleAsync()
+    {
+        _error = null;
+        if (_schedule.EnrollmentId == Guid.Empty)
+        {
+            _error = "Please select a student enrollment.";
+            return;
+        }
+        _schedule.InterviewerId = Guid.TryParse(_interviewerId, out var iid) ? iid : null;
+        _schedule.ScheduledAtUtc = DateTime.SpecifyKind(_scheduledLocal, DateTimeKind.Utc);
+
+        _saving = true;
+        var res = await AdminApi.ScheduleMockInterviewAsync(_schedule);
+        _saving = false;
+
+        if (res is { Success: true })
+        {
+            _showSchedule = false;
+            _schedule = new() { ScheduledAtUtc = DateTime.UtcNow.AddDays(1) };
+            _interviewerId = string.Empty;
+            await LoadList();
+        }
+        else
+        {
+            _error = res?.Message ?? "Could not schedule.";
+        }
+    }
+
+    private void OpenFeedback(AdminMockInterviewListItemDto m)
+    {
+        _feedbackId = m.Id;
+        _feedback = new RecordMockInterviewFeedbackRequest { Status = m.Status == "Scheduled" ? "Completed" : m.Status, OverallRating = m.OverallRating };
+    }
+
+    private async Task SaveFeedback()
+    {
+        if (_feedbackId is null) return;
+        _saving = true;
+        var res = await AdminApi.RecordMockFeedbackAsync(_feedbackId.Value, _feedback);
+        _saving = false;
+        if (res is { Success: true })
+        {
+            _feedbackId = null;
+            await LoadList();
+        }
+    }
+}

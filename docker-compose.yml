@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nextgen-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nextgen
+      POSTGRES_PASSWORD: nextgen_dev_password
+      POSTGRES_DB: nextgen_coaching
+    ports:
+      - "5432:5432"
+    volumes:
+      - nextgen_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextgen -d nextgen_coaching"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  seq:
+    image: datalust/seq:latest
+    container_name: nextgen-seq
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:80"
+    volumes:
+      - nextgen_seqdata:/data
+
+volumes:
+  nextgen_pgdata:
+  nextgen_seqdata:

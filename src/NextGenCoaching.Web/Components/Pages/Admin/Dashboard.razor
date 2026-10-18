@@ -1,0 +1,205 @@
+@page "/admin"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@inject AuthStateService AuthState
+
+<PageTitle>Dashboard · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Dashboard"]</h1>
+        <p class="text-caption text-text-secondary">Welcome back, @(AuthState.Current?.FullName ?? "team").</p>
+    </div>
+</div>
+
+@if (_stats is null)
+{
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        @for (var i = 0; i < 4; i++)
+        {
+            <div class="card p-5 h-24 animate-pulse"><div class="h-3 bg-border-base rounded w-2/3 mb-3"></div><div class="h-6 bg-border-base rounded w-1/3"></div></div>
+        }
+    </div>
+}
+else
+{
+    @* ---------- Stat tiles ---------- *@
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatTile Label="Total Students"   Value="@_stats.TotalStudents.ToString("N0")"   Icon="👥" Accent="blue" />
+        <StatTile Label="Active Batches"   Value="@_stats.ActiveBatches.ToString("N0")"   Icon="📚" Accent="amber" />
+        <StatTile Label="Total Courses"    Value="@_stats.TotalCourses.ToString("N0")"    Icon="🎓" Accent="purple" />
+        <StatTile Label="Placed Students"  Value="@_stats.PlacedStudents.ToString("N0")"  Icon="💼" Accent="success" />
+    </div>
+
+    @* ---------- Leads overview + Placement strip ---------- *@
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div class="card p-5 lg:col-span-1">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Leads Overview</h2>
+                <span class="text-meta text-text-muted uppercase tracking-wider">@_stats.OpenLeads open</span>
+            </div>
+            @if (_stats.LeadsByStatus.Count == 0)
+            {
+                <div class="text-caption text-text-muted py-8 text-center">No leads yet.</div>
+            }
+            else
+            {
+                <div class="space-y-2.5">
+                    @foreach (var s in _stats.LeadsByStatus)
+                    {
+                        var pct = TotalLeads == 0 ? 0 : (int)Math.Round(s.Count * 100.0 / TotalLeads);
+                        <div>
+                            <div class="flex items-center justify-between text-caption mb-1">
+                                <span class="text-text-primary">@s.Status</span>
+                                <span class="text-text-muted">@s.Count</span>
+                            </div>
+                            <div class="h-1.5 bg-surface-muted rounded-full overflow-hidden">
+                                <div class="h-full @StatusBarColor(s.Status)" style="width:@(pct)%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="card p-5 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Placement Trend</h2>
+                <span class="text-meta text-text-muted uppercase tracking-wider">Last 6 months</span>
+            </div>
+            @* Static placeholder bars — real data wiring deferred *@
+            <div class="flex items-end gap-3 h-32">
+                @foreach (var (m, h) in _placeholderTrend)
+                {
+                    <div class="flex-1 flex flex-col items-center justify-end gap-1.5">
+                        <div class="w-full bg-brand-sky-100 rounded-t" style="height:@(h)%"></div>
+                        <div class="text-meta text-text-muted">@m</div>
+                    </div>
+                }
+            </div>
+            <div class="mt-4 text-meta text-text-muted">Live chart will replace this in Phase 5.</div>
+        </div>
+    </div>
+
+    @* ---------- Recent leads + Upcoming mocks ---------- *@
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Recent Leads</h2>
+                <a href="/admin/leads" class="text-caption text-brand-primary">View all →</a>
+            </div>
+            @if (_stats.RecentLeads.Count == 0)
+            {
+                <div class="text-caption text-text-muted py-6 text-center">No recent leads.</div>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-meta uppercase tracking-wider text-text-muted border-b border-border-base">
+                            <th class="pb-2 font-medium">@L["Name"]</th>
+                            <th class="pb-2 font-medium">Course</th>
+                            <th class="pb-2 font-medium">@L["Status"]</th>
+                            <th class="pb-2 font-medium text-right">When</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-base">
+                        @foreach (var l in _stats.RecentLeads)
+                        {
+                            <tr>
+                                <td class="py-2.5">@l.FullName</td>
+                                <td class="py-2.5 text-text-secondary">@l.CourseInterestTitle</td>
+                                <td class="py-2.5"><span class="@StatusPillClass(l.Status)">@l.Status</span></td>
+                                <td class="py-2.5 text-right text-text-muted text-caption">@RelTime(l.CreatedAtUtc)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Upcoming Mock Interviews</h2>
+                <a href="/admin/students" class="text-caption text-brand-primary">View all →</a>
+            </div>
+            @if (_stats.UpcomingMockInterviews.Count == 0)
+            {
+                <div class="text-caption text-text-muted py-6 text-center">None scheduled.</div>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-meta uppercase tracking-wider text-text-muted border-b border-border-base">
+                            <th class="pb-2 font-medium">@L["Student"]</th>
+                            <th class="pb-2 font-medium">Course</th>
+                            <th class="pb-2 font-medium text-right">Scheduled</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-base">
+                        @foreach (var m in _stats.UpcomingMockInterviews)
+                        {
+                            <tr>
+                                <td class="py-2.5">@m.StudentName</td>
+                                <td class="py-2.5 text-text-secondary">@m.CourseTitle</td>
+                                <td class="py-2.5 text-right text-text-muted text-caption">@m.ScheduledAtUtc.ToLocalTime().ToString("dd MMM · HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private AdminDashboardStatsDto? _stats;
+
+    private int TotalLeads => _stats?.LeadsByStatus.Sum(x => x.Count) ?? 0;
+
+    private readonly (string Month, int Height)[] _placeholderTrend =
+    {
+        ("Jan", 38), ("Feb", 52), ("Mar", 61), ("Apr", 73), ("May", 81), ("Jun", 92)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _stats = await AdminApi.GetDashboardAsync();
+    }
+
+    private static string StatusBarColor(string status) => status switch
+    {
+        "New"            => "bg-brand-primary",
+        "Contacted"      => "bg-status-info",
+        "Qualified"      => "bg-status-success",
+        "DemoScheduled"  => "bg-status-purple",
+        "Negotiation"    => "bg-status-warning",
+        "Enrolled"       => "bg-status-success",
+        "Lost"           => "bg-status-danger",
+        "Dormant"        => "bg-text-disabled",
+        _                => "bg-brand-primary"
+    };
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "New"            => "bg-brand-sky-100 text-brand-primary-dark",
+        "Contacted"      => "bg-status-info/15 text-status-info",
+        "Qualified"      => "bg-status-success/15 text-status-success",
+        "DemoScheduled"  => "bg-status-purple/15 text-status-purple",
+        "Negotiation"    => "bg-status-warning/15 text-status-warning",
+        "Enrolled"       => "bg-status-success/15 text-status-success",
+        "Lost"           => "bg-status-danger/15 text-status-danger",
+        _                => "bg-surface-muted text-text-secondary"
+    };
+
+    private static string RelTime(DateTime utc)
+    {
+        var diff = DateTime.UtcNow - utc;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("dd MMM");
+    }
+}

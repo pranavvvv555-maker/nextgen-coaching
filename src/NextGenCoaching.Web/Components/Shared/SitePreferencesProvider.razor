@@ -1,0 +1,13 @@
+@implements IDisposable
+<CascadingValue Name="SitePreferencesRevision" Value="L.Revision">
+    <Routes />
+</CascadingValue>
+@code {
+    protected override void OnInitialized() => L.Changed += OnPreferencesChanged;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await L.InitializeAsync();
+    }
+    private void OnPreferencesChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => L.Changed -= OnPreferencesChanged;
+}

@@ -1,0 +1,354 @@
+@page "/admin/curriculum"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Curriculum · Admin · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">Course curriculum</h1>
+    <p class="text-caption text-text-secondary">Manage the tools, journey, features, assignments, and projects shown on a course.</p>
+</div>
+
+<ConfirmDialog @ref="_confirm" />
+
+<div class="card p-4 mb-5">
+    <label class="text-caption text-text-secondary mb-1 block">Course</label>
+    <select @bind="_courseId" @bind:after="OnCourseChanged" class="w-full md:w-96 border border-border-base rounded-btn px-3 py-2 text-sm">
+        <option value="">— Select a course —</option>
+        @if (_courses is not null)
+        {
+            @foreach (var c in _courses)
+            {
+                <option value="@c.Id">@c.Label</option>
+            }
+        }
+    </select>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_c is not null)
+{
+    @* ---------------- Tools ---------------- *@
+    <section class="card p-5 mb-5">
+        <h2 class="text-h3 mb-3">Tools</h2>
+        @if (_c.Tools.Count > 0)
+        {
+            <table class="w-full text-sm mb-3">
+                <thead class="text-caption text-text-secondary"><tr><th class="text-left py-1">#</th><th class="text-left">@L["Name"]</th><th class="text-left">Description</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var t in _c.Tools)
+                    {
+                        <tr class="border-t border-border-base">
+                            <td class="py-2">@t.SortOrder</td>
+                            <td>@t.ToolName</td>
+                            <td class="text-text-secondary">@t.Description</td>
+                            <td class="text-right">
+                                <button class="text-brand-primary mr-3" @onclick="() => EditTool(t)">@L["Edit"]</button>
+                                <button class="text-status-danger" @onclick="() => DeleteTool(t.Id)">@L["Delete"]</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+            <input @bind="_tool.ToolName" placeholder="Tool name" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+            <input @bind="_tool.Description" placeholder="Description" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-2" />
+            <input @bind="_tool.SortOrder" type="number" placeholder="Order" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+        </div>
+        <div class="mt-3 flex gap-2">
+            <button class="btn-primary" @onclick="SaveTool">@(_toolId is null ? "Add tool" : "Update tool")</button>
+            @if (_toolId is not null)
+            {
+                <button class="btn-outline" @onclick="() => { _tool = new(); _toolId = null; }">@L["Cancel"]</button>
+            }
+        </div>
+    </section>
+
+    @* ---------------- Journey steps ---------------- *@
+    <section class="card p-5 mb-5">
+        <h2 class="text-h3 mb-3">Journey steps</h2>
+        @if (_c.JourneySteps.Count > 0)
+        {
+            <table class="w-full text-sm mb-3">
+                <thead class="text-caption text-text-secondary"><tr><th class="text-left py-1">Step</th><th class="text-left">Title</th><th class="text-left">Description</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var s in _c.JourneySteps)
+                    {
+                        <tr class="border-t border-border-base">
+                            <td class="py-2">@s.StepNumber</td>
+                            <td>@s.Title</td>
+                            <td class="text-text-secondary">@s.Description</td>
+                            <td class="text-right">
+                                <button class="text-brand-primary mr-3" @onclick="() => EditStep(s)">@L["Edit"]</button>
+                                <button class="text-status-danger" @onclick="() => DeleteStep(s.Id)">@L["Delete"]</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+            <input @bind="_step.StepNumber" type="number" placeholder="Step #" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+            <input @bind="_step.Title" placeholder="Title" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+            <input @bind="_step.Description" placeholder="Description" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-2" />
+        </div>
+        <div class="mt-3 flex gap-2">
+            <button class="btn-primary" @onclick="SaveStep">@(_stepId is null ? "Add step" : "Update step")</button>
+            @if (_stepId is not null)
+            {
+                <button class="btn-outline" @onclick="() => { _step = new(); _stepId = null; }">@L["Cancel"]</button>
+            }
+        </div>
+    </section>
+
+    @* ---------------- Features ---------------- *@
+    <section class="card p-5 mb-5">
+        <h2 class="text-h3 mb-3">Features</h2>
+        @if (_c.Features.Count > 0)
+        {
+            <table class="w-full text-sm mb-3">
+                <thead class="text-caption text-text-secondary"><tr><th class="text-left py-1">#</th><th class="text-left">Label</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var f in _c.Features)
+                    {
+                        <tr class="border-t border-border-base">
+                            <td class="py-2">@f.SortOrder</td>
+                            <td>@f.Label</td>
+                            <td class="text-right">
+                                <button class="text-brand-primary mr-3" @onclick="() => EditFeature(f)">@L["Edit"]</button>
+                                <button class="text-status-danger" @onclick="() => DeleteFeature(f.Id)">@L["Delete"]</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 items-end">
+            <input @bind="_feature.Label" placeholder="Feature label" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-2" />
+            <input @bind="_feature.SortOrder" type="number" placeholder="Order" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+        </div>
+        <div class="mt-3 flex gap-2">
+            <button class="btn-primary" @onclick="SaveFeature">@(_featureId is null ? "Add feature" : "Update feature")</button>
+            @if (_featureId is not null)
+            {
+                <button class="btn-outline" @onclick="() => { _feature = new(); _featureId = null; }">@L["Cancel"]</button>
+            }
+        </div>
+    </section>
+
+    @* ---------------- Assignments ---------------- *@
+    <section class="card p-5 mb-5">
+        <h2 class="text-h3 mb-3">@L["Assignments"]</h2>
+        @if (_c.Assignments.Count > 0)
+        {
+            <table class="w-full text-sm mb-3">
+                <thead class="text-caption text-text-secondary"><tr><th class="text-left py-1">#</th><th class="text-left">Title</th><th class="text-left">Due (days)</th><th class="text-left">Max</th><th class="text-left">Published</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var a in _c.Assignments)
+                    {
+                        <tr class="border-t border-border-base">
+                            <td class="py-2">@a.AssignmentNumber</td>
+                            <td>@a.Title</td>
+                            <td>@a.DueOffsetDays</td>
+                            <td>@a.MaxScore</td>
+                            <td>@(a.IsPublished ? "Yes" : "No")</td>
+                            <td class="text-right">
+                                <button class="text-brand-primary mr-3" @onclick="() => EditAssignment(a)">@L["Edit"]</button>
+                                <button class="text-status-danger" @onclick="() => DeleteAssignment(a.Id)">@L["Delete"]</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+            <input @bind="_assignment.AssignmentNumber" type="number" placeholder="#" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+            <input @bind="_assignment.Title" placeholder="Title" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-3" />
+            <textarea @bind="_assignment.Description" placeholder="Description" rows="2" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-4"></textarea>
+            <input @bind="_assignment.ResourcesUrl" placeholder="Resources URL" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-2" />
+            <input @bind="_assignment.DueOffsetDays" type="number" placeholder="Due (days)" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+            <input @bind="_assignment.MaxScore" type="number" placeholder="Max score" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+        </div>
+        <div class="mt-2 flex items-center gap-2">
+            <input id="apub" type="checkbox" @bind="_assignment.IsPublished" />
+            <label for="apub" class="text-sm">Published</label>
+        </div>
+        <div class="mt-3 flex gap-2">
+            <button class="btn-primary" @onclick="SaveAssignment">@(_assignmentId is null ? "Add assignment" : "Update assignment")</button>
+            @if (_assignmentId is not null)
+            {
+                <button class="btn-outline" @onclick="() => { _assignment = new(); _assignmentId = null; }">@L["Cancel"]</button>
+            }
+        </div>
+    </section>
+
+    @* ---------------- Projects ---------------- *@
+    <section class="card p-5 mb-5">
+        <h2 class="text-h3 mb-3">@L["Projects"]</h2>
+        @if (_c.Projects.Count > 0)
+        {
+            <table class="w-full text-sm mb-3">
+                <thead class="text-caption text-text-secondary"><tr><th class="text-left py-1">#</th><th class="text-left">Title</th><th class="text-left">Weeks</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var p in _c.Projects)
+                    {
+                        <tr class="border-t border-border-base">
+                            <td class="py-2">@p.ProjectNumber</td>
+                            <td>@p.Title</td>
+                            <td>@p.RecommendedDurationWeeks</td>
+                            <td class="text-right">
+                                <button class="text-brand-primary mr-3" @onclick="() => EditProject(p)">@L["Edit"]</button>
+                                <button class="text-status-danger" @onclick="() => DeleteProject(p.Id)">@L["Delete"]</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
+            <input @bind="_project.ProjectNumber" type="number" placeholder="#" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+            <input @bind="_project.Title" placeholder="Title" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-3" />
+            <textarea @bind="_project.Brief" placeholder="Brief" rows="2" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-4"></textarea>
+            <input @bind="_project.DatasetUrl" placeholder="Dataset URL" class="border border-border-base rounded-btn px-3 py-2 text-sm md:col-span-3" />
+            <input @bind="_project.RecommendedDurationWeeks" type="number" placeholder="Weeks" class="border border-border-base rounded-btn px-3 py-2 text-sm" />
+        </div>
+        <div class="mt-3 flex gap-2">
+            <button class="btn-primary" @onclick="SaveProject">@(_projectId is null ? "Add project" : "Update project")</button>
+            @if (_projectId is not null)
+            {
+                <button class="btn-outline" @onclick="() => { _project = new(); _projectId = null; }">@L["Cancel"]</button>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    private bool _loading;
+    private ConfirmDialog _confirm = default!;
+    private string _courseId = string.Empty;
+    private IReadOnlyList<SelectOptionDto>? _courses;
+    private CourseCurriculumDto? _c;
+
+    private UpsertCurriculumToolRequest _tool = new();
+    private Guid? _toolId;
+    private UpsertCurriculumJourneyStepRequest _step = new();
+    private Guid? _stepId;
+    private UpsertCurriculumFeatureRequest _feature = new();
+    private Guid? _featureId;
+    private UpsertCurriculumAssignmentRequest _assignment = new();
+    private Guid? _assignmentId;
+    private UpsertCurriculumProjectRequest _project = new();
+    private Guid? _projectId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _courses = await AdminApi.GetCoursesLookupAsync();
+    }
+
+    private async Task OnCourseChanged()
+    {
+        ResetForms();
+        if (Guid.TryParse(_courseId, out var id))
+        {
+            _loading = true;
+            _c = await AdminApi.GetCurriculumAsync(id);
+            _loading = false;
+        }
+        else
+        {
+            _c = null;
+        }
+    }
+
+    private Guid CourseId => Guid.Parse(_courseId);
+
+    private async Task Reload() => _c = await AdminApi.GetCurriculumAsync(CourseId);
+
+    private void ResetForms()
+    {
+        _tool = new(); _toolId = null;
+        _step = new(); _stepId = null;
+        _feature = new(); _featureId = null;
+        _assignment = new(); _assignmentId = null;
+        _project = new(); _projectId = null;
+    }
+
+    // ----- Tools -----
+    private void EditTool(CurriculumToolDto t)
+    {
+        _toolId = t.Id;
+        _tool = new UpsertCurriculumToolRequest { ToolName = t.ToolName, IconUrl = t.IconUrl, Description = t.Description, SortOrder = t.SortOrder };
+    }
+    private async Task SaveTool()
+    {
+        if (_toolId is null) await AdminApi.AddToolAsync(CourseId, _tool);
+        else await AdminApi.UpdateToolAsync(_toolId.Value, _tool);
+        _tool = new(); _toolId = null;
+        await Reload();
+    }
+    private Task DeleteTool(Guid id) => _confirm.ShowAsync("Delete tool?", "This removes the tool from the curriculum.", async () => { await AdminApi.DeleteToolAsync(id); await Reload(); });
+
+    // ----- Journey steps -----
+    private void EditStep(CurriculumJourneyStepDto s)
+    {
+        _stepId = s.Id;
+        _step = new UpsertCurriculumJourneyStepRequest { StepNumber = s.StepNumber, Title = s.Title, Description = s.Description, Icon = s.Icon };
+    }
+    private async Task SaveStep()
+    {
+        if (_stepId is null) await AdminApi.AddJourneyStepAsync(CourseId, _step);
+        else await AdminApi.UpdateJourneyStepAsync(_stepId.Value, _step);
+        _step = new(); _stepId = null;
+        await Reload();
+    }
+    private Task DeleteStep(Guid id) => _confirm.ShowAsync("Delete journey step?", "This removes the step from the curriculum.", async () => { await AdminApi.DeleteJourneyStepAsync(id); await Reload(); });
+
+    // ----- Features -----
+    private void EditFeature(CurriculumFeatureDto f)
+    {
+        _featureId = f.Id;
+        _feature = new UpsertCurriculumFeatureRequest { Label = f.Label, Icon = f.Icon, SortOrder = f.SortOrder };
+    }
+    private async Task SaveFeature()
+    {
+        if (_featureId is null) await AdminApi.AddFeatureAsync(CourseId, _feature);
+        else await AdminApi.UpdateFeatureAsync(_featureId.Value, _feature);
+        _feature = new(); _featureId = null;
+        await Reload();
+    }
+    private Task DeleteFeature(Guid id) => _confirm.ShowAsync("Delete feature?", "This removes the feature from the curriculum.", async () => { await AdminApi.DeleteFeatureAsync(id); await Reload(); });
+
+    // ----- Assignments -----
+    private void EditAssignment(CurriculumAssignmentDto a)
+    {
+        _assignmentId = a.Id;
+        _assignment = new UpsertCurriculumAssignmentRequest { AssignmentNumber = a.AssignmentNumber, Title = a.Title, Description = a.Description, ResourcesUrl = a.ResourcesUrl, DueOffsetDays = a.DueOffsetDays, MaxScore = a.MaxScore, IsPublished = a.IsPublished };
+    }
+    private async Task SaveAssignment()
+    {
+        if (_assignmentId is null) await AdminApi.AddAssignmentAsync(CourseId, _assignment);
+        else await AdminApi.UpdateAssignmentAsync(_assignmentId.Value, _assignment);
+        _assignment = new(); _assignmentId = null;
+        await Reload();
+    }
+    private Task DeleteAssignment(Guid id) => _confirm.ShowAsync("Delete assignment?", "This removes the assignment from the curriculum.", async () => { await AdminApi.DeleteAssignmentAsync(id); await Reload(); });
+
+    // ----- Projects -----
+    private void EditProject(CurriculumProjectDto p)
+    {
+        _projectId = p.Id;
+        _project = new UpsertCurriculumProjectRequest { ProjectNumber = p.ProjectNumber, Title = p.Title, Brief = p.Brief, DatasetUrl = p.DatasetUrl, RecommendedDurationWeeks = p.RecommendedDurationWeeks };
+    }
+    private async Task SaveProject()
+    {
+        if (_projectId is null) await AdminApi.AddProjectAsync(CourseId, _project);
+        else await AdminApi.UpdateProjectAsync(_projectId.Value, _project);
+        _project = new(); _projectId = null;
+        await Reload();
+    }
+    private Task DeleteProject(Guid id) => _confirm.ShowAsync("Delete project?", "This removes the project from the curriculum.", async () => { await AdminApi.DeleteProjectAsync(id); await Reload(); });
+}

@@ -1,0 +1,108 @@
+@page "/admin/placements"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@inject NavigationManager Nav
+
+<PageTitle>Placements · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Placements"]</h1>
+        <p class="text-caption text-text-secondary">Students placed with hiring partners, most recent first.</p>
+    </div>
+    @if (_data is not null)
+    {
+        <div class="text-right">
+            <div class="text-h2 text-brand-navy">@_data.Count</div>
+            <div class="text-caption text-text-muted">total placements</div>
+        </div>
+    }
+</div>
+
+@* ---------- Search ---------- *@
+<div class="card p-4 mb-4">
+    <div class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="text-caption text-text-secondary mb-1 block">@L["Search"]</label>
+            <input @bind="_search" @bind:event="oninput" @onkeydown="OnSearchKeyDown"
+                   placeholder="Student, company, role…"
+                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+        </div>
+        <button @onclick="LoadAsync" class="btn-primary">Apply</button>
+        <button @onclick="ResetSearch" class="btn-outline">Reset</button>
+    </div>
+</div>
+
+@* ---------- Table ---------- *@
+<div class="card overflow-hidden">
+    @if (_loading)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data is null || _data.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No placements match this search.</div>
+    }
+    else
+    {
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-surface-muted">
+                    <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                        <th class="px-4 py-3 font-medium">@L["Student"]</th>
+                        <th class="px-4 py-3 font-medium">Company</th>
+                        <th class="px-4 py-3 font-medium">Role</th>
+                        <th class="px-4 py-3 font-medium">Course</th>
+                        <th class="px-4 py-3 font-medium text-right">CTC</th>
+                        <th class="px-4 py-3 font-medium">Placed</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border-base">
+                    @foreach (var p in _data)
+                    {
+                        <tr class="hover:bg-surface-muted/50 cursor-pointer" @onclick="@(() => Nav.NavigateTo($"/admin/students/{p.StudentProfileId}"))">
+                            <td class="px-4 py-3">
+                                <span class="font-medium text-brand-navy">@p.StudentName</span>
+                                @if (p.IsFeatured)
+                                {
+                                    <span class="pill pill-flagship ml-2">Featured</span>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-text-secondary">@p.CompanyName</td>
+                            <td class="px-4 py-3 text-text-secondary">@p.RoleTitle</td>
+                            <td class="px-4 py-3 text-text-secondary">@p.CourseTitle</td>
+                            <td class="px-4 py-3 text-right text-text-secondary">@(p.CtcLpa is null ? "—" : $"₹{p.CtcLpa.Value:0.##} LPA")</td>
+                            <td class="px-4 py-3 text-text-muted text-caption">@p.PlacementDate.ToString("dd MMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<AdminPlacementListItemDto>? _data;
+    private string? _search;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _data = await AdminApi.GetPlacementsAsync(_search);
+        _loading = false;
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await LoadAsync();
+    }
+
+    private async Task ResetSearch()
+    {
+        _search = null;
+        await LoadAsync();
+    }
+}

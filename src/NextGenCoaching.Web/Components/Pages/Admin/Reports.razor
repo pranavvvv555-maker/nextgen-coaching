@@ -1,0 +1,128 @@
+@page "/admin/reports"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Reports · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Reports"]</h1>
+        <p class="text-caption text-text-secondary">Enrollments, revenue, and placement performance.</p>
+    </div>
+    @if (_r is not null)
+    {
+        <a href="@_csvHref" download="nextgen-revenue-by-course.csv" class="btn-outline">Export CSV</a>
+    }
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_r is null)
+{
+    <div class="card p-8 text-center text-text-secondary">No data available.</div>
+}
+else
+{
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div class="card p-4 text-center"><div class="text-h2 text-brand-primary">@_r.TotalStudents</div><div class="text-meta text-text-secondary">@L["Students"]</div></div>
+        <div class="card p-4 text-center"><div class="text-h2 text-brand-primary">@_r.ActiveEnrollments</div><div class="text-meta text-text-secondary">Active enrollments</div></div>
+        <div class="card p-4 text-center"><div class="text-h2 text-status-success">₹@_r.TotalRevenue.ToString("N0")</div><div class="text-meta text-text-secondary">Revenue</div></div>
+        <div class="card p-4 text-center"><div class="text-h2 text-status-success">@_r.Placements</div><div class="text-meta text-text-secondary">Placed (joined)</div></div>
+        <div class="card p-4 text-center"><div class="text-h2 text-status-info">@_r.OpenJobs</div><div class="text-meta text-text-secondary">Open jobs</div></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div class="card p-5">
+            <h2 class="text-h3 mb-3">Revenue by course</h2>
+            @if (_r.RevenueByCourse.Count == 0)
+            {
+                <p class="text-caption text-text-secondary">No enrollments yet.</p>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <thead class="text-caption text-text-secondary"><tr><th class="text-left py-1">Course</th><th class="text-right">Enrolls</th><th class="text-right">Revenue</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in _r.RevenueByCourse)
+                        {
+                            <tr class="border-t border-border-base">
+                                <td class="py-2">@row.CourseTitle</td>
+                                <td class="py-2 text-right">@row.Enrollments</td>
+                                <td class="py-2 text-right">₹@row.Revenue.ToString("N0")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="card p-5">
+            <h2 class="text-h3 mb-3">Placements by status</h2>
+            @if (_r.PlacementsByStatus.Count == 0)
+            {
+                <p class="text-caption text-text-secondary">No referrals yet.</p>
+            }
+            else
+            {
+                <div class="space-y-2">
+                    @foreach (var row in _r.PlacementsByStatus)
+                    {
+                        <div class="flex items-center justify-between text-sm">
+                            <span>@row.Status</span>
+                            <span class="font-medium">@row.Count</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="card p-5 lg:col-span-2">
+            <h2 class="text-h3 mb-3">Enrollments by month</h2>
+            @if (_r.EnrollmentsByMonth.Count == 0)
+            {
+                <p class="text-caption text-text-secondary">No enrollments yet.</p>
+            }
+            else
+            {
+                <div class="flex items-end gap-2 h-40">
+                    @{
+                        var max = _r.EnrollmentsByMonth.Max(m => m.Count);
+                    }
+                    @foreach (var m in _r.EnrollmentsByMonth)
+                    {
+                        var h = max == 0 ? 0 : (int)(m.Count * 100.0 / max);
+                        <div class="flex flex-col items-center justify-end flex-1">
+                            <div class="w-full bg-brand-primary rounded-t" style="height:@(h)%" title="@m.Count"></div>
+                            <div class="text-meta text-text-secondary mt-1">@m.Month</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private AdminReportDto? _r;
+    private string _csvHref = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _r = await AdminApi.GetReportAsync();
+        if (_r is not null) BuildCsv();
+        _loading = false;
+    }
+
+    private void BuildCsv()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Course,Enrollments,Revenue");
+        foreach (var row in _r!.RevenueByCourse)
+            sb.AppendLine($"\"{row.CourseTitle.Replace("\"", "\"\"")}\",{row.Enrollments},{row.Revenue}");
+        _csvHref = "data:text/csv;charset=utf-8," + Uri.EscapeDataString(sb.ToString());
+    }
+}

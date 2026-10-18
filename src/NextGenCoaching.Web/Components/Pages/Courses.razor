@@ -1,0 +1,102 @@
+@page "/courses"
+@inject CourseApiClient CoursesApi
+
+<PageTitle>@L["All Programs & Specialisations · NextGen IT Coaching"]</PageTitle>
+
+<section class="programs-galaxy-hero" aria-labelledby="programs-title">
+    <div class="ng-container programs-galaxy-layout">
+        <div class="programs-galaxy-copy" data-motion="fade-up">
+            <span class="eyebrow"><i class="status-dot"></i>@L["FIND YOUR NEXT CHAPTER"]</span>
+            <h1 id="programs-title">@L["New skills."]<br /><span>@L["New possibilities."]</span></h1>
+            <p>@L["Six practical programs in data, analytics, and cloud engineering. Find the right focus for your next step."]</p>
+            <div class="program-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="6" /><path d="m15 15 5 5" /></svg><input @bind="_searchQuery" @bind:event="oninput" aria-label="@L["Search programs"]" placeholder="@L["Find your focus. Try Python, SQL, or cloud..."]" /></div>
+            <span class="programs-search-hint">@L["Search a skill and watch it light up."]</span>
+        </div>
+        <SkillGalaxy SearchQuery="@_searchQuery" />
+    </div>
+</section>
+
+<section class="program-catalogue max-w-7xl mx-auto px-4 py-12">
+    @* Category Filter Pills *@
+    @if (_categories is { Count: > 0 })
+    {
+        <div class="flex flex-wrap items-center gap-2 mb-10 pb-4 border-b border-border-base">
+            <span class="text-xs font-bold uppercase tracking-wider text-text-muted mr-2">@L["Filter By:"]</span>
+            <button @onclick="() => Filter(null)" class="@FilterBtnClass(null)">
+                @L["All Programs"] (@(_courses?.Count ?? 6))
+            </button>
+            @foreach (var cat in _categories)
+            {
+                <button @onclick="() => Filter(cat)" class="@FilterBtnClass(cat)">
+                    <span class="capitalize">@L[cat]</span>
+                </button>
+            }
+        </div>
+    }
+
+    @if (FilteredCourses is { Count: > 0 })
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var c in FilteredCourses)
+            {
+                <CourseCard Course="c" />
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card p-12 text-center text-text-muted max-w-md mx-auto">
+            <div class="text-3xl mb-3">🔍</div>
+            <div class="font-bold text-brand-navy mb-1">@L["No matching courses found"]</div>
+            <p class="text-xs text-text-secondary mb-4">@L["Try clearing your search query or selecting a different category."]</p>
+            <button @onclick="async () => { _searchQuery = string.Empty; await Filter(null); }" class="btn-primary text-xs">@L["Reset Filters"]</button>
+        </div>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<CourseSummaryDto> _courses = CourseApiClient.LocalCatalog;
+    private IReadOnlyList<string> _categories = CategoriesFrom(CourseApiClient.LocalCatalog);
+    private string? _activeCategory;
+    private string _searchQuery = string.Empty;
+
+    private IReadOnlyList<CourseSummaryDto>? FilteredCourses
+    {
+        get
+        {
+            var courses = _courses.Where(c => _activeCategory is null || string.Equals(c.Category, _activeCategory, StringComparison.OrdinalIgnoreCase));
+            if (string.IsNullOrWhiteSpace(_searchQuery)) return courses.ToList();
+            var q = _searchQuery.Trim().ToLowerInvariant();
+            return courses.Where(c => 
+                c.Title.ToLowerInvariant().Contains(q) || L[c.Title].Contains(q, StringComparison.OrdinalIgnoreCase) 
+                || (c.Tagline?.ToLowerInvariant().Contains(q) ?? false) || L[c.Tagline].Contains(q, StringComparison.OrdinalIgnoreCase)
+                || (c.Category?.ToLowerInvariant().Contains(q) ?? false) || L[c.Category].Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(4));
+        var courses = await CoursesApi.GetCoursesAsync(ct: timeout.Token);
+        if (courses is { Count: > 0 })
+        {
+            _courses = courses;
+            _categories = CategoriesFrom(courses);
+        }
+    }
+
+    private Task Filter(string? category)
+    {
+        _activeCategory = category;
+        return Task.CompletedTask;
+    }
+
+    private static IReadOnlyList<string> CategoriesFrom(IReadOnlyList<CourseSummaryDto> courses) =>
+        courses.Select(c => c.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c!).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    private string FilterBtnClass(string? cat) =>
+        cat == _activeCategory
+            ? "px-4 py-2 rounded-xl text-xs font-bold bg-brand-primary text-white shadow-md shadow-brand-primary/25 transition-all"
+            : "px-4 py-2 rounded-xl text-xs font-semibold bg-surface text-text-secondary border border-border-base hover:border-brand-primary/50 hover:bg-brand-sky-50/50 transition-all";
+}
+

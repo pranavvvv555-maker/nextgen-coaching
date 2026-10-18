@@ -1,0 +1,30 @@
+@inject AuthStateService AuthState
+@inject AuthApiClient AuthApi
+@inject NavigationManager Nav
+@implements IDisposable
+<header class="site-nav"><div class="ng-container nav-inner">
+<a href="/" class="brand-lockup" aria-label="@L["NextGen home"]"><BrandLogo /><span class="brand-tagline hidden md:block">@L["YOUR NEXT CHAPTER IN TECH"]</span></a>
+<nav class="nav-links" aria-label="@L["Main navigation"]"><a href="/">@L["Home"]</a><a href="/courses">@L["Programs"]</a><a href="/services">@L["Career support"]</a><a href="/about">@L["Our story"]</a><a href="/contact">@L["Contact"]</a></nav>
+<div class="nav-actions">@if (AuthState.IsAuthenticated) { <a href="@PortalUrl" class="btn-primary">@L["My workspace ↗"]</a><button class="nav-signin" @onclick="LogoutAsync">@L["Sign out"]</button> } else { <a href="/login" class="nav-signin">@L["Sign in"]</a><a href="/webinar" class="btn-primary">@L["Free masterclass ↗"]</a> }<button @ref="_menuToggle" @onclick="ToggleMenu" @onkeydown="HandleMenuKey" class="menu-toggle" aria-label="@L["Toggle menu"]" aria-expanded="@(_mobileMenuOpen ? "true" : "false")" aria-controls="mobile-navigation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">@if (_mobileMenuOpen) { <path d="m6 6 12 12M6 18 18 6" /> } else { <path d="M4 7h16M4 12h16M4 17h16" /> }</svg></button></div></div>
+@if (_mobileMenuOpen) { <nav id="mobile-navigation" class="ng-container mobile-nav" @onkeydown="HandleMenuKey" aria-label="@L["Mobile navigation"]"><a href="/" @onclick="CloseMenu">@L["Home ↗"]</a><a href="/courses" @onclick="CloseMenu">@L["Programs ↗"]</a><a href="/services" @onclick="CloseMenu">@L["Career support ↗"]</a><a href="/about" @onclick="CloseMenu">@L["Our story ↗"]</a><a href="/webinar" @onclick="CloseMenu">@L["Free masterclass ↗"]</a><a href="/contact" @onclick="CloseMenu">@L["Contact ↗"]</a><div class="mobile-nav-auth">@if (AuthState.IsAuthenticated) { <a href="@PortalUrl" @onclick="CloseMenu" class="btn-primary">@L["My workspace ↗"]</a><button @onclick="LogoutAsync" class="btn-outline">@L["Sign out"]</button> } else { <a href="/login" @onclick="CloseMenu" class="btn-outline">@L["Sign in"]</a><a href="/signup" @onclick="CloseMenu" class="btn-primary">@L["Create account ↗"]</a> }</div></nav> }
+</header>
+@code {
+private bool _mobileMenuOpen;
+private ElementReference _menuToggle;
+private string PortalUrl => AuthState.IsInRole(RoleNames.Admin) || AuthState.IsInRole(RoleNames.Counsellor) ? "/admin" : AuthState.IsInRole(RoleNames.Instructor) ? "/instructor" : AuthState.IsInRole(RoleNames.HrReviewer) ? "/hr" : "/student";
+protected override void OnInitialized() { AuthState.StateChanged += OnAuthChanged; Nav.LocationChanged += OnLocationChanged; }
+private void OnAuthChanged() => InvokeAsync(StateHasChanged);
+private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => InvokeAsync(() => { _mobileMenuOpen = false; StateHasChanged(); });
+private void ToggleMenu() => _mobileMenuOpen = !_mobileMenuOpen;
+private void CloseMenu() => _mobileMenuOpen = false;
+private async Task HandleMenuKey(KeyboardEventArgs e)
+{
+    if (e.Key != "Escape" || !_mobileMenuOpen) return;
+    _mobileMenuOpen = false;
+    await _menuToggle.FocusAsync();
+}
+private async Task LogoutAsync() { _mobileMenuOpen = false; await AuthApi.LogoutAsync(); Nav.NavigateTo("/"); }
+public void Dispose() { AuthState.StateChanged -= OnAuthChanged; Nav.LocationChanged -= OnLocationChanged; }
+}
+
+

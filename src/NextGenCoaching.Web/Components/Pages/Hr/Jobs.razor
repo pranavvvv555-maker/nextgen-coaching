@@ -1,0 +1,306 @@
+@page "/hr/jobs"
+@layout HrLayout
+@inject HrApiClient HrApi
+
+<PageTitle>Jobs · HR · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">Job openings</h1>
+        <p class="text-caption text-text-secondary">Manage the placement pipeline. Closed jobs are kept for history.</p>
+    </div>
+    <button @onclick="OpenCreate" class="btn-primary">+ New job</button>
+</div>
+
+<div class="card overflow-hidden">
+    @if (_data is null)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No jobs yet. Click <strong>New job</strong> to post one.</div>
+    }
+    else
+    {
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Role / company</th>
+                    <th class="px-4 py-3 font-medium">Location</th>
+                    <th class="px-4 py-3 font-medium">CTC (LPA)</th>
+                    <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                    <th class="px-4 py-3 font-medium text-right">Pipeline</th>
+                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var j in _data)
+                {
+                    <tr class="hover:bg-surface-muted/50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@j.RoleTitle</div>
+                            <div class="text-meta text-text-muted">@j.CompanyName</div>
+                            @if (j.SkillsRequired.Count > 0)
+                            {
+                                <div class="text-meta text-text-muted mt-1">@string.Join(" · ", j.SkillsRequired.Take(4))</div>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">
+                            <div>@(j.Location ?? "—")</div>
+                            @if (!string.IsNullOrEmpty(j.WorkMode))
+                            {
+                                <div class="text-meta text-text-muted">@j.WorkMode</div>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@CtcRange(j)</td>
+                        <td class="px-4 py-3"><span class="@StatusPillClass(j.Status)">@j.Status</span></td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="text-sm font-medium text-brand-navy">@j.ReferralsCount</div>
+                            @if (j.PlacedCount > 0)
+                            {
+                                <div class="text-meta text-status-success">@j.PlacedCount placed</div>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex gap-1 justify-end">
+                                <button @onclick="() => OpenEdit(j)" class="btn-outline text-caption px-2.5 py-1">@L["Edit"]</button>
+                                @if (j.Status == "Open")
+                                {
+                                    <button @onclick="() => CloseAsync(j.Id)" class="btn-outline text-caption px-2.5 py-1 hover:text-status-danger hover:border-status-danger">@L["Close"]</button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@* ---------- Create / edit modal ---------- *@
+@if (_modalOpen)
+{
+    <div class="fixed inset-0 z-40 bg-brand-navy/40" @onclick="CloseModal"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div class="bg-surface rounded-card shadow-card-hover w-full max-w-xl pointer-events-auto" @onclick:stopPropagation="true">
+            <div class="px-5 py-4 border-b border-border-base flex items-center justify-between">
+                <h2 class="text-h3">@(_editingId is null ? "Post a new role" : "Edit role")</h2>
+                <button @onclick="CloseModal" class="text-text-muted text-2xl leading-none">×</button>
+            </div>
+            <div class="p-5 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Company</label>
+                        <input @bind="_form.CompanyName" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Role title</label>
+                        <input @bind="_form.RoleTitle" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Description</label>
+                    <textarea @bind="_form.Description" rows="4" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Required skills (comma separated)</label>
+                    <input @bind="_skillsCsv" placeholder="SQL, Python, Pandas"
+                           class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Min exp (yrs)</label>
+                        <input @bind="_form.MinExperienceYears" type="number" step="0.5"
+                               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Min CTC (LPA)</label>
+                        <input @bind="_form.MinCtcLpa" type="number" step="0.5"
+                               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Max CTC (LPA)</label>
+                        <input @bind="_form.MaxCtcLpa" type="number" step="0.5"
+                               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Location</label>
+                        <input @bind="_form.Location" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Work mode</label>
+                        <select @bind="_form.WorkMode" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                            <option value="">—</option>
+                            <option value="Onsite">Onsite</option>
+                            <option value="Hybrid">@L["Hybrid"]</option>
+                            <option value="Remote">Remote</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Apply URL</label>
+                        <input @bind="_form.ApplicationUrl" placeholder="https://…" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Expires (optional)</label>
+                        <input @bind="_expiresLocal" type="datetime-local" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Logo URL (optional)</label>
+                    <input @bind="_form.CompanyLogoUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(_modalError))
+                {
+                    <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2">@_modalError</div>
+                }
+            </div>
+            <div class="px-5 py-3 border-t border-border-base flex justify-end gap-2">
+                <button @onclick="CloseModal" class="btn-outline text-sm">@L["Cancel"]</button>
+                <button @onclick="SaveAsync" disabled="@(_saving || !CanSave)" class="btn-primary text-sm">
+                    @(_saving ? "Saving…" : (_editingId is null ? "Post" : "Save"))
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_toast))
+{
+    <div class="fixed bottom-6 right-6 bg-status-success text-white px-4 py-2 rounded-btn shadow-card-hover">@_toast</div>
+}
+
+@code {
+    private IReadOnlyList<HrJobOpeningDto>? _data;
+    private string? _toast;
+
+    private bool _modalOpen;
+    private Guid? _editingId;
+    private UpsertJobOpeningRequest _form = new();
+    private string _skillsCsv = string.Empty;
+    private DateTime? _expiresLocal;
+    private bool _saving;
+    private string? _modalError;
+
+    private bool CanSave =>
+        !string.IsNullOrWhiteSpace(_form.CompanyName)
+        && !string.IsNullOrWhiteSpace(_form.RoleTitle);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => _data = await HrApi.GetJobsAsync();
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form = new UpsertJobOpeningRequest();
+        _skillsCsv = string.Empty;
+        _expiresLocal = null;
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private void OpenEdit(HrJobOpeningDto j)
+    {
+        _editingId = j.Id;
+        _form = new UpsertJobOpeningRequest
+        {
+            CompanyName = j.CompanyName,
+            CompanyLogoUrl = j.CompanyLogoUrl,
+            RoleTitle = j.RoleTitle,
+            Description = j.Description,
+            SkillsRequired = j.SkillsRequired.ToList(),
+            MinExperienceYears = j.MinExperienceYears,
+            MinCtcLpa = j.MinCtcLpa,
+            MaxCtcLpa = j.MaxCtcLpa,
+            Location = j.Location,
+            WorkMode = j.WorkMode,
+            ExpiresAtUtc = j.ExpiresAtUtc,
+            ApplicationUrl = j.ApplicationUrl
+        };
+        _skillsCsv = string.Join(", ", j.SkillsRequired);
+        _expiresLocal = j.ExpiresAtUtc?.ToLocalTime();
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private void CloseModal() => _modalOpen = false;
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _modalError = null;
+
+        _form.SkillsRequired = _skillsCsv
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        _form.ExpiresAtUtc = _expiresLocal?.ToUniversalTime();
+
+        bool success;
+        string? message;
+        if (_editingId is null)
+        {
+            var r = await HrApi.CreateJobAsync(_form);
+            success = r?.Success == true;
+            message = r?.Message;
+        }
+        else
+        {
+            var r = await HrApi.UpdateJobAsync(_editingId.Value, _form);
+            success = r?.Success == true;
+            message = r?.Message;
+        }
+
+        _saving = false;
+
+        if (success)
+        {
+            _toast = _editingId is null ? "Job posted." : "Job updated.";
+            _modalOpen = false;
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+        else
+        {
+            _modalError = message ?? "Could not save.";
+        }
+    }
+
+    private async Task CloseAsync(Guid id)
+    {
+        var resp = await HrApi.CloseJobAsync(id);
+        if (resp?.Success == true)
+        {
+            _toast = "Job closed.";
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+    }
+
+    private async Task HideToastAsync()
+    {
+        await Task.Delay(2500);
+        _toast = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string CtcRange(HrJobOpeningDto j)
+    {
+        if (j.MinCtcLpa is null && j.MaxCtcLpa is null) return "—";
+        if (j.MinCtcLpa is not null && j.MaxCtcLpa is not null) return $"{j.MinCtcLpa:0.#} – {j.MaxCtcLpa:0.#}";
+        return j.MinCtcLpa?.ToString("0.#") ?? j.MaxCtcLpa?.ToString("0.#") ?? "—";
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Open"   => "bg-status-success/15 text-status-success",
+        "Paused" => "bg-status-warning/15 text-status-warning",
+        "Closed" => "bg-surface-muted text-text-secondary",
+        _        => "bg-surface-muted text-text-secondary"
+    };
+}

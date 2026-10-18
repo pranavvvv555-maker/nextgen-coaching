@@ -1,0 +1,132 @@
+@page "/instructor/attendance"
+@layout InstructorLayout
+@inject InstructorApiClient InstructorApi
+
+<PageTitle>Attendance · Instructor · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Attendance"]</h1>
+    <p class="text-caption text-text-secondary">Mark attendance for your batch sessions.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <div class="card p-4">
+        <h2 class="text-h3 mb-3">@L["Sessions"]</h2>
+        @if (_loading)
+        {
+            <p class="text-caption text-text-secondary">@L["Loading…"]</p>
+        }
+        else if (_sessions is null || _sessions.Count == 0)
+        {
+            <p class="text-caption text-text-secondary">No sessions found for your batches.</p>
+        }
+        else
+        {
+            <div class="space-y-1 max-h-[70vh] overflow-y-auto">
+                @foreach (var s in _sessions)
+                {
+                    <button class="w-full text-left px-3 py-2 rounded-btn @(_selected?.SessionId == s.Id ? "bg-brand-primary text-white" : "hover:bg-surface-muted")"
+                            @onclick="() => LoadRoster(s.Id)">
+                        <div class="text-sm font-medium">@s.Title</div>
+                        <div class="text-meta @(_selected?.SessionId == s.Id ? "text-brand-sky-100" : "text-text-secondary")">
+                            @s.BatchName · @s.ScheduledAtUtc.ToLocalTime().ToString("dd MMM, HH:mm") · @s.MarkedCount/@s.RosterSize marked
+                        </div>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="lg:col-span-2 card p-5">
+        @if (_selected is null)
+        {
+            <p class="text-text-secondary text-caption">Select a session to mark attendance.</p>
+        }
+        else
+        {
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-h3">@_selected.SessionTitle</h2>
+                    <p class="text-caption text-text-secondary">@_selected.BatchName · @_selected.ScheduledAtUtc.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn-outline text-sm" @onclick="SetAllPresent">All present</button>
+                    <button class="btn-primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? "Saving…" : "Save")</button>
+                </div>
+            </div>
+
+            @if (_selected.Rows.Count == 0)
+            {
+                <p class="text-caption text-text-secondary">No active students in this batch.</p>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <thead class="text-caption text-text-secondary"><tr><th class="text-left py-2">@L["Student"]</th><th class="text-left">@L["Status"]</th></tr></thead>
+                    <tbody>
+                        @foreach (var r in _selected.Rows)
+                        {
+                            <tr class="border-t border-border-base">
+                                <td class="py-2 font-medium">@r.StudentName</td>
+                                <td class="py-2">
+                                    <select @bind="r.Status" class="border border-border-base rounded-btn px-2 py-1 text-sm">
+                                        <option value="Present">Present</option>
+                                        <option value="Late">Late</option>
+                                        <option value="Absent">Absent</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            @if (_saved)
+            {
+                <p class="text-sm text-status-success mt-3">Attendance saved.</p>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool _loading;
+    private bool _saving;
+    private bool _saved;
+    private IReadOnlyList<InstructorSessionListItemDto>? _sessions;
+    private AttendanceRosterDto? _selected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _sessions = await InstructorApi.GetAttendanceSessionsAsync();
+        _loading = false;
+    }
+
+    private async Task LoadRoster(Guid sessionId)
+    {
+        _saved = false;
+        _selected = await InstructorApi.GetAttendanceRosterAsync(sessionId);
+    }
+
+    private void SetAll(string status)
+    {
+        if (_selected is null) return;
+        foreach (var r in _selected.Rows) r.Status = status;
+    }
+
+    private void SetAllPresent() => SetAll("Present");
+
+    private async Task SaveAsync()
+    {
+        if (_selected is null) return;
+        _saving = true;
+        var req = new SaveAttendanceRequest
+        {
+            Entries = _selected.Rows.Select(r => new AttendanceEntryDto { EnrollmentId = r.EnrollmentId, Status = r.Status }).ToList()
+        };
+        var res = await InstructorApi.SaveAttendanceAsync(_selected.SessionId, req);
+        _saving = false;
+        _saved = res is { Success: true };
+        _sessions = await InstructorApi.GetAttendanceSessionsAsync();
+    }
+}

@@ -1,0 +1,220 @@
+@page "/student/profile"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+@inject AuthStateService AuthState
+
+<PageTitle>My profile · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["My profile"]</h1>
+        <p class="text-caption text-text-secondary">Keep this current — placement teams use it during introductions to hiring partners.</p>
+    </div>
+</div>
+
+@if (_form is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else
+{
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        @* ---------- Identity card ---------- *@
+        <div class="card p-6">
+            <div class="text-center">
+                @if (!string.IsNullOrEmpty(_form.ProfileImageUrl))
+                {
+                    <img src="@_form.ProfileImageUrl" class="w-24 h-24 rounded-full mx-auto object-cover border-2 border-border-base" alt="Profile" />
+                }
+                else
+                {
+                    <div class="w-24 h-24 rounded-full mx-auto bg-brand-sky-100 text-brand-primary flex items-center justify-center text-3xl font-semibold">
+                        @Initial
+                    </div>
+                }
+                <h2 class="text-h3 mt-3">@_form.FullName</h2>
+                <div class="text-caption text-text-muted">@_email</div>
+                @if (!string.IsNullOrEmpty(_form.TargetRole))
+                {
+                    <div class="mt-2 text-sm text-text-primary">🎯 @_form.TargetRole</div>
+                }
+            </div>
+
+            <div class="border-t border-border-base mt-5 pt-4 space-y-2 text-sm">
+                @if (!string.IsNullOrEmpty(_form.LinkedinUrl))
+                {
+                    <a href="@_form.LinkedinUrl" target="_blank" class="flex items-center gap-2 text-brand-primary"><span>🔗</span><span>LinkedIn</span></a>
+                }
+                @if (!string.IsNullOrEmpty(_form.GithubUrl))
+                {
+                    <a href="@_form.GithubUrl" target="_blank" class="flex items-center gap-2 text-brand-primary"><span>🐙</span><span>GitHub</span></a>
+                }
+                @if (!string.IsNullOrEmpty(_form.PortfolioUrl))
+                {
+                    <a href="@_form.PortfolioUrl" target="_blank" class="flex items-center gap-2 text-brand-primary"><span>🌐</span><span>Portfolio</span></a>
+                }
+            </div>
+        </div>
+
+        @* ---------- Edit form ---------- *@
+        <div class="card p-6 lg:col-span-2">
+            <h2 class="text-h3 mb-4">Edit details</h2>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">@L["Full name"]</label>
+                        <input @bind="_form.FullName" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">@L["Phone"]</label>
+                        <input @bind="_form.PhoneNumber" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">@L["City"]</label>
+                        <input @bind="_form.City" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">State</label>
+                        <input @bind="_form.State" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Profile photo URL</label>
+                    <input @bind="_form.ProfileImageUrl" placeholder="https://…/photo.jpg"
+                           class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+
+                <div class="border-t border-border-base pt-4">
+                    <h3 class="text-h3 mb-3">Career goals</h3>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">Current role</label>
+                            <input @bind="_form.CurrentRole" placeholder="e.g. Recent graduate, Analyst"
+                                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">Target role</label>
+                            <input @bind="_form.TargetRole" placeholder="e.g. Data Engineer"
+                                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Short bio</label>
+                        <textarea @bind="_form.Bio" rows="3" placeholder="A few lines describing your background and goals"
+                                  class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                    </div>
+                </div>
+
+                <div class="border-t border-border-base pt-4">
+                    <h3 class="text-h3 mb-3">Education</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="col-span-2">
+                            <label class="text-caption text-text-secondary mb-1 block">Degree</label>
+                            <input @bind="_form.GraduationDegree" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">Year</label>
+                            <input @bind="_form.GraduationYear" type="number" min="1990" max="2099"
+                                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="text-caption text-text-secondary mb-1 block">College / university</label>
+                        <input @bind="_form.GraduationCollege" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+
+                <div class="border-t border-border-base pt-4">
+                    <h3 class="text-h3 mb-3">Links</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">LinkedIn</label>
+                            <input @bind="_form.LinkedinUrl" placeholder="https://linkedin.com/in/…"
+                                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">GitHub</label>
+                            <input @bind="_form.GithubUrl" placeholder="https://github.com/…"
+                                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">Portfolio</label>
+                            <input @bind="_form.PortfolioUrl" placeholder="https://…"
+                                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2.5">@_error</div>
+                }
+                @if (!string.IsNullOrEmpty(_toast))
+                {
+                    <div class="text-sm text-status-success bg-status-success/10 rounded-btn p-2.5">@_toast</div>
+                }
+
+                <div class="flex justify-end pt-2">
+                    <button @onclick="SaveAsync" disabled="@(_busy || string.IsNullOrWhiteSpace(_form.FullName))" class="btn-primary">
+                        @(_busy ? "Saving…" : "Save changes")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private UpdateProfileRequest? _form;
+    private string _email = string.Empty;
+    private bool _busy;
+    private string? _error;
+    private string? _toast;
+
+    private string Initial =>
+        (_form?.FullName ?? AuthState.Current?.FullName ?? "S")
+            .TrimStart().FirstOrDefault().ToString().ToUpperInvariant();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var p = await StudentApi.GetProfileAsync();
+        if (p is null) return;
+        _email = p.Email;
+        _form = new UpdateProfileRequest
+        {
+            FullName = p.FullName,
+            PhoneNumber = p.PhoneNumber,
+            City = p.City,
+            State = p.State,
+            ProfileImageUrl = p.ProfileImageUrl,
+            GraduationDegree = p.GraduationDegree,
+            GraduationYear = p.GraduationYear,
+            GraduationCollege = p.GraduationCollege,
+            CurrentRole = p.CurrentRole,
+            TargetRole = p.TargetRole,
+            LinkedinUrl = p.LinkedinUrl,
+            GithubUrl = p.GithubUrl,
+            PortfolioUrl = p.PortfolioUrl,
+            Bio = p.Bio
+        };
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_form is null) return;
+        _busy = true;
+        _error = null;
+        _toast = null;
+
+        var resp = await StudentApi.UpdateProfileAsync(_form);
+        _busy = false;
+
+        if (resp?.Success == true)
+            _toast = "Profile updated.";
+        else
+            _error = resp?.Message ?? "Could not save profile.";
+    }
+}

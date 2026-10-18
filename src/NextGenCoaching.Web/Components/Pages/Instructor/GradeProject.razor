@@ -1,0 +1,173 @@
+@page "/instructor/grading/project/{Id:guid}"
+@layout InstructorLayout
+@inject InstructorApiClient InstructorApi
+@inject NavigationManager Nav
+
+<PageTitle>Grade project · Instructor · NextGen</PageTitle>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else
+{
+    <div class="flex items-center gap-2 text-caption text-text-secondary mb-2">
+        <a href="/instructor/grading" class="text-brand-primary">← Grading queue</a>
+        <span>·</span><span>@_data.CourseTitle</span>
+        <span>·</span><span>@_data.BatchName</span>
+    </div>
+
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <div class="text-meta text-text-muted uppercase tracking-wider">Project #@_data.ProjectNumber</div>
+            <h1 class="text-h2">@_data.ProjectTitle</h1>
+            <p class="text-caption text-text-secondary mt-1">
+                Submitted by <strong>@_data.StudentName</strong> · @_data.SubmittedAtUtc.ToLocalTime().ToString("ddd, dd MMM yyyy · HH:mm")
+            </p>
+        </div>
+        <span class="@StatusPillClass(_data.Status)">@_data.Status</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        @* ---------- Left: submission ---------- *@
+        <div class="card p-5 lg:col-span-2 space-y-4">
+            <div>
+                <h2 class="text-h3 mb-3">Submission links</h2>
+                <ul class="space-y-2 text-sm">
+                    @if (!string.IsNullOrEmpty(_data.RepoUrl))
+                    {
+                        <li><span class="text-meta text-text-muted uppercase tracking-wider w-24 inline-block">Repo:</span><a href="@_data.RepoUrl" target="_blank" class="text-brand-primary break-all">@_data.RepoUrl</a></li>
+                    }
+                    @if (!string.IsNullOrEmpty(_data.DeployedUrl))
+                    {
+                        <li><span class="text-meta text-text-muted uppercase tracking-wider w-24 inline-block">Live:</span><a href="@_data.DeployedUrl" target="_blank" class="text-brand-primary break-all">@_data.DeployedUrl</a></li>
+                    }
+                    @if (!string.IsNullOrEmpty(_data.PresentationUrl))
+                    {
+                        <li><span class="text-meta text-text-muted uppercase tracking-wider w-24 inline-block">Slides:</span><a href="@_data.PresentationUrl" target="_blank" class="text-brand-primary break-all">@_data.PresentationUrl</a></li>
+                    }
+                </ul>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_data.Description))
+            {
+                <div class="border-t border-border-base pt-4">
+                    <h2 class="text-h3 mb-2">Student's description</h2>
+                    <p class="text-sm text-text-primary whitespace-pre-wrap">@_data.Description</p>
+                </div>
+            }
+
+            <div class="border-t border-border-base pt-4">
+                <h2 class="text-h3 mb-2">Project brief</h2>
+                <p class="text-sm text-text-primary whitespace-pre-wrap">@_data.ProjectBrief</p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_data.RubricJson))
+            {
+                <div class="border-t border-border-base pt-4">
+                    <h2 class="text-h3 mb-2">Rubric</h2>
+                    <pre class="text-meta bg-surface-muted rounded-btn p-3 overflow-x-auto">@_data.RubricJson</pre>
+                </div>
+            }
+        </div>
+
+        @* ---------- Right: grading form ---------- *@
+        <div class="card p-5">
+            @if (_data.Status == "Graded")
+            {
+                <h2 class="text-h3 mb-2">Already graded</h2>
+                <div class="text-h2 text-status-success mb-1">@_data.TotalScore?.ToString("0.#")</div>
+                <div class="text-meta text-text-muted mb-3">@_data.GradedAtUtc?.ToLocalTime().ToString("dd MMM HH:mm")</div>
+                @if (!string.IsNullOrEmpty(_data.Feedback))
+                {
+                    <div class="p-3 bg-surface-muted rounded-btn mb-3">
+                        <div class="text-meta text-text-muted uppercase tracking-wider mb-1">Feedback</div>
+                        <p class="text-sm text-text-primary whitespace-pre-wrap">@_data.Feedback</p>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(_data.EvaluationJson))
+                {
+                    <pre class="text-meta bg-surface-muted rounded-btn p-3 overflow-x-auto">@_data.EvaluationJson</pre>
+                }
+            }
+            else
+            {
+                <h2 class="text-h3 mb-3">Grade this submission</h2>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Total score</label>
+                        <input @bind="_form.TotalScore" type="number" step="0.5" min="0" max="100"
+                               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        <div class="text-meta text-text-muted mt-1">Treat as a 0–100 scale unless your rubric says otherwise.</div>
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Feedback</label>
+                        <textarea @bind="_form.Feedback" rows="5"
+                                  placeholder="Strengths, gaps, suggested next steps"
+                                  class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Rubric breakdown (optional JSON)</label>
+                        <textarea @bind="_form.EvaluationJson" rows="4" placeholder='{"design": 8, "code_quality": 7, "docs": 9}'
+                                  class="w-full border border-border-base rounded-btn px-3 py-2 text-meta font-mono"></textarea>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2">@_error</div>
+                    }
+
+                    <button @onclick="SubmitAsync" disabled="@_busy" class="btn-primary w-full text-sm">
+                        @(_busy ? "Saving…" : "Save grade")
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ProjectGradingDto? _data;
+    private readonly GradeProjectRequest _form = new();
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _data = await InstructorApi.GetProjectSubmissionAsync(Id);
+        if (_data is not null && _data.Status != "Graded")
+        {
+            _form.TotalScore = _data.TotalScore ?? 0;
+            _form.Feedback = _data.Feedback;
+            _form.EvaluationJson = _data.EvaluationJson;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+
+        var resp = await InstructorApi.GradeProjectAsync(Id, _form);
+        _busy = false;
+
+        if (resp?.Success == true)
+        {
+            Nav.NavigateTo("/instructor/grading");
+        }
+        else
+        {
+            _error = resp?.Message ?? "Could not save grade.";
+        }
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Submitted"   => "bg-status-info/15 text-status-info",
+        "Graded"      => "bg-status-success/15 text-status-success",
+        _             => "bg-surface-muted text-text-secondary"
+    };
+}

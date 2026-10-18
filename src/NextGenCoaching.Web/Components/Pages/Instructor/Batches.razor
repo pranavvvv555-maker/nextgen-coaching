@@ -1,0 +1,71 @@
+@page "/instructor/batches"
+@layout InstructorLayout
+@inject InstructorApiClient InstructorApi
+
+<PageTitle>My batches · Instructor · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["My batches"]</h1>
+        <p class="text-caption text-text-secondary">Cohorts you're the primary instructor for.</p>
+    </div>
+</div>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else if (_data.Count == 0)
+{
+    <div class="card p-8 text-center text-text-muted">You aren't assigned to any batches yet. Ask the admin team to add you.</div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach (var b in _data)
+        {
+            <div class="card p-5">
+                <div class="flex items-start justify-between mb-2">
+                    <div>
+                        <h3 class="text-h3 leading-tight">@b.Name</h3>
+                        <div class="text-caption text-text-muted">@b.CourseTitle</div>
+                    </div>
+                    <span class="@StatusPillClass(b.Status)">@b.Status</span>
+                </div>
+
+                <div class="text-caption text-text-secondary mb-3">
+                    @b.StartDate.ToString("dd MMM yyyy")
+                    @if (b.EndDate.HasValue)
+                    {
+                        <text> – @b.EndDate.Value.ToString("dd MMM yyyy")</text>
+                    }
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <div class="text-meta text-text-muted uppercase tracking-wider">@L["Students"]</div>
+                        <div class="font-medium text-brand-navy">@b.StudentCount</div>
+                    </div>
+                    <div>
+                        <div class="text-meta text-text-muted uppercase tracking-wider">@L["Sessions"]</div>
+                        <div class="font-medium text-brand-navy">@b.CompletedSessions / @b.TotalSessions</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<InstructorBatchSummaryDto>? _data;
+    protected override async Task OnInitializedAsync() => _data = await InstructorApi.GetBatchesAsync();
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Active"    => "bg-status-success/15 text-status-success",
+        "Planned"   => "bg-status-warning/15 text-status-warning",
+        "Completed" => "bg-status-info/15 text-status-info",
+        "Cancelled" => "bg-status-danger/15 text-status-danger",
+        _           => "bg-surface-muted text-text-secondary"
+    };
+}

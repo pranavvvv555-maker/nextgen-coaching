@@ -1,0 +1,21 @@
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="@Path" />
+</svg>
+@code {
+    [Parameter] public string Name { get; set; } = "chat";
+    private string Path => Name switch {
+        "code" => "M8 6 2 12l6 6M16 6l6 6-6 6M14 3l-4 18",
+        "database" => "M4 6c0-5 16-5 16 0v12c0 5-16 5-16 0V6Zm0 0c0 5 16 5 16 0M4 12c0 5 16 5 16 0",
+        "chart" => "M4 20V12h4v8M10 20V8h4v12M16 20V3h4v17",
+        "snow" => "M12 2v20M3 7l18 10M3 17 21 7M8 4l4 4 4-4M8 20l4-4 4 4M3 11l5-1-1-5M17 19l-1-5 5-1M3 13l5 1-1 5M17 5l-1 5 5 1",
+        "phone" => "M5 3h4l2 5-3 2a15 15 0 0 0 6 6l2-3 5 2v4c0 2-2 2-4 2C9 20 4 15 3 7c0-2 0-4 2-4Z",
+        "email" => "M3 5h18v14H3V5Zm0 1 9 7 9-7",
+        "book" => "M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3V4Zm9 2v15",
+        "target" => "M20 12a8 8 0 1 1-8-8M16 12a4 4 0 1 1-4-4M12 12l9-9M17 3h4v4",
+        "arrow" => "M4 12h16M13 5l7 7-7 7",
+        "cloud" => "M6 18h12a4 4 0 0 0 0-8 6 6 0 0 0-11-2 5 5 0 0 0-1 10Z",
+        "pin" => "M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 0 1 14 0ZM9 10a3 3 0 1 0 6 0 3 3 0 0 0-6 0",
+        "spark" => "m12 2 3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7Z",
+        _ => "M4 4h16v12H9l-5 4V4ZM8 9h.01M12 9h.01M16 9h.01"
+    };
+}

@@ -1,0 +1,40 @@
+@inject AuthStateService AuthState
+@inject AuthApiClient AuthApi
+@inject NavigationManager Nav
+
+<div class="portal-preferences"><PreferenceControls /></div>
+<header class="bg-surface border-b border-border-base h-14 flex items-center justify-between px-6">
+    <div class="text-sm text-text-secondary"></div>
+
+    <div class="flex items-center gap-4">
+        <div class="relative">
+            <button @onclick="ToggleMenu" class="flex items-center gap-2 text-sm">
+                <div class="w-8 h-8 rounded-full bg-brand-sky-100 text-brand-primary flex items-center justify-center font-semibold">
+                    @Initial
+                </div>
+                <div class="hidden sm:block text-left leading-tight">
+                    <div class="font-medium text-brand-navy">@(AuthState.Current?.FullName ?? "Instructor")</div>
+                    <div class="text-meta text-text-muted">@L["Instructor"]</div>
+                </div>
+            </button>
+
+            @if (_open)
+            {
+                <div class="absolute right-0 top-10 w-44 bg-surface border border-border-base rounded-card shadow-card-hover py-1 z-50">
+                    <button @onclick="LogoutAsync" class="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-surface-muted">@L["Sign out"]</button>
+                </div>
+            }
+        </div>
+    </div>
+</header>
+
+@code {
+    private bool _open;
+    private string Initial => (AuthState.Current?.FullName ?? "I").Substring(0, 1).ToUpperInvariant();
+    private void ToggleMenu() => _open = !_open;
+    private async Task LogoutAsync()
+    {
+        await AuthApi.LogoutAsync();
+        Nav.NavigateTo("/login");
+    }
+}

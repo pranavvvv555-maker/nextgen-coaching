@@ -1,0 +1,260 @@
+@page "/student"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+@inject AuthStateService AuthState
+@inject NavigationManager Nav
+
+<PageTitle>My dashboard · NextGen</PageTitle>
+
+@if (_data is null)
+{
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        @for (var i = 0; i < 4; i++)
+        {
+            <div class="card p-4 h-24 animate-pulse"><div class="h-3 bg-border-base rounded w-2/3 mb-3"></div><div class="h-6 bg-border-base rounded w-1/3"></div></div>
+        }
+    </div>
+}
+else
+{
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-h2">Welcome back, @FirstName.</h1>
+            <p class="text-caption text-text-secondary">Here's what's on for you this week.</p>
+        </div>
+    </div>
+
+    @* ---------- Stat tiles ---------- *@
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatTile Label="My Courses"             Value="@_data.Stats.CoursesEnrolled.ToString()"           Icon="🎓" Accent="blue" />
+        <StatTile Label="Pending Assignments"    Value="@_data.Stats.AssignmentsPending.ToString()"        Icon="📝" Accent="amber" />
+        <StatTile Label="Upcoming Mock Interviews" Value="@_data.Stats.MockInterviewsUpcoming.ToString()"  Icon="🎤" Accent="purple" />
+        <StatTile Label="Attendance"             Value="@($"{_data.Stats.AttendancePercentage:0.#}%")"     Icon="✓"  Accent="success" />
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        @* ---------- Upcoming sessions ---------- *@
+        <div class="card p-5 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Upcoming Sessions</h2>
+                <a href="/student/sessions" class="text-caption text-brand-primary">View all →</a>
+            </div>
+            @if (_data.UpcomingSessions.Count == 0)
+            {
+                <div class="text-caption text-text-muted py-8 text-center">Nothing scheduled. Enjoy the break.</div>
+            }
+            else
+            {
+                <div class="space-y-2.5">
+                    @foreach (var s in _data.UpcomingSessions.Take(4))
+                    {
+                        <div class="flex items-center gap-4 p-3 rounded-btn border border-border-base hover:bg-surface-muted">
+                            <div class="@CourseIconClass(s.CourseSlug) w-11 h-11 rounded-xl flex items-center justify-center text-sm font-semibold flex-shrink-0">
+                                @CourseInitial(s.CourseSlug)
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-brand-navy truncate">@s.Title</div>
+                                <div class="text-caption text-text-muted">@s.CourseTitle · @s.SessionType</div>
+                            </div>
+                            <div class="text-right hidden sm:block">
+                                <div class="text-caption text-text-primary">@s.ScheduledAtUtc.ToLocalTime().ToString("ddd, dd MMM")</div>
+                                <div class="text-caption text-text-muted">@s.ScheduledAtUtc.ToLocalTime().ToString("HH:mm") · @s.DurationMinutes min</div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(s.MeetingUrl) && (s.ScheduledAtUtc - DateTime.UtcNow).TotalMinutes < 30)
+                            {
+                                <a href="@s.MeetingUrl" target="_blank" class="btn-primary text-caption px-3 py-1.5">Join</a>
+                            }
+                            else
+                            {
+                                <button class="btn-outline text-caption px-3 py-1.5" disabled>Join</button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @* ---------- Announcements ---------- *@
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Announcements</h2>
+            </div>
+            @if (_data.Announcements.Count == 0)
+            {
+                <div class="text-caption text-text-muted py-8 text-center">No announcements right now.</div>
+            }
+            else
+            {
+                <div class="space-y-3">
+                    @foreach (var a in _data.Announcements)
+                    {
+                        <div class="border-l-2 border-brand-primary pl-3">
+                            <div class="font-medium text-sm text-brand-navy">@a.Title</div>
+                            <p class="text-caption text-text-secondary mt-0.5">@a.Message</p>
+                            <div class="text-meta text-text-muted mt-1">@RelTime(a.CreatedAtUtc)</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ---------- Course progress ---------- *@
+    <div class="card p-5 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-h3">Course Progress</h2>
+            <a href="/student/courses" class="text-caption text-brand-primary">All courses →</a>
+        </div>
+        @if (_data.Enrollments.Count == 0)
+        {
+            <div class="text-caption text-text-muted py-8 text-center">You're not enrolled in any courses yet.</div>
+        }
+        else
+        {
+            <div class="space-y-4">
+                @foreach (var e in _data.Enrollments)
+                {
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="@CourseIconClass(e.CourseSlug) w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold">
+                                    @CourseInitial(e.CourseSlug)
+                                </div>
+                                <div>
+                                    <div class="font-medium text-sm text-brand-navy">@e.CourseTitle</div>
+                                    <div class="text-meta text-text-muted">@e.BatchName · @e.CompletedSessions of @e.TotalSessions sessions</div>
+                                </div>
+                            </div>
+                            <div class="text-sm font-medium text-brand-navy">@e.CompletionPercentage.ToString("0.#")%</div>
+                        </div>
+                        <div class="h-2 bg-surface-muted rounded-full overflow-hidden">
+                            <div class="h-full bg-brand-primary rounded-full" style="width:@(e.CompletionPercentage)%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    @* ---------- Pending assignments + Mock interviews ---------- *@
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Pending Assignments</h2>
+                <a href="/student/assignments" class="text-caption text-brand-primary">All →</a>
+            </div>
+            @if (_data.PendingAssignments.Count == 0)
+            {
+                <div class="text-caption text-text-muted py-6 text-center">You're all caught up. 🎉</div>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <tbody class="divide-y divide-border-base">
+                        @foreach (var a in _data.PendingAssignments)
+                        {
+                            <tr class="hover:bg-surface-muted/50 cursor-pointer" @onclick="@(() => Nav.NavigateTo($"/student/assignments/{a.AssignmentId}"))">
+                                <td class="py-2.5">
+                                    <div class="font-medium text-brand-navy">@a.Title</div>
+                                    <div class="text-meta text-text-muted">@a.CourseTitle@(a.ToolName is null ? "" : " · " + a.ToolName)</div>
+                                </td>
+                                <td class="py-2.5 text-right">
+                                    <div class="text-caption text-text-muted">Due @a.DueAtUtc.ToLocalTime().ToString("dd MMM")</div>
+                                    <span class="@AssignmentStatusClass(a.Status)">@AssignmentStatusLabel(a.Status)</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-h3">Upcoming Mock Interviews</h2>
+            </div>
+            @if (_data.UpcomingMockInterviews.Count == 0)
+            {
+                <div class="text-caption text-text-muted py-6 text-center">No mock interviews scheduled yet.</div>
+            }
+            else
+            {
+                <div class="space-y-3">
+                    @foreach (var m in _data.UpcomingMockInterviews)
+                    {
+                        <div class="flex items-center gap-3 p-3 rounded-btn border border-border-base">
+                            <div class="w-10 h-10 rounded-lg bg-status-purple/15 text-status-purple flex items-center justify-center font-semibold">R@m.RoundNumber</div>
+                            <div class="flex-1">
+                                <div class="font-medium text-sm text-brand-navy">Mock interview · Round @m.RoundNumber</div>
+                                <div class="text-caption text-text-muted">@m.CourseTitle · @m.ScheduledAtUtc.ToLocalTime().ToString("ddd, dd MMM · HH:mm")</div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(m.MeetingUrl))
+                            {
+                                <a href="@m.MeetingUrl" target="_blank" class="btn-outline text-caption px-3 py-1.5">@L["Details"]</a>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private StudentDashboardDto? _data;
+
+    private string FirstName =>
+        (_data?.Profile.FullName ?? AuthState.Current?.FullName ?? "")
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault() ?? "there";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await StudentApi.GetDashboardAsync();
+    }
+
+    private static string CourseIconClass(string slug) => slug switch
+    {
+        "data-science"        => "bg-brand-sky-50 text-brand-primary",
+        "snowflake"           => "bg-status-info/15 text-status-info",
+        "azure-data-factory"  => "bg-brand-sky-50 text-brand-primary",
+        _                     => "bg-status-warning/15 text-status-warning"
+    };
+
+    private static string CourseInitial(string slug) => slug switch
+    {
+        "data-science"        => "DS",
+        "sql"                 => "SQ",
+        "python"              => "Py",
+        "power-bi"            => "Bi",
+        "snowflake"           => "❄",
+        "azure-data-factory"  => "Az",
+        _                     => "•"
+    };
+
+    private static string AssignmentStatusClass(string status) => "pill " + status switch
+    {
+        "NotStarted"  => "bg-status-warning/15 text-status-warning",
+        "Submitted"   => "bg-status-info/15 text-status-info",
+        "Graded"      => "bg-status-success/15 text-status-success",
+        _             => "bg-surface-muted text-text-secondary"
+    };
+
+    private static string AssignmentStatusLabel(string status) => status switch
+    {
+        "NotStarted"  => "To do",
+        "Submitted"   => "Submitted",
+        "Graded"      => "Graded",
+        _             => status
+    };
+
+    private static string RelTime(DateTime utc)
+    {
+        var diff = DateTime.UtcNow - utc;
+        if (diff.TotalMinutes < 1) return "just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalDays < 7) return $"{(int)diff.TotalDays}d ago";
+        return utc.ToLocalTime().ToString("dd MMM");
+    }
+}

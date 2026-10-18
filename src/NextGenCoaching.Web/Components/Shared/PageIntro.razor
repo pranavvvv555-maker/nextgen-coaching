@@ -1,0 +1,8 @@
+<section class="page-intro"><div class="page-intro-art" aria-hidden="true"><i></i><i></i><i></i><span>✳</span></div><div class="ng-container page-intro-content"><span class="eyebrow"><i class="status-dot"></i>@L[Eyebrow]</span><h1>@L[Title]</h1><p>@L[Description]</p>@if (!string.IsNullOrWhiteSpace(Meta)) { <small>@L["Last updated:"] @Meta</small> }@ChildContent</div></section>
+@code {
+[Parameter] public string Eyebrow { get; set; } = "THE NEXTGEN EXPERIENCE";
+[Parameter] public string Title { get; set; } = string.Empty;
+[Parameter] public string Description { get; set; } = string.Empty;
+[Parameter] public string? Meta { get; set; }
+[Parameter] public RenderFragment? ChildContent { get; set; }
+}

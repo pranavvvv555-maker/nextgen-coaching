@@ -1,0 +1,293 @@
+@page "/admin/users"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@using NextGenCoaching.Shared.Constants
+
+<PageTitle>Users · Admin · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Users"]</h1>
+    <p class="text-caption text-text-secondary">Everyone with an account — students, instructors, counsellors, HR, and admins.</p>
+</div>
+
+<div class="card p-4 mb-5 flex flex-col md:flex-row md:items-end gap-3">
+    <div class="flex-1">
+        <label class="text-caption text-text-secondary mb-1 block">@L["Search"]</label>
+        <input @bind="_q.Search" @bind:event="oninput" @onkeyup="OnKey" placeholder="Name, email, or phone…"
+               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+    </div>
+    <div>
+        <label class="text-caption text-text-secondary mb-1 block">Role</label>
+        <select @bind="_q.Role" class="border border-border-base rounded-btn px-3 py-2 text-sm w-full md:w-48">
+            <option value="">All roles</option>
+            @foreach (var r in RoleNames.All)
+            {
+                <option value="@r">@r</option>
+            }
+        </select>
+    </div>
+    <label class="flex items-center gap-2 text-sm pb-2">
+        <input type="checkbox" @bind="_activeOnly" /> Active only
+    </label>
+    <button class="btn-primary" @onclick="ApplyFilters">Apply</button>
+</div>
+
+@if (_editingUser is not null)
+{
+    <div class="card p-5 mb-5 border border-brand-primary">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h2 class="text-h3">Manage @_editingUser.FullName</h2>
+                <p class="text-caption text-text-secondary">@_editingUser.Email</p>
+            </div>
+            <button class="text-text-muted hover:text-text-primary text-sm" @onclick="CloseEditor">Close ✕</button>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <div class="font-medium mb-2">Roles</div>
+                <div class="space-y-2">
+                    @foreach (var r in RoleNames.All)
+                    {
+                        <label class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" checked="@_editRoles.Contains(r)" @onchange="e => ToggleRole(r, e)" />
+                            @r
+                        </label>
+                    }
+                </div>
+                <button class="btn-primary mt-3 text-sm" disabled="@_savingRoles" @onclick="SaveRolesAsync">
+                    @(_savingRoles ? "Saving…" : "Save roles")
+                </button>
+            </div>
+
+            <div>
+                <div class="font-medium mb-2">Set a new password</div>
+                <input type="password" @bind="_newPassword" placeholder="At least 8 characters"
+                       class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                <button class="btn-primary mt-3 text-sm" disabled="@_savingPassword" @onclick="SavePasswordAsync">
+                    @(_savingPassword ? "Saving…" : "Set password")
+                </button>
+                <p class="text-meta text-text-muted mt-2">The user can sign in with this password immediately.</p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_editorMsg))
+        {
+            <div class="mt-4 text-sm @(_editorOk ? "text-status-success" : "text-status-danger")">@_editorMsg</div>
+        }
+    </div>
+}
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_result is null || _result.Items.Count == 0)
+{
+    <div class="card p-8 text-center text-text-secondary">No users match these filters.</div>
+}
+else
+{
+    <div class="card overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted text-text-secondary text-caption">
+                <tr>
+                    <th class="text-left px-4 py-3">@L["Name"]</th>
+                    <th class="text-left px-4 py-3">@L["Contact"]</th>
+                    <th class="text-left px-4 py-3">Roles</th>
+                    <th class="text-left px-4 py-3">Joined</th>
+                    <th class="text-left px-4 py-3">Last login</th>
+                    <th class="text-left px-4 py-3">@L["Status"]</th>
+                    <th class="text-right px-4 py-3">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in _result.Items)
+                {
+                    <tr class="border-t border-border-base align-top">
+                        <td class="px-4 py-3">
+                            <div class="font-medium">@u.FullName</div>
+                            @if (!string.IsNullOrEmpty(u.City) || !string.IsNullOrEmpty(u.State))
+                            {
+                                <div class="text-meta text-text-secondary">@($"{u.City} {u.State}".Trim())</div>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">
+                            <div>@u.Email</div>
+                            @if (!string.IsNullOrEmpty(u.Phone)) { <div class="text-meta">@u.Phone</div> }
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="flex flex-wrap gap-1">
+                                @foreach (var r in u.Roles)
+                                {
+                                    <span class="pill pill-category">@r</span>
+                                }
+                                @if (u.Roles.Count == 0) { <span class="text-meta text-text-muted">—</span> }
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">@u.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="px-4 py-3">@(u.LastLoginAtUtc is null ? "—" : u.LastLoginAtUtc.Value.ToLocalTime().ToString("dd MMM yyyy"))</td>
+                        <td class="px-4 py-3">
+                            @if (u.IsActive)
+                            {
+                                <span class="pill text-status-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="pill text-status-danger">Inactive</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-right whitespace-nowrap">
+                            <button class="btn-outline text-sm mr-2" @onclick="() => OpenEditor(u)">Manage</button>
+                            <button class="@(u.IsActive ? "btn-outline" : "btn-primary") text-sm" disabled="@(_busy == u.Id)" @onclick="() => ToggleAsync(u.Id)">
+                                @(_busy == u.Id ? "…" : (u.IsActive ? "Deactivate" : "Reactivate"))
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="flex items-center justify-between mt-4 text-sm text-text-secondary">
+        <div>@_result.TotalCount user(s) · page @_result.Page</div>
+        <div class="flex gap-2">
+            <button class="btn-outline" disabled="@(_q.Page <= 1)" @onclick="PrevPage">Previous</button>
+            <button class="btn-outline" disabled="@(!HasNext)" @onclick="NextPage">Next</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private bool _activeOnly;
+    private Guid? _busy;
+    private UserListQuery _q = new() { Page = 1, PageSize = 25 };
+    private PagedResult<AdminUserListItemDto>? _result;
+
+    // editor state
+    private AdminUserListItemDto? _editingUser;
+    private HashSet<string> _editRoles = new(StringComparer.OrdinalIgnoreCase);
+    private string _newPassword = "";
+    private bool _savingRoles;
+    private bool _savingPassword;
+    private string? _editorMsg;
+    private bool _editorOk;
+
+    private bool HasNext => _result is not null && (_result.Page * _result.PageSize) < _result.TotalCount;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _q.ActiveOnly = _activeOnly ? true : null;
+        _result = await AdminApi.GetUsersAsync(_q);
+        _loading = false;
+    }
+
+    private async Task ApplyFilters()
+    {
+        _q.Page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await ApplyFilters();
+    }
+
+    private async Task PrevPage()
+    {
+        if (_q.Page > 1) { _q.Page--; await LoadAsync(); }
+    }
+
+    private async Task NextPage()
+    {
+        if (HasNext) { _q.Page++; await LoadAsync(); }
+    }
+
+    private async Task ToggleAsync(Guid id)
+    {
+        _busy = id;
+        await AdminApi.ToggleUserActiveAsync(id);
+        _busy = null;
+        await LoadAsync();
+    }
+
+    private void OpenEditor(AdminUserListItemDto u)
+    {
+        _editingUser = u;
+        _editRoles = new HashSet<string>(u.Roles, StringComparer.OrdinalIgnoreCase);
+        _newPassword = "";
+        _editorMsg = null;
+    }
+
+    private void CloseEditor()
+    {
+        _editingUser = null;
+        _editorMsg = null;
+    }
+
+    private void ToggleRole(string role, ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b;
+        if (on) _editRoles.Add(role);
+        else _editRoles.Remove(role);
+    }
+
+    private async Task SaveRolesAsync()
+    {
+        if (_editingUser is null) return;
+        var id = _editingUser.Id;
+        _savingRoles = true;
+        _editorMsg = null;
+
+        var resp = await AdminApi.SetUserRolesAsync(id, new SetUserRolesRequest { Roles = _editRoles.ToList() });
+
+        _savingRoles = false;
+        if (resp is { Success: true })
+        {
+            _editorOk = true;
+            _editorMsg = "Roles updated.";
+            await LoadAsync();
+            _editingUser = _result?.Items.FirstOrDefault(x => x.Id == id) ?? _editingUser;
+        }
+        else
+        {
+            _editorOk = false;
+            _editorMsg = resp?.Message ?? "Could not update roles.";
+            if (resp?.Errors is { Count: > 0 }) _editorMsg += " " + string.Join(" ", resp.Errors);
+        }
+    }
+
+    private async Task SavePasswordAsync()
+    {
+        if (_editingUser is null) return;
+        if (string.IsNullOrWhiteSpace(_newPassword) || _newPassword.Length < 8)
+        {
+            _editorOk = false;
+            _editorMsg = "Password must be at least 8 characters.";
+            return;
+        }
+
+        _savingPassword = true;
+        _editorMsg = null;
+
+        var resp = await AdminApi.ResetUserPasswordAsync(_editingUser.Id, new SetUserPasswordRequest { NewPassword = _newPassword });
+
+        _savingPassword = false;
+        if (resp is { Success: true })
+        {
+            _editorOk = true;
+            _editorMsg = "Password updated.";
+            _newPassword = "";
+        }
+        else
+        {
+            _editorOk = false;
+            _editorMsg = resp?.Message ?? "Could not set password.";
+            if (resp?.Errors is { Count: > 0 }) _editorMsg += " " + string.Join(" ", resp.Errors);
+        }
+    }
+}

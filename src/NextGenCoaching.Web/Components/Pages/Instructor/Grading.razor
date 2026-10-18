@@ -1,0 +1,114 @@
+@page "/instructor/grading"
+@layout InstructorLayout
+@inject InstructorApiClient InstructorApi
+@inject NavigationManager Nav
+
+<PageTitle>Grading · Instructor · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">Grading queue</h1>
+        <p class="text-caption text-text-secondary">Oldest first. Once graded, a submission disappears from this list and the student gets a notification.</p>
+    </div>
+</div>
+
+@* Tabs *@
+<div class="flex border-b border-border-base mb-4">
+    <button @onclick="@(() => SetTab("assignments"))"
+            class="@TabClass("assignments") px-4 py-2.5 text-sm font-medium">
+        Assignments
+        @if (_assignments is { Count: > 0 })
+        {
+            <span class="ml-1 text-meta text-text-muted">(@_assignments.Count)</span>
+        }
+    </button>
+    <button @onclick="@(() => SetTab("projects"))"
+            class="@TabClass("projects") px-4 py-2.5 text-sm font-medium">
+        Projects
+        @if (_projects is { Count: > 0 })
+        {
+            <span class="ml-1 text-meta text-text-muted">(@_projects.Count)</span>
+        }
+    </button>
+</div>
+
+@{
+    var items = _tab == "assignments" ? _assignments : _projects;
+    var routeKind = _tab == "assignments" ? "assignment" : "project";
+}
+
+<div class="card overflow-hidden">
+    @if (items is null)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (items.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">Nothing to grade. 👏</div>
+    }
+    else
+    {
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Title</th>
+                    <th class="px-4 py-3 font-medium">Course / batch</th>
+                    <th class="px-4 py-3 font-medium">@L["Student"]</th>
+                    <th class="px-4 py-3 font-medium text-right">Waiting</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var item in items)
+                {
+                    <tr class="hover:bg-surface-muted/50 cursor-pointer"
+                        @onclick="@(() => Nav.NavigateTo($"/instructor/grading/{routeKind}/{item.SubmissionId}"))">
+                        <td class="px-4 py-3 font-medium text-brand-navy">@item.Title</td>
+                        <td class="px-4 py-3 text-text-secondary">
+                            <div>@item.CourseTitle</div>
+                            <div class="text-meta text-text-muted">@item.BatchName</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@item.StudentName</td>
+                        <td class="px-4 py-3 text-right">
+                            <span class="@AgeClass(item.AgeHours ?? 0)">@AgeLabel(item.AgeHours ?? 0)</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private string _tab = "assignments";
+    private IReadOnlyList<GradingQueueItemDto>? _assignments;
+    private IReadOnlyList<GradingQueueItemDto>? _projects;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch both up front so the tab counts are accurate without a click
+        await Task.WhenAll(LoadAssignmentsAsync(), LoadProjectsAsync());
+    }
+
+    private async Task LoadAssignmentsAsync() => _assignments = await InstructorApi.GetPendingAssignmentsAsync();
+    private async Task LoadProjectsAsync() => _projects = await InstructorApi.GetPendingProjectsAsync();
+
+    private void SetTab(string tab) => _tab = tab;
+
+    private string TabClass(string tab) => _tab == tab
+        ? "border-b-2 border-brand-primary text-brand-navy"
+        : "text-text-muted hover:text-text-primary";
+
+    private static string AgeClass(int hours) => "pill " + hours switch
+    {
+        < 24       => "bg-status-success/15 text-status-success",
+        < 72       => "bg-status-warning/15 text-status-warning",
+        _          => "bg-status-danger/15 text-status-danger"
+    };
+
+    private static string AgeLabel(int hours) => hours switch
+    {
+        < 1   => "just now",
+        < 24  => $"{hours}h",
+        _     => $"{hours / 24}d"
+    };
+}

@@ -1,0 +1,362 @@
+@page "/admin/webinars"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@inject CourseApiClient CoursesApi
+
+<PageTitle>Webinars · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Webinars"]</h1>
+        <p class="text-caption text-text-secondary">Schedule and manage free webinars. Each registration creates a lead.</p>
+    </div>
+    <button @onclick="OpenCreate" class="btn-primary">+ New webinar</button>
+</div>
+
+@* ---------- List ---------- *@
+<div class="card overflow-hidden">
+    @if (_data is null)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data.Items.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No webinars yet. Click <strong>New webinar</strong> to schedule one.</div>
+    }
+    else
+    {
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Title</th>
+                    <th class="px-4 py-3 font-medium">Course</th>
+                    <th class="px-4 py-3 font-medium">Scheduled</th>
+                    <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                    <th class="px-4 py-3 font-medium text-right">Registrations</th>
+                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var w in _data.Items)
+                {
+                    <tr class="hover:bg-surface-muted/50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@w.Title</div>
+                            @if (w.Capacity.HasValue)
+                            {
+                                <div class="text-meta text-text-muted">Capacity @w.Capacity</div>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@(w.CourseTitle ?? "—")</td>
+                        <td class="px-4 py-3 text-text-secondary">@w.ScheduledAtUtc.ToLocalTime().ToString("ddd, dd MMM · HH:mm")</td>
+                        <td class="px-4 py-3"><span class="@StatusPillClass(w.Status)">@w.Status</span></td>
+                        <td class="px-4 py-3 text-right">
+                            <span class="font-medium text-brand-navy">@w.RegistrationsCount</span>
+                            <span class="text-meta text-text-muted ml-1">(@w.AttendedCount attended)</span>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex gap-1 justify-end">
+                                <button @onclick="() => OpenRegistrations(w.Id, w.Title)" class="btn-outline text-caption px-2.5 py-1">Registrations</button>
+                                <button @onclick="() => OpenEdit(w)" class="btn-outline text-caption px-2.5 py-1">@L["Edit"]</button>
+                                <button @onclick="() => ConfirmDelete(w)" class="btn-outline text-caption px-2.5 py-1 hover:text-status-danger hover:border-status-danger">@L["Delete"]</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@* ---------- Create / edit modal ---------- *@
+@if (_modalOpen)
+{
+    <div class="fixed inset-0 z-40 bg-brand-navy/40" @onclick="CloseModal"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div class="bg-surface rounded-card shadow-card-hover w-full max-w-lg pointer-events-auto" @onclick:stopPropagation="true">
+            <div class="px-5 py-4 border-b border-border-base flex items-center justify-between">
+                <h2 class="text-h3">@(_editingId is null ? "New webinar" : "Edit webinar")</h2>
+                <button @onclick="CloseModal" class="text-text-muted text-2xl leading-none">×</button>
+            </div>
+            <div class="p-5 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Title</label>
+                    <input @bind="_form.Title" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Description</label>
+                    <textarea @bind="_form.Description" rows="3" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Course (optional)</label>
+                    <select @bind="_selectedCourseId" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                        <option value="">— Generic webinar —</option>
+                        @if (_courses is not null)
+                        {
+                            @foreach (var c in _courses)
+                            {
+                                <option value="@c.Id">@c.Title</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Scheduled (local)</label>
+                        <input @bind="_scheduledLocal" type="datetime-local" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Duration (min)</label>
+                        <input @bind="_form.DurationMinutes" type="number" min="15" max="240" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Join URL</label>
+                    <input @bind="_form.JoinUrl" placeholder="https://meet.example.com/..." class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Capacity (optional)</label>
+                        <input @bind="_form.Capacity" type="number" min="1" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Banner image URL</label>
+                        <input @bind="_form.BannerImageUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(_modalError))
+                {
+                    <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2">@_modalError</div>
+                }
+            </div>
+            <div class="px-5 py-3 border-t border-border-base flex justify-end gap-2">
+                <button @onclick="CloseModal" class="btn-outline text-sm">@L["Cancel"]</button>
+                <button @onclick="SaveAsync" disabled="@(_saving || !CanSave)" class="btn-primary text-sm">
+                    @(_saving ? "Saving…" : (_editingId is null ? "Create" : "Save changes"))
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@* ---------- Registrations drawer ---------- *@
+@if (_registrationsWebinarId is not null)
+{
+    <div class="fixed inset-0 z-40 bg-brand-navy/40" @onclick="CloseRegistrations"></div>
+    <aside class="fixed right-0 top-0 h-full w-full sm:w-[520px] bg-surface shadow-card-hover z-50 flex flex-col">
+        <div class="px-5 py-4 border-b border-border-base flex items-start justify-between">
+            <div>
+                <div class="text-meta uppercase tracking-wider text-text-muted mb-1">Registrations</div>
+                <h2 class="text-h3 leading-tight">@_registrationsTitle</h2>
+            </div>
+            <button @onclick="CloseRegistrations" class="text-text-muted text-2xl leading-none">×</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5">
+            @if (_registrations is null)
+            {
+                <div class="text-text-muted text-sm">@L["Loading…"]</div>
+            }
+            else if (_registrations.Count == 0)
+            {
+                <div class="text-text-muted text-sm text-center py-8">No registrations yet.</div>
+            }
+            else
+            {
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-meta uppercase tracking-wider text-text-muted border-b border-border-base">
+                            <th class="pb-2 font-medium">@L["Name"]</th>
+                            <th class="pb-2 font-medium">@L["Contact"]</th>
+                            <th class="pb-2 font-medium text-right">Attended</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-base">
+                        @foreach (var r in _registrations)
+                        {
+                            <tr>
+                                <td class="py-2">
+                                    <div class="font-medium text-brand-navy">@r.FullName</div>
+                                    <div class="text-meta text-text-muted">@(r.City ?? "—") · @r.RegisteredAtUtc.ToLocalTime().ToString("dd MMM HH:mm")</div>
+                                </td>
+                                <td class="py-2 text-text-secondary">
+                                    <div>@r.Email</div>
+                                    <div class="text-meta text-text-muted">@r.Phone</div>
+                                </td>
+                                <td class="py-2 text-right">
+                                    <button @onclick="() => ToggleAttendedAsync(r.Id)"
+                                            class="@(r.Attended ? "bg-status-success text-white" : "bg-surface-muted text-text-secondary border border-border-base") px-2.5 py-1 rounded-full text-caption font-medium">
+                                        @(r.Attended ? "✓ Attended" : "Not yet")
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </aside>
+}
+
+@if (!string.IsNullOrEmpty(_toast))
+{
+    <div class="fixed bottom-6 right-6 bg-status-success text-white px-4 py-2 rounded-btn shadow-card-hover">@_toast</div>
+}
+
+@code {
+    private PagedResult<AdminWebinarDto>? _data;
+    private IReadOnlyList<CourseSummaryDto>? _courses;
+    private string? _toast;
+
+    // Modal state
+    private bool _modalOpen;
+    private Guid? _editingId;
+    private UpsertWebinarRequest _form = new() { ScheduledAtUtc = DateTime.UtcNow.AddDays(7), DurationMinutes = 60 };
+    private DateTime? _scheduledLocal;
+    private string _selectedCourseId = string.Empty;
+    private bool _saving;
+    private string? _modalError;
+
+    // Registrations drawer
+    private Guid? _registrationsWebinarId;
+    private string _registrationsTitle = string.Empty;
+    private IReadOnlyList<AdminWebinarRegistrationDto>? _registrations;
+
+    private bool CanSave =>
+        !string.IsNullOrWhiteSpace(_form.Title)
+        && _scheduledLocal.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadAsync(), LoadCoursesAsync());
+    }
+
+    private async Task LoadAsync() => _data = await AdminApi.GetWebinarsAsync(pageSize: 50);
+    private async Task LoadCoursesAsync() => _courses = await CoursesApi.GetCoursesAsync();
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form = new UpsertWebinarRequest
+        {
+            ScheduledAtUtc = DateTime.UtcNow.AddDays(7),
+            DurationMinutes = 60
+        };
+        _scheduledLocal = DateTime.Now.AddDays(7);
+        _selectedCourseId = string.Empty;
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private void OpenEdit(AdminWebinarDto w)
+    {
+        _editingId = w.Id;
+        _form = new UpsertWebinarRequest
+        {
+            Title = w.Title,
+            Description = w.Description,
+            CourseId = w.CourseId,
+            ScheduledAtUtc = w.ScheduledAtUtc,
+            DurationMinutes = w.DurationMinutes,
+            JoinUrl = w.JoinUrl,
+            Capacity = w.Capacity,
+            BannerImageUrl = w.BannerImageUrl
+        };
+        _scheduledLocal = w.ScheduledAtUtc.ToLocalTime();
+        _selectedCourseId = w.CourseId?.ToString() ?? string.Empty;
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private void CloseModal() => _modalOpen = false;
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _modalError = null;
+
+        if (_scheduledLocal is null)
+        {
+            _modalError = "Pick a valid date/time.";
+            _saving = false;
+            return;
+        }
+        _form.ScheduledAtUtc = _scheduledLocal.Value.ToUniversalTime();
+        _form.CourseId = Guid.TryParse(_selectedCourseId, out var cid) ? cid : null;
+
+        var resp = _editingId is null
+            ? await AdminApi.CreateWebinarAsync(_form)
+            : await AdminApi.UpdateWebinarAsync(_editingId.Value, _form);
+
+        _saving = false;
+
+        if (resp?.Success == true)
+        {
+            _toast = _editingId is null ? "Webinar created." : "Webinar updated.";
+            _modalOpen = false;
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+        else
+        {
+            _modalError = resp?.Message ?? "Couldn't save.";
+        }
+    }
+
+    private async Task ConfirmDelete(AdminWebinarDto w)
+    {
+        // No native confirm dialog in pure Blazor — just delete in this MVP. Add a confirm modal later.
+        var resp = await AdminApi.DeleteWebinarAsync(w.Id);
+        if (resp?.Success == true)
+        {
+            _toast = "Webinar deleted.";
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+        else
+        {
+            _toast = resp?.Message ?? "Delete failed.";
+            _ = HideToastAsync();
+        }
+    }
+
+    private async Task OpenRegistrations(Guid id, string title)
+    {
+        _registrationsWebinarId = id;
+        _registrationsTitle = title;
+        _registrations = null;
+        _registrations = await AdminApi.GetWebinarRegistrationsAsync(id);
+    }
+
+    private void CloseRegistrations()
+    {
+        _registrationsWebinarId = null;
+        _registrations = null;
+    }
+
+    private async Task ToggleAttendedAsync(Guid regId)
+    {
+        if (_registrationsWebinarId is null) return;
+        var resp = await AdminApi.ToggleAttendedAsync(_registrationsWebinarId.Value, regId);
+        if (resp?.Success == true)
+        {
+            _registrations = await AdminApi.GetWebinarRegistrationsAsync(_registrationsWebinarId.Value);
+            await LoadAsync(); // refresh attended count in list
+        }
+    }
+
+    private async Task HideToastAsync()
+    {
+        await Task.Delay(2500);
+        _toast = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Scheduled" => "bg-brand-sky-100 text-brand-primary-dark",
+        "Live"      => "bg-status-success/15 text-status-success",
+        "Completed" => "bg-status-info/15 text-status-info",
+        "Cancelled" => "bg-status-danger/15 text-status-danger",
+        _           => "bg-surface-muted text-text-secondary"
+    };
+}

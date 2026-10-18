@@ -1,0 +1,14 @@
+@inject AuthStateService AuthState
+
+@* Renders nothing. Lives at the interactive root (Routes.razor) so it runs exactly once per
+   circuit and rehydrates the auth session from protected browser storage. Layouts gate on
+   AuthState.Initialized, so protected areas show a brief loading state instead of bouncing
+   the user to /login while this completes. *@
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Prerendering is disabled app-wide (App.razor), so JS interop is available here.
+        await AuthState.InitializeAsync();
+    }
+}

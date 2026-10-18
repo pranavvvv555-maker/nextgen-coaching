@@ -1,0 +1,64 @@
+@page "/student/projects"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+@inject NavigationManager Nav
+
+<PageTitle>Projects · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Projects"]</h1>
+        <p class="text-caption text-text-secondary">Capstone projects from each of your enrolled courses.</p>
+    </div>
+</div>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else if (_data.Count == 0)
+{
+    <div class="card p-8 text-center text-text-muted">No projects yet. Once you're enrolled in a course, its projects appear here.</div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach (var p in _data)
+        {
+            <div class="card p-5 cursor-pointer hover:shadow-card-hover transition" @onclick="@(() => Nav.NavigateTo($"/student/projects/{p.Id}"))">
+                <div class="flex items-start justify-between mb-2">
+                    <div>
+                        <div class="text-meta text-text-muted uppercase tracking-wider">Project #@p.ProjectNumber</div>
+                        <h3 class="text-h3 leading-tight">@p.Title</h3>
+                        <div class="text-caption text-text-secondary mt-1">@p.CourseTitle · ~@p.RecommendedDurationWeeks weeks</div>
+                    </div>
+                    <span class="@StatusPillClass(p.Status)">@StatusLabel(p.Status)</span>
+                </div>
+
+                @if (p.Score.HasValue)
+                {
+                    <div class="text-sm font-medium text-status-success mt-2">Scored @p.Score.Value.ToString("0.#")</div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ProjectListItemDto>? _data;
+    protected override async Task OnInitializedAsync() => _data = await StudentApi.GetProjectsAsync();
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "NotStarted"  => "bg-status-warning/15 text-status-warning",
+        "Submitted"   => "bg-status-info/15 text-status-info",
+        "Graded"      => "bg-status-success/15 text-status-success",
+        _             => "bg-surface-muted text-text-secondary"
+    };
+
+    private static string StatusLabel(string status) => status switch
+    {
+        "NotStarted"  => "Not started",
+        _             => status
+    };
+}

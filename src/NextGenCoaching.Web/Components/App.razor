@@ -1,0 +1,46 @@
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostingEnvironment
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <script src="@PreferencesScriptUrl"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="icon" type="image/jpeg" href="images/nextgen-official-logo.jpeg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="@StylesheetUrl" />
+    <HeadOutlet @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+</head>
+<body>
+    <SitePreferencesProvider @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
+    <script src="_framework/blazor.web.js"></script>
+    <script src="js/confetti.browser.min.js"></script>
+    <script src="js/vendor/motion-14.1.0.js"></script>
+    <script src="@MotionScriptUrl"></script>
+    <script src="js/razorpay-interop.js"></script>
+</body>
+</html>
+
+
+
+@code {
+    private string _preferencesVersion = string.Empty;
+    private string PreferencesScriptUrl => $"/js/site-preferences.js?v={_preferencesVersion}";
+    private string _cssVersion = string.Empty;
+    private string _motionVersion = string.Empty;
+    private string MotionScriptUrl => $"js/nextgen-motion.js?v={_motionVersion}";
+    private string StylesheetUrl => $"{Assets["css/app.output.css"]}?v={_cssVersion}";
+
+    protected override void OnInitialized()
+    {
+        using var preferencesScript = HostingEnvironment.WebRootFileProvider.GetFileInfo("js/site-preferences.js").CreateReadStream();
+        _preferencesVersion = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(preferencesScript))[..16];
+        using var stylesheet = HostingEnvironment.WebRootFileProvider.GetFileInfo("css/app.output.css").CreateReadStream();
+        _cssVersion = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stylesheet))[..16];
+        using var motionScript = HostingEnvironment.WebRootFileProvider.GetFileInfo("js/nextgen-motion.js").CreateReadStream();
+        _motionVersion = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(motionScript))[..16];
+    }
+}
+

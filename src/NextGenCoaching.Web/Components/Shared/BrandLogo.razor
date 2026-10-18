@@ -1,0 +1,20 @@
+@* A fixed SVG viewport crops white margins without changing the original artwork.
+   Intrinsic dimensions keep the logo bounded even when a browser has older CSS. *@
+<svg class="official-logo @Class" width="@LogoWidth" height="@LogoHeight"
+     viewBox="250 345 750 560" preserveAspectRatio="xMidYMid meet"
+     role="img" aria-label="@L["NextGen official logo"]" focusable="false">
+    <image href="/images/nextgen-official-logo.jpeg" x="0" y="0" width="1254" height="1254" />
+</svg>
+
+@code {
+    [Parameter] public string? Class { get; set; }
+
+    private int LogoWidth => Class switch
+    {
+        "official-logo--portal" => 66,
+        "official-logo--account" => 72,
+        "official-logo--workspace" => 46,
+        _ => 100
+    };
+    private int LogoHeight => (int)Math.Round(LogoWidth * 560.0 / 750.0);
+}

@@ -1,0 +1,68 @@
+@page "/student/assignments"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+@inject NavigationManager Nav
+
+<PageTitle>Assignments · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-h2">@L["Assignments"]</h1>
+</div>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else if (_data.PendingAssignments.Count == 0)
+{
+    <div class="card p-8 text-center text-text-muted">No pending assignments. 🎉</div>
+}
+else
+{
+    <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Title</th>
+                    <th class="px-4 py-3 font-medium">Course</th>
+                    <th class="px-4 py-3 font-medium">Tool</th>
+                    <th class="px-4 py-3 font-medium">Due</th>
+                    <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                    <th class="px-4 py-3 font-medium text-right">Score</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var a in _data.PendingAssignments)
+                {
+                    <tr class="hover:bg-surface-muted/50 cursor-pointer" @onclick="@(() => Nav.NavigateTo($"/student/assignments/{a.AssignmentId}"))">
+                        <td class="px-4 py-3 font-medium text-brand-navy">@a.Title</td>
+                        <td class="px-4 py-3 text-text-secondary">@a.CourseTitle</td>
+                        <td class="px-4 py-3 text-text-muted">@(a.ToolName ?? "—")</td>
+                        <td class="px-4 py-3 text-text-secondary">@a.DueAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="px-4 py-3"><span class="@StatusClass(a.Status)">@StatusLabel(a.Status)</span></td>
+                        <td class="px-4 py-3 text-right text-text-secondary">@(a.Score?.ToString("0.#") ?? "—") / @a.MaxScore</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private StudentDashboardDto? _data;
+    protected override async Task OnInitializedAsync() => _data = await StudentApi.GetDashboardAsync();
+
+    private static string StatusClass(string status) => "pill " + status switch
+    {
+        "NotStarted"  => "bg-status-warning/15 text-status-warning",
+        "Submitted"   => "bg-status-info/15 text-status-info",
+        "Graded"      => "bg-status-success/15 text-status-success",
+        _             => "bg-surface-muted text-text-secondary"
+    };
+
+    private static string StatusLabel(string status) => status switch
+    {
+        "NotStarted"  => "To do",
+        _             => status
+    };
+}

@@ -1,0 +1,74 @@
+@page "/student/placements"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+
+<PageTitle>Placements · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">My placements</h1>
+    <p class="text-caption text-text-secondary">Roles you've applied to and where each stands in the process.</p>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_items is null || _items.Count == 0)
+{
+    <div class="card p-8 text-center">
+        <div class="text-3xl mb-2">🚀</div>
+        <p class="text-body font-medium">No placement activity yet</p>
+        <p class="text-caption text-text-secondary">Apply to roles on the <a href="/student/jobs" class="text-brand-primary underline">@L["job board"]</a> to get started.</p>
+    </div>
+}
+else
+{
+    <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted text-text-secondary text-caption">
+                <tr>
+                    <th class="text-left px-4 py-3">Company</th>
+                    <th class="text-left px-4 py-3">Role</th>
+                    <th class="text-left px-4 py-3">@L["Status"]</th>
+                    <th class="text-left px-4 py-3">Applied</th>
+                    <th class="text-left px-4 py-3">Offer</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in _items)
+                {
+                    <tr class="border-t border-border-base">
+                        <td class="px-4 py-3 font-medium">@p.CompanyName</td>
+                        <td class="px-4 py-3 text-text-secondary">@p.RoleTitle</td>
+                        <td class="px-4 py-3"><span class="pill @StatusClass(p.Status)">@p.Status</span></td>
+                        <td class="px-4 py-3">@p.ReferredAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="px-4 py-3">@(p.OfferedCtcLpa is not null ? $"{p.OfferedCtcLpa} LPA" : "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private IReadOnlyList<StudentPlacementDto>? _items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _items = await StudentApi.GetPlacementsAsync();
+        _loading = false;
+    }
+
+    private string StatusClass(string s) => s switch
+    {
+        "Joined" => "text-status-success",
+        "Offered" => "text-status-success",
+        "Interviewing" => "text-status-info",
+        "Screening" => "text-status-warning",
+        "Rejected" => "text-status-danger",
+        "Declined" => "text-status-danger",
+        _ => ""
+    };
+}

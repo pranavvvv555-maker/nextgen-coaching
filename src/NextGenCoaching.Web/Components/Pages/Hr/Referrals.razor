@@ -1,0 +1,119 @@
+@page "/hr/referrals"
+@layout HrLayout
+@inject HrApiClient HrApi
+
+<PageTitle>Referrals · HR · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Referrals"]</h1>
+        <p class="text-caption text-text-secondary">Move candidates through the placement funnel. Status changes are recorded with a timestamp.</p>
+    </div>
+</div>
+
+<div class="card overflow-hidden">
+    @if (_data is null)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No referrals yet. Use the API or seed data to create them.</div>
+    }
+    else
+    {
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">@L["Student"]</th>
+                    <th class="px-4 py-3 font-medium">Role / company</th>
+                    <th class="px-4 py-3 font-medium">Referred</th>
+                    <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                    <th class="px-4 py-3 font-medium">Offered</th>
+                    <th class="px-4 py-3 font-medium text-right">Update</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var r in _data)
+                {
+                    <tr class="hover:bg-surface-muted/50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@r.StudentName</div>
+                            <div class="text-meta text-text-muted">@r.StudentEmail</div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@r.RoleTitle</div>
+                            <div class="text-meta text-text-muted">@r.CompanyName</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-muted text-caption">@r.ReferredAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="px-4 py-3"><span class="@StatusPillClass(r.Status)">@r.Status</span></td>
+                        <td class="px-4 py-3 text-text-secondary">@(r.OfferedCtcLpa?.ToString("0.# 'LPA'") ?? "—")</td>
+                        <td class="px-4 py-3 text-right">
+                            <select value="@r.Status"
+                                    @onchange="@(e => UpdateAsync(r.Id, e.Value?.ToString() ?? r.Status))"
+                                    class="border border-border-base rounded-btn px-2 py-1 text-sm">
+                                @foreach (var s in _statuses)
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                            </select>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(_toast))
+{
+    <div class="fixed bottom-6 right-6 bg-status-success text-white px-4 py-2 rounded-btn shadow-card-hover">@_toast</div>
+}
+
+@code {
+    private IReadOnlyList<HrReferralDto>? _data;
+    private string? _toast;
+
+    private readonly string[] _statuses =
+    {
+        "Referred", "Screening", "Interviewing", "Offered", "Joined", "Rejected", "Declined"
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private async Task LoadAsync() => _data = await HrApi.GetReferralsAsync();
+
+    private async Task UpdateAsync(Guid id, string status)
+    {
+        var resp = await HrApi.UpdateReferralStatusAsync(id, new UpdateReferralStatusRequest { Status = status });
+        if (resp?.Success == true)
+        {
+            _toast = $"Status: {status}";
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+        else
+        {
+            _toast = resp?.Message ?? "Update failed";
+            _ = HideToastAsync();
+        }
+    }
+
+    private async Task HideToastAsync()
+    {
+        await Task.Delay(2500);
+        _toast = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Referred"     => "bg-brand-sky-100 text-brand-primary-dark",
+        "Screening"    => "bg-status-info/15 text-status-info",
+        "Interviewing" => "bg-status-warning/15 text-status-warning",
+        "Offered"      => "bg-status-purple/15 text-status-purple",
+        "Joined"       => "bg-status-success/15 text-status-success",
+        "Rejected"     => "bg-status-danger/15 text-status-danger",
+        "Declined"     => "bg-text-disabled text-text-secondary",
+        _              => "bg-surface-muted text-text-secondary"
+    };
+}

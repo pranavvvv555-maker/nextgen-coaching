@@ -1,0 +1,162 @@
+@page "/admin/students"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@inject NavigationManager Nav
+
+<PageTitle>Students · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Students"]</h1>
+        <p class="text-caption text-text-secondary">Everyone with a student profile, with their enrolments and status.</p>
+    </div>
+</div>
+
+@* ---------- Filters ---------- *@
+<div class="card p-4 mb-4">
+    <div class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="text-caption text-text-secondary mb-1 block">@L["Search"]</label>
+            <input @bind="_query.Search" @bind:event="oninput" @onkeydown="OnSearchKeyDown"
+                   placeholder="Name, email, phone…"
+                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+        </div>
+        <div class="w-44">
+            <label class="text-caption text-text-secondary mb-1 block">@L["Status"]</label>
+            <select @bind="_query.Status" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                <option value="">All</option>
+                @foreach (var s in _statuses)
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </div>
+        <button @onclick="ApplyFilters" class="btn-primary">Apply</button>
+        <button @onclick="ResetFilters" class="btn-outline">Reset</button>
+    </div>
+</div>
+
+@* ---------- Table ---------- *@
+<div class="card overflow-hidden">
+    @if (_loading)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data is null || _data.Items.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No students match these filters.</div>
+    }
+    else
+    {
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-surface-muted">
+                    <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                        <th class="px-4 py-3 font-medium">@L["Name"]</th>
+                        <th class="px-4 py-3 font-medium">@L["Contact"]</th>
+                        <th class="px-4 py-3 font-medium">Enrolments</th>
+                        <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                        <th class="px-4 py-3 font-medium">Last login</th>
+                        <th class="px-4 py-3 font-medium">Joined</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border-base">
+                    @foreach (var s in _data.Items)
+                    {
+                        <tr class="hover:bg-surface-muted/50 cursor-pointer" @onclick="@(() => Nav.NavigateTo($"/admin/students/{s.Id}"))">
+                            <td class="px-4 py-3">
+                                <div class="font-medium text-brand-navy">@s.FullName</div>
+                                @if (!string.IsNullOrEmpty(s.City))
+                                {
+                                    <div class="text-meta text-text-muted">@s.City</div>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-text-secondary">
+                                <div>@s.Email</div>
+                                @if (!string.IsNullOrEmpty(s.Phone))
+                                {
+                                    <div class="text-meta text-text-muted">@s.Phone</div>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-text-secondary">
+                                @if (s.EnrollmentCount == 0)
+                                {
+                                    <span class="text-text-muted">—</span>
+                                }
+                                else
+                                {
+                                    <div>@(s.LatestCourseTitle ?? "—")</div>
+                                    <div class="text-meta text-text-muted">@s.EnrollmentCount enrolment@(s.EnrollmentCount == 1 ? "" : "s")</div>
+                                }
+                            </td>
+                            <td class="px-4 py-3"><span class="@StatusPillClass(s.Status)">@s.Status</span></td>
+                            <td class="px-4 py-3 text-text-muted text-caption">
+                                @(s.LastLoginAtUtc is null ? "Never" : s.LastLoginAtUtc.Value.ToLocalTime().ToString("dd MMM yyyy"))
+                            </td>
+                            <td class="px-4 py-3 text-text-muted text-caption">@s.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border-base text-caption text-text-muted">
+            <div>
+                Showing @((_query.Page - 1) * _query.PageSize + 1)–@(Math.Min(_query.Page * _query.PageSize, _data.TotalCount)) of @_data.TotalCount
+            </div>
+            <div class="flex items-center gap-2">
+                <button @onclick="PrevPage" disabled="@(!_data.HasPrevious)" class="px-3 py-1 rounded-btn border border-border-base disabled:opacity-40">Prev</button>
+                <span>Page @_data.Page of @_data.TotalPages</span>
+                <button @onclick="NextPage" disabled="@(!_data.HasNext)" class="px-3 py-1 rounded-btn border border-border-base disabled:opacity-40">Next</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private readonly StudentListQuery _query = new() { PageSize = 25 };
+    private PagedResult<AdminStudentListItemDto>? _data;
+    private bool _loading;
+
+    private readonly string[] _statuses = { "Active", "OnHold", "Dropped", "Placed" };
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _data = await AdminApi.GetStudentsAsync(_query);
+        _loading = false;
+    }
+
+    private async Task ApplyFilters()
+    {
+        _query.Page = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _query.Page = 1; await LoadAsync(); }
+    }
+
+    private async Task ResetFilters()
+    {
+        _query.Status = null;
+        _query.Search = null;
+        _query.Page = 1;
+        await LoadAsync();
+    }
+
+    private async Task PrevPage() { if (_data?.HasPrevious == true) { _query.Page--; await LoadAsync(); } }
+    private async Task NextPage() { if (_data?.HasNext     == true) { _query.Page++; await LoadAsync(); } }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Active"  => "bg-status-success/15 text-status-success",
+        "OnHold"  => "bg-status-warning/15 text-status-warning",
+        "Dropped" => "bg-status-danger/15 text-status-danger",
+        "Placed"  => "bg-status-purple/15 text-status-purple",
+        _         => "bg-surface-muted text-text-secondary"
+    };
+}

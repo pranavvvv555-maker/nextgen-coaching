@@ -1,0 +1,86 @@
+@page "/student/notifications"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+@inject NavigationManager Nav
+
+<PageTitle>Notifications · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Notifications"]</h1>
+        <p class="text-caption text-text-secondary">Announcements, assignment grading, mock-interview feedback.</p>
+    </div>
+    @if (_unreadCount > 0)
+    {
+        <button @onclick="MarkAllReadAsync" class="btn-outline text-sm">Mark all read (@_unreadCount)</button>
+    }
+</div>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else if (_data.Count == 0)
+{
+    <div class="card p-8 text-center text-text-muted">Nothing yet. We'll let you know when there's something new.</div>
+}
+else
+{
+    <div class="card overflow-hidden">
+        <ul class="divide-y divide-border-base">
+            @foreach (var n in _data)
+            {
+                <li class="px-5 py-4 flex items-start gap-3 cursor-pointer @(n.IsRead ? "bg-surface" : "bg-brand-sky-50/30")"
+                    @onclick="@(() => OpenAsync(n))">
+                    <div class="w-2 h-2 rounded-full mt-2 @(n.IsRead ? "bg-transparent" : "bg-brand-primary")"></div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <div class="font-medium text-brand-navy">@n.Title</div>
+                            <span class="pill bg-surface-muted text-text-secondary text-meta">@n.Type</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(n.Message))
+                        {
+                            <p class="text-sm text-text-secondary mt-1">@n.Message</p>
+                        }
+                        <div class="text-meta text-text-muted mt-1">@n.CreatedAtUtc.ToLocalTime().ToString("ddd, dd MMM yyyy · HH:mm")</div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<NotificationDto>? _data;
+    private int _unreadCount;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _data = await StudentApi.GetNotificationsAsync();
+        _unreadCount = _data?.Count(n => !n.IsRead) ?? 0;
+    }
+
+    private async Task OpenAsync(NotificationDto n)
+    {
+        if (!n.IsRead)
+        {
+            await StudentApi.MarkNotificationReadAsync(n.Id);
+        }
+        if (!string.IsNullOrEmpty(n.LinkUrl))
+        {
+            Nav.NavigateTo(n.LinkUrl);
+        }
+        else
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        await StudentApi.MarkAllReadAsync();
+        await LoadAsync();
+    }
+}

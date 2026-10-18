@@ -1,0 +1,139 @@
+@page "/instructor"
+@layout InstructorLayout
+@inject InstructorApiClient InstructorApi
+@inject NavigationManager Nav
+
+<PageTitle>Dashboard · Instructor · NextGen</PageTitle>
+
+@if (_data is null)
+{
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        @for (var i = 0; i < 4; i++)
+        {
+            <div class="card p-4 h-24 animate-pulse"><div class="h-3 bg-border-base rounded w-2/3 mb-3"></div><div class="h-6 bg-border-base rounded w-1/3"></div></div>
+        }
+    </div>
+}
+else
+{
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-h2">Welcome, @FirstName.</h1>
+            <p class="text-caption text-text-secondary">Here's what needs your attention.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatTile Label="Active batches"    Value="@_data.Stats.ActiveBatches.ToString()"           Icon="📚" Accent="blue" />
+        <StatTile Label="Total students"    Value="@_data.Stats.TotalStudents.ToString()"          Icon="👥" Accent="purple" />
+        <StatTile Label="Assignments to grade" Value="@_data.Stats.PendingAssignmentGrades.ToString()" Icon="📝" Accent="amber" />
+        <StatTile Label="Projects to grade"    Value="@_data.Stats.PendingProjectGrades.ToString()" Icon="🎯" Accent="danger" />
+    </div>
+
+    @* Today's sessions *@
+    <div class="card p-5 mb-6">
+        <div class="flex items-center justify-between mb-3">
+            <h2 class="text-h3">Today's sessions</h2>
+        </div>
+        @if (_data.TodaysSessions.Count == 0)
+        {
+            <div class="text-caption text-text-muted text-center py-6">Nothing on today.</div>
+        }
+        else
+        {
+            <div class="space-y-2.5">
+                @foreach (var s in _data.TodaysSessions)
+                {
+                    <div class="flex items-center gap-4 p-3 rounded-btn border border-border-base">
+                        <div class="text-center min-w-[56px]">
+                            <div class="text-h3 text-brand-navy">@s.ScheduledAtUtc.ToLocalTime().ToString("HH:mm")</div>
+                            <div class="text-meta text-text-muted">@s.DurationMinutes min</div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium text-brand-navy">@s.Title</div>
+                            <div class="text-caption text-text-muted">@s.CourseTitle · @s.BatchName</div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(s.MeetingUrl))
+                        {
+                            <a href="@s.MeetingUrl" target="_blank" class="btn-primary text-caption px-3 py-1.5">Open room</a>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    @* Two grading queues side by side *@
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-h3">Pending assignments</h2>
+                <a href="/instructor/grading" class="text-caption text-brand-primary">All →</a>
+            </div>
+            @if (_data.PendingAssignments.Count == 0)
+            {
+                <div class="text-caption text-text-muted text-center py-6">Nothing to grade. 👏</div>
+            }
+            else
+            {
+                <ul class="divide-y divide-border-base">
+                    @foreach (var item in _data.PendingAssignments)
+                    {
+                        <li class="py-2.5 cursor-pointer hover:bg-surface-muted/50 -mx-2 px-2 rounded"
+                            @onclick="@(() => Nav.NavigateTo($"/instructor/grading/assignment/{item.SubmissionId}"))">
+                            <div class="font-medium text-brand-navy">@item.Title</div>
+                            <div class="flex items-center justify-between text-meta text-text-muted">
+                                <span>@item.StudentName · @item.BatchName</span>
+                                <span>@RelTime(item.SubmittedAtUtc)</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-h3">Pending projects</h2>
+                <a href="/instructor/grading" class="text-caption text-brand-primary">All →</a>
+            </div>
+            @if (_data.PendingProjects.Count == 0)
+            {
+                <div class="text-caption text-text-muted text-center py-6">Nothing to grade.</div>
+            }
+            else
+            {
+                <ul class="divide-y divide-border-base">
+                    @foreach (var item in _data.PendingProjects)
+                    {
+                        <li class="py-2.5 cursor-pointer hover:bg-surface-muted/50 -mx-2 px-2 rounded"
+                            @onclick="@(() => Nav.NavigateTo($"/instructor/grading/project/{item.SubmissionId}"))">
+                            <div class="font-medium text-brand-navy">@item.Title</div>
+                            <div class="flex items-center justify-between text-meta text-text-muted">
+                                <span>@item.StudentName · @item.BatchName</span>
+                                <span>@RelTime(item.SubmittedAtUtc)</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private InstructorDashboardDto? _data;
+
+    private string FirstName =>
+        (_data?.FullName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "there";
+
+    protected override async Task OnInitializedAsync() => _data = await InstructorApi.GetDashboardAsync();
+
+    private static string RelTime(DateTime utc)
+    {
+        var diff = DateTime.UtcNow - utc;
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        return $"{(int)diff.TotalDays}d ago";
+    }
+}

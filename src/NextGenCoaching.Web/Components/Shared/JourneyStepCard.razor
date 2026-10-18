@@ -1,0 +1,2 @@
+<div class="journey-card card card-hover" data-motion="fade-up" data-delay="@((StepNumber % 3) * 60)"><span class="journey-number">@StepNumber.ToString("D2")</span><div><h3>@L[Title]</h3><p>@L[Description]</p></div></div>
+@code { [Parameter] public int StepNumber { get; set; } [Parameter] public string Title { get; set; } = string.Empty; [Parameter] public string Description { get; set; } = string.Empty; }

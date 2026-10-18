@@ -1,0 +1,119 @@
+@page "/instructor/profile"
+@layout InstructorLayout
+@inject InstructorApiClient InstructorApi
+
+<PageTitle>My profile · Instructor · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["My profile"]</h1>
+    <p class="text-caption text-text-secondary">This is what students and the public site see about you.</p>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_p is null)
+{
+    <div class="card p-8 text-center text-text-secondary">No instructor profile found for your account.</div>
+}
+else
+{
+    <div class="card p-5 max-w-3xl">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Full name"]</label>
+                <input @bind="_edit.FullName" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Email"]</label>
+                <input value="@_p.Email" disabled class="w-full border border-border-base rounded-btn px-3 py-2 text-sm bg-surface-muted text-text-secondary" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Phone"]</label>
+                <input @bind="_edit.Phone" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["City"]</label>
+                <input @bind="_edit.City" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-caption text-text-secondary mb-1 block">Headline</label>
+                <input @bind="_edit.Headline" placeholder="e.g. Senior Data Scientist @@ Acme" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-caption text-text-secondary mb-1 block">Bio</label>
+                <textarea @bind="_edit.Bio" rows="4" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-caption text-text-secondary mb-1 block">Expertise tags (comma-separated)</label>
+                <input @bind="_tagsRaw" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Years of experience</label>
+                <input @bind="_edit.YearsExperience" type="number" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">LinkedIn URL</label>
+                <input @bind="_edit.LinkedinUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div class="flex items-center gap-2">
+                <input id="pub" type="checkbox" @bind="_edit.IsPublic" />
+                <label for="pub" class="text-sm">Show me on the public site</label>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_msg))
+        {
+            <p class="text-sm mt-3 @(_ok ? "text-status-success" : "text-status-danger")">@_msg</p>
+        }
+        <div class="mt-4">
+            <button class="btn-primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? "Saving…" : "Save profile")</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private bool _saving;
+    private bool _ok;
+    private string? _msg;
+    private string _tagsRaw = string.Empty;
+    private InstructorProfileDto? _p;
+    private UpdateInstructorRequest _edit = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _p = await InstructorApi.GetProfileAsync();
+        if (_p is not null)
+        {
+            _edit = new UpdateInstructorRequest
+            {
+                FullName = _p.FullName,
+                Phone = _p.Phone,
+                City = _p.City,
+                Headline = _p.Headline,
+                Bio = _p.Bio,
+                ExpertiseTags = _p.ExpertiseTags,
+                YearsExperience = _p.YearsExperience,
+                LinkedinUrl = _p.LinkedinUrl,
+                HourlyRate = _p.HourlyRate,
+                IsPublic = _p.IsPublic
+            };
+            _tagsRaw = string.Join(", ", _p.ExpertiseTags);
+        }
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _msg = null;
+        _edit.ExpertiseTags = _tagsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        _saving = true;
+        var res = await InstructorApi.UpdateProfileAsync(_edit);
+        _saving = false;
+        _ok = res is { Success: true };
+        _msg = _ok ? "Profile saved." : (res?.Message ?? "Could not save.");
+    }
+}

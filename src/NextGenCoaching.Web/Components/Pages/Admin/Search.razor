@@ -1,0 +1,71 @@
+@page "/admin/search"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@inject NavigationManager Nav
+
+<PageTitle>Search · Admin · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Search"]</h1>
+    <p class="text-caption text-text-secondary">Find students, courses, instructors, and jobs.</p>
+</div>
+
+<div class="flex gap-2 mb-6 max-w-xl">
+    <input @bind="_q" @bind:event="oninput" @onkeyup="OnKey" placeholder="Type at least 2 characters…"
+           class="flex-1 border border-border-base rounded-btn px-3 py-2 text-sm" />
+    <button class="btn-primary" @onclick="SearchAsync">@L["Search"]</button>
+</div>
+
+@if (_searching)
+{
+    <div class="card p-6 text-center text-text-secondary">Searching…</div>
+}
+else if (_results is not null)
+{
+    @if (_results.Hits.Count == 0)
+    {
+        <div class="card p-8 text-center text-text-secondary">No results for “@_results.Query”.</div>
+    }
+    else
+    {
+        @foreach (var group in _results.Hits.GroupBy(h => h.Type))
+        {
+            <div class="mb-5">
+                <h2 class="text-caption text-text-secondary uppercase tracking-wide mb-2">@group.Key</h2>
+                <div class="card divide-y divide-border-base">
+                    @foreach (var hit in group)
+                    {
+                        <button class="w-full text-left px-4 py-3 hover:bg-surface-muted" @onclick="() => Go(hit.Url)">
+                            <div class="font-medium text-sm">@hit.Title</div>
+                            @if (!string.IsNullOrEmpty(hit.Subtitle))
+                            {
+                                <div class="text-meta text-text-secondary">@hit.Subtitle</div>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    }
+}
+
+@code {
+    private string _q = "";
+    private bool _searching;
+    private SearchResultsDto? _results;
+
+    private async Task OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SearchAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_q) || _q.Trim().Length < 2) return;
+        _searching = true;
+        _results = await AdminApi.SearchAsync(_q.Trim());
+        _searching = false;
+    }
+
+    private void Go(string url) => Nav.NavigateTo(url);
+}

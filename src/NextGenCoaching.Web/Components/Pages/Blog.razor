@@ -1,0 +1,158 @@
+@page "/blog"
+
+<PageTitle>@L["Insights, Guides & Career Playbooks · NextGen Coaching"]</PageTitle>
+
+<!-- HERO SECTION: Cosmic Dark Gradient Mesh -->
+<PageIntro Eyebrow="IDEAS FOR YOUR NEXT CHAPTER" Title="Stay curious. Stay a step ahead." Description="Explore perspectives on data, technology, interviews, and building a career that inspires you." />
+
+<!-- MAIN CONTENT & ARTICLES FEED -->
+<section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Category Chips & Search Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-8 mb-10 border-b border-slate-200" data-motion="fade-up">
+        <div class="flex flex-wrap gap-2">
+            <span class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold cursor-pointer shadow-sm">@L["All Articles"]</span>
+            <span class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer transition-colors">@L["Career Transitions"]</span>
+            <span class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer transition-colors">@L["SQL & Data Warehousing"]</span>
+            <span class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer transition-colors">@L["Interview Questions"]</span>
+            <span class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer transition-colors">@L["Salary Trends"]</span>
+        </div>
+        <div class="text-xs text-slate-500 font-medium">
+            @L["Showing 6 curated field guides"]
+        </div>
+    </div>
+
+    <!-- Featured Articles Grid -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        @foreach (var post in CuratedPosts)
+        {
+            <article data-motion="fade-up" data-tilt class="card card-hover spotlight-card p-6 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex flex-col justify-between group">
+                <div>
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-3">
+                        <span class="px-2.5 py-0.5 rounded-md font-semibold @post.BadgeClass">@L[post.Category]</span>
+                        <span>@L[post.ReadTime]</span>
+                    </div>
+
+                    <h2 class="text-xl font-bold text-slate-900 group-hover:text-brand-primary transition-colors leading-snug">
+                        @L[post.Title]
+                    </h2>
+
+                    <p class="mt-3 text-slate-600 text-sm leading-relaxed line-clamp-3">
+                        @L[post.Excerpt]
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center">
+                            @post.AuthorInitials
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-slate-900">@post.Author</div>
+                            <div class="text-[11px] text-slate-400">@L[post.PublishedOn]</div>
+                        </div>
+                    </div>
+                    <span class="text-brand-primary text-xs font-semibold group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                        @L["Read →"]
+                    </span>
+                </div>
+            </article>
+        }
+    </div>
+
+    <!-- Newsletter CTA Box -->
+    <div data-motion="fade-up" class="mt-20 relative bg-gradient-to-r from-slate-900 via-brand-navy to-slate-900 rounded-3xl p-8 sm:p-12 text-white shadow-2xl border border-white/10 overflow-hidden text-center max-w-4xl mx-auto">
+        <div class="pointer-events-none absolute -bottom-20 -right-20 w-72 h-72 bg-brand-cyan/20 rounded-full blur-[100px]"></div>
+        <div class="relative z-10 max-w-xl mx-auto">
+            <span class="px-3 py-1 rounded-full bg-white/10 text-brand-cyan text-xs font-bold uppercase tracking-wider mb-4 inline-block">
+                @L["Weekly Tech Career Briefing"]
+            </span>
+            <h3 class="text-2xl sm:text-3xl font-extrabold tracking-tight">@L["Stay Ahead of Indian Tech Hiring Trends"]</h3>
+            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
+                @L["Join 14,000+ aspiring and junior data professionals. Receive real interview questions, salary tear-downs, and resume blueprints every Sunday morning."]
+            </p>
+            <div class="mt-6 flex flex-col sm:flex-row gap-2.5 max-w-md mx-auto">
+                <input type="email" placeholder="@L["Enter your email address"]" class="px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan flex-1" />
+                <button class="btn-gradient px-6 py-3 text-sm font-semibold shadow-glow-cyan shrink-0">@L["Subscribe Free"]</button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-3">@L["Zero spam. Unsubscribe in one click anytime."]</p>
+        </div>
+    </div>
+</section>
+
+@code {
+    private record BlogPostItem(
+        string Title,
+        string Excerpt,
+        string Category,
+        string BadgeClass,
+        string ReadTime,
+        string Author,
+        string AuthorInitials,
+        string PublishedOn
+    );
+
+    private readonly List<BlogPostItem> CuratedPosts = new()
+    {
+        new(
+            "The 2026 SQL Window Functions Handbook for Data Analyst Interviews",
+            "A comprehensive breakdown of ROW_NUMBER(), DENSE_RANK(), LAG/LEAD, and running aggregates that Tier-1 product companies test in technical rounds.",
+            "Technical Deep-Dive",
+            "bg-blue-50 text-brand-primary",
+            "8 min read",
+            "Rajesh Nair",
+            "RN",
+            "Oct 2026"
+        ),
+        new(
+            "How Sanya Cracked a ₹12.5 LPA Data Engineering Offer from Non-CS Background",
+            "From a B.Com graduate doing invoice reconciliation to deploying automated Snowflake ELT pipelines at an international fintech firm.",
+            "Alumni Story",
+            "bg-emerald-50 text-emerald-700",
+            "6 min read",
+            "Priya Deshmukh",
+            "PD",
+            "Sep 2026"
+        ),
+        new(
+            "Snowflake vs. Azure Synapse in 2026: What Hiring Managers Look For",
+            "Understanding virtual warehouse auto-suspend, micro-partitions, and why companies are actively transitioning legacy on-prem schemas to cloud DWH.",
+            "Architecture",
+            "bg-purple-50 text-brand-purple",
+            "10 min read",
+            "Vikramaditya Sen",
+            "VS",
+            "Sep 2026"
+        ),
+        new(
+            "The 5 Costliest Resume Mistakes Keeping You Stuck in Applicant Hell",
+            "Why listing 'Python, C++, Java, Machine Learning' without quantified business impact is triggering immediate ATS rejection and how to fix it.",
+            "Career Advice",
+            "bg-amber-50 text-amber-700",
+            "5 min read",
+            "Sneha Kulkarni",
+            "SK",
+            "Aug 2026"
+        ),
+        new(
+            "Power BI Enterprise DAX: 7 Measures Every BI Developer Must Master",
+            "Calculate period-over-period sales variance, rolling averages, and dynamic currency conversions without slowing down report rendering.",
+            "Technical Deep-Dive",
+            "bg-blue-50 text-brand-primary",
+            "9 min read",
+            "Sneha Kulkarni",
+            "SK",
+            "Aug 2026"
+        ),
+        new(
+            "Salary Benchmark Report 2026: Entry & Mid-Level Analytics Roles in India",
+            "An honest analysis of starting salaries for Data Analysts, Analytics Engineers, and ETL Developers across Bengaluru, Hyderabad, and Pune.",
+            "Market Intelligence",
+            "bg-rose-50 text-rose-700",
+            "7 min read",
+            "Priya Deshmukh",
+            "PD",
+            "Jul 2026"
+        )
+    };
+}
+

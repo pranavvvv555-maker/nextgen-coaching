@@ -1,0 +1,280 @@
+@inject AdminApiClient AdminApi
+@inject PaymentApiClient PayApi
+
+@if (Open)
+{
+    <div class="fixed inset-0 z-40 bg-brand-navy/40" @onclick="Close"></div>
+    <aside class="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-surface shadow-card-hover z-50 flex flex-col">
+        @* Header *@
+        <div class="px-5 py-4 border-b border-border-base flex items-start justify-between">
+            <div>
+                <div class="text-meta uppercase tracking-wider text-text-muted mb-1">@L["Lead"]</div>
+                @if (_lead is null)
+                {
+                    <div class="h-5 w-40 bg-border-base rounded animate-pulse"></div>
+                }
+                else
+                {
+                    <h2 class="text-h2 leading-tight">@_lead.FullName</h2>
+                    <div class="text-caption text-text-muted mt-0.5">@_lead.Email · @_lead.Phone</div>
+                }
+            </div>
+            <button @onclick="Close" class="text-text-muted hover:text-text-primary text-2xl leading-none">×</button>
+        </div>
+
+        @* Body — scrollable *@
+        <div class="flex-1 overflow-y-auto">
+            @if (_lead is null)
+            {
+                <div class="p-6 text-text-muted text-sm">@L["Loading…"]</div>
+            }
+            else
+            {
+                <div class="p-5 border-b border-border-base">
+                    <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                        <div>
+                            <dt class="text-meta text-text-muted uppercase tracking-wider">@L["Status"]</dt>
+                            <dd><span class="@StatusPillClass(_lead.Status)">@_lead.Status</span></dd>
+                        </div>
+                        <div>
+                            <dt class="text-meta text-text-muted uppercase tracking-wider">@L["Source"]</dt>
+                            <dd class="text-text-secondary">@_lead.Source</dd>
+                        </div>
+                        <div>
+                            <dt class="text-meta text-text-muted uppercase tracking-wider">@L["Course interest"]</dt>
+                            <dd class="text-text-secondary">@(_lead.CourseInterestTitle ?? "—")</dd>
+                        </div>
+                        <div>
+                            <dt class="text-meta text-text-muted uppercase tracking-wider">@L["City"]</dt>
+                            <dd class="text-text-secondary">@(_lead.City ?? "—")</dd>
+                        </div>
+                        <div>
+                            <dt class="text-meta text-text-muted uppercase tracking-wider">@L["Graduation"]</dt>
+                            <dd class="text-text-secondary">@(_lead.Graduation ?? "—") @(_lead.YearOfGraduation?.ToString() ?? "")</dd>
+                        </div>
+                        <div>
+                            <dt class="text-meta text-text-muted uppercase tracking-wider">@L["Created"]</dt>
+                            <dd class="text-text-secondary">@_lead.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</dd>
+                        </div>
+                        @if (_lead.NextFollowupAtUtc.HasValue)
+                        {
+                            <div class="col-span-2">
+                                <dt class="text-meta text-text-muted uppercase tracking-wider">@L["Next follow-up"]</dt>
+                                <dd class="text-text-secondary">@_lead.NextFollowupAtUtc.Value.ToLocalTime().ToString("ddd, dd MMM · HH:mm")</dd>
+                            </div>
+                        }
+                    </dl>
+                </div>
+
+                @* Convert to student *@
+                <div class="p-5 border-b border-border-base">
+                    <h3 class="text-h3 mb-3">@L["Convert to student"]</h3>
+                    @if (_lead.Status == "Enrolled")
+                    {
+                        <div class="text-caption text-text-secondary">@L["This lead is already enrolled."]</div>
+                    }
+                    else if (_setPasswordUrl is null)
+                    {
+                        <p class="text-caption text-text-secondary mb-2">
+                            Creates a student account, returns a one-time set-password link you can email to @_lead.Email.
+                        </p>
+                        <button @onclick="ConvertAsync" disabled="@_converting" class="btn-outline w-full text-sm">
+                            @(_converting ? "Converting…" : "Convert to student")
+                        </button>
+                        @if (!string.IsNullOrEmpty(_convertError))
+                        {
+                            <div class="text-caption text-status-danger bg-status-danger/10 rounded-btn p-2 mt-2">@_convertError</div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-caption text-status-success bg-status-success/10 rounded-btn p-2 mb-2">
+                            @L["Student created. Send this link:"]
+                        </div>
+                        <textarea readonly rows="2" class="w-full border border-border-base rounded-btn px-2 py-1.5 text-meta font-mono">@_setPasswordUrl</textarea>
+                        <a href="@($"/checkout?course=data-science&leadId={LeadId}")" target="_blank" class="btn-primary w-full mt-2 text-sm text-center inline-block">
+                            @L["Open checkout page for this lead"]
+                        </a>
+                    }
+                </div>
+
+                @* Log-activity form *@
+                <div class="p-5 border-b border-border-base">
+                    <h3 class="text-h3 mb-3">@L["Log activity"]</h3>
+                    <div class="space-y-2.5">
+                        <div class="grid grid-cols-2 gap-2">
+                            <select @bind="_form.ActivityType" class="border border-border-base rounded-btn px-2.5 py-1.5 text-sm">
+                                <option value="Note">@L["Note"]</option>
+                                <option value="Call">@L["Call"]</option>
+                                <option value="Email">@L["Email"]</option>
+                                <option value="WhatsApp">WhatsApp</option>
+                                <option value="Sms">SMS</option>
+                                <option value="Meeting">@L["Meeting"]</option>
+                            </select>
+                            <input @bind="_form.Outcome" placeholder="Outcome (optional)"
+                                   class="border border-border-base rounded-btn px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <textarea @bind="_form.Description" rows="3" placeholder="What happened? Next steps?"
+                                  class="w-full border border-border-base rounded-btn px-2.5 py-1.5 text-sm"></textarea>
+                        <div>
+                            <label class="text-meta text-text-muted block mb-1">@L["Next follow-up (optional)"]</label>
+                            <input @bind="_followupLocal" type="datetime-local"
+                                   class="w-full border border-border-base rounded-btn px-2.5 py-1.5 text-sm" />
+                        </div>
+                        <button @onclick="LogAsync" disabled="@(_logging || !CanLog)" class="btn-primary w-full text-sm">
+                            @(_logging ? "Saving…" : "Save activity")
+                        </button>
+                        @if (!string.IsNullOrEmpty(_toast))
+                        {
+                            <div class="text-caption text-status-success bg-status-success/10 rounded-btn p-2">@_toast</div>
+                        }
+                    </div>
+                </div>
+
+                @* Activity timeline *@
+                <div class="p-5">
+                    <h3 class="text-h3 mb-3">@L["Activity timeline"]</h3>
+                    @if (_lead.Activities.Count == 0)
+                    {
+                        <div class="text-caption text-text-muted text-center py-4">@L["No activity yet."]</div>
+                    }
+                    else
+                    {
+                        <ol class="space-y-3">
+                            @foreach (var a in _lead.Activities)
+                            {
+                                <li class="border-l-2 border-brand-primary pl-3">
+                                    <div class="flex items-center gap-2 text-meta text-text-muted uppercase tracking-wider mb-0.5">
+                                        <span>@a.ActivityType</span>
+                                        @if (!string.IsNullOrEmpty(a.Outcome))
+                                        {
+                                            <span>·</span>
+                                            <span>@a.Outcome</span>
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(a.Description))
+                                    {
+                                        <p class="text-sm text-text-primary">@a.Description</p>
+                                    }
+                                    <div class="text-meta text-text-muted mt-1">@a.OccurredAtUtc.ToLocalTime().ToString("ddd, dd MMM yyyy · HH:mm")</div>
+                                </li>
+                            }
+                        </ol>
+                    }
+                </div>
+            }
+        </div>
+    </aside>
+}
+
+@code {
+    [Parameter] public Guid? LeadId { get; set; }
+    [Parameter] public EventCallback OnClosed { get; set; }
+    [Parameter] public EventCallback OnUpdated { get; set; }
+
+    private bool Open => LeadId is not null;
+
+    private LeadDetailDto? _lead;
+    private readonly LogLeadActivityRequest _form = new();
+    private DateTime? _followupLocal;
+    private bool _logging;
+    private string? _toast;
+    private Guid? _loadedFor;
+
+    // Convert-to-student state
+    private bool _converting;
+    private string? _convertError;
+    private string? _setPasswordUrl;
+
+    private bool CanLog =>
+        !string.IsNullOrWhiteSpace(_form.Description);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (LeadId is null)
+        {
+            _lead = null;
+            _loadedFor = null;
+            return;
+        }
+        if (_loadedFor != LeadId)
+        {
+            _lead = null;
+            _loadedFor = LeadId;
+            _setPasswordUrl = null;
+            _convertError = null;
+            _lead = await AdminApi.GetLeadAsync(LeadId.Value);
+            ResetForm();
+        }
+    }
+
+    private void ResetForm()
+    {
+        _form.ActivityType = "Note";
+        _form.Outcome = null;
+        _form.Description = string.Empty;
+        _form.NextFollowupAtUtc = null;
+        _followupLocal = null;
+        _toast = null;
+    }
+
+    private async Task LogAsync()
+    {
+        if (LeadId is null) return;
+        _logging = true;
+        _toast = null;
+        _form.NextFollowupAtUtc = _followupLocal?.ToUniversalTime();
+
+        var resp = await AdminApi.LogLeadActivityAsync(LeadId.Value, _form);
+        _logging = false;
+
+        if (resp?.Success == true)
+        {
+            _toast = "Activity logged.";
+            ResetForm();
+            // refetch detail so the timeline reflects the new entry
+            _lead = await AdminApi.GetLeadAsync(LeadId.Value);
+            await OnUpdated.InvokeAsync();
+        }
+        else
+        {
+            _toast = resp?.Message ?? "Couldn't save activity.";
+        }
+    }
+
+    private async Task ConvertAsync()
+    {
+        if (LeadId is null) return;
+        _converting = true;
+        _convertError = null;
+
+        var resp = await PayApi.ConvertLeadAsync(LeadId.Value);
+        _converting = false;
+
+        if (resp?.Success == true && resp.Data is not null)
+        {
+            _setPasswordUrl = resp.Data.SetPasswordUrl;
+            // Refresh detail so the status pill reflects the new state
+            _lead = await AdminApi.GetLeadAsync(LeadId.Value);
+            await OnUpdated.InvokeAsync();
+        }
+        else
+        {
+            _convertError = resp?.Message ?? "Conversion failed.";
+        }
+    }
+
+    private async Task Close() => await OnClosed.InvokeAsync();
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "New"            => "bg-brand-sky-100 text-brand-primary-dark",
+        "Contacted"      => "bg-status-info/15 text-status-info",
+        "Qualified"      => "bg-status-success/15 text-status-success",
+        "DemoScheduled"  => "bg-status-purple/15 text-status-purple",
+        "Negotiation"    => "bg-status-warning/15 text-status-warning",
+        "Enrolled"       => "bg-status-success/15 text-status-success",
+        "Lost"           => "bg-status-danger/15 text-status-danger",
+        _                => "bg-surface-muted text-text-secondary"
+    };
+}

@@ -1,0 +1,94 @@
+@page "/"
+@inject CourseApiClient Courses
+
+<PageTitle>@L["NextGen | Your next chapter starts here"]</PageTitle>
+<HeadContent><meta name="description" content="Live online Data Science, Python, SQL, Power BI and cloud programs across India. Explore practical projects and learn with personal mentor guidance." /></HeadContent>
+
+<div class="home-project-first">
+<section class="ng-hero colour-pop-hero" data-learning-hero aria-labelledby="home-hero-title">
+    <div class="hero-ambient" aria-hidden="true"></div>
+    <div class="ng-container hero-layout">
+        <div class="hero-copy" data-hero-enter>
+            <span class="eyebrow hero-eyebrow"><span class="status-dot"></span> @L["THINK BIG. LEARN WITH NEXTGEN."]</span>
+            <h1 id="home-hero-title"><span class="colour-pop-brand">NextGen —</span><span class="colour-pop-your">@L["Your"]</span><span class="colour-pop-chapter">@L["next chapter"]</span><span class="colour-pop-start">@L["starts here."]<svg viewBox="0 0 600 30" fill="none" aria-hidden="true"><path d="M8 21C174 0 390 4 590 19M25 27C192 9 381 12 574 24" stroke="currentColor" stroke-width="7" stroke-linecap="round" /></svg></span></h1>
+            <p>@L["Live online learning in Data Science, AI and cloud. Build practical skills with mentors—from anywhere in India."]</p>
+            <div class="hero-actions"><a href="/courses" class="btn-primary">@L["Explore programs"] <span aria-hidden="true">↗</span></a><a href="/webinar" class="hero-demo">@L["Free masterclass"] <span aria-hidden="true">↗</span></a></div>
+            <div class="home-hero-note"><span class="status-dot"></span>@L["Live online · Pan India"]</div>
+        </div>
+        <div class="hero-art" data-hero-enter><DataAiScene /><button type="button" class="data-ai-motion-toggle" data-ai-motion-toggle aria-pressed="false" aria-label="@L["Pause animation"]" data-pause-label="@L["Pause animation"]" data-play-label="@L["Play animation"]"><span data-ai-pause-icon aria-hidden="true">Ⅱ</span><span data-ai-play-icon aria-hidden="true" hidden>▶</span><span class="sr-only" data-ai-toggle-label>@L["Pause animation"]</span></button></div>
+    </div>
+
+</section>
+
+<ProjectShowcase Featured="true" />
+
+<section class="home-skills-section" aria-labelledby="home-skills-title">
+    <div class="ng-container home-skills-layout">
+        <div><span class="eyebrow">@L["TOOLS FOR YOUR NEXT CHAPTER"]</span><h2 id="home-skills-title">@L["Skills that"]<br /><span>@L["connect."]</span></h2></div>
+        <div class="home-skills-list">
+            @foreach (var skill in Skills) { <div class="home-skill"><span class="home-skill-icon home-skill-icon--@skill.Color"><ContactGlyph Name="@skill.Icon" /></span><strong>@skill.Name</strong><small>@L[skill.Description]</small></div> }
+        </div>
+    </div>
+</section>
+
+<section id="programs" class="home-programs-section" aria-labelledby="home-programs-title">
+    <div class="ng-container">
+        <div class="home-section-heading" data-motion="fade-up"><div><span class="eyebrow">@L["CHOOSE A PATH. BUILD WHAT’S NEXT."]</span><h2 id="home-programs-title">@L["Find your"] <span>@L["program."]</span></h2></div><a href="/courses" class="text-link">@L["Explore all programs"]<span aria-hidden="true">↗</span></a></div>
+        <div class="home-program-grid">
+            @foreach (var course in _courses.OrderBy(c => c.SortOrder)) {
+                <a href="/courses/@course.Slug" class="home-program-tile" data-home-course="@course.Slug" data-motion="fade-up"><div class="home-program-art"><CourseIllustration CourseSlug="@course.Slug" /></div><div><h3>@L[course.Title]</h3><p>@L[CourseFocus(course.Slug)]</p><span>@L["View program"] <span aria-hidden="true">↗</span></span></div></a>
+            }
+        </div>
+    </div>
+</section>
+
+<section class="home-online-section" aria-labelledby="home-online-title">
+    <div class="ng-container home-online-layout">
+        <div class="home-online-copy" data-motion="fade-up"><span class="eyebrow">@L["LEARN ANYWHERE. GROW EVERY DAY."]</span><h2 id="home-online-title">@L["Learning that"]<br /><span>@L["fits your life."]</span></h2><p>@L["Get guidance, hands-on practice and the flexibility to learn from anywhere in India."]</p></div>
+        <figure class="home-online-art" data-motion="fade-up"><img src="images/home-online-classroom.webp" alt="@L["A student joining a NextGen online class with a mentor"]" width="1448" height="1086" loading="lazy" decoding="async" /><figcaption>@L["Live learning. Personal support."]</figcaption></figure>
+        <ul class="home-online-benefits">
+            <li><span class="home-online-icon home-online-icon--mint"><ContactGlyph Name="cloud" /></span><div><h3>@L["Online across India"]</h3><p>@L["Learn from your own space, wherever you are."]</p></div></li>
+            <li><span class="home-online-icon home-online-icon--lavender"><ContactGlyph /></span><div><h3>@L["Live classes"]</h3><p>@L["Ask questions and work through ideas with mentors."]</p></div></li>
+            <li><span class="home-online-icon home-online-icon--coral"><ContactGlyph Name="book" /></span><div><h3>@L["Practical projects"]</h3><p>@L["Apply your skills to useful, hands-on work."]</p></div></li>
+        </ul>
+    </div>
+</section>
+
+<section class="ng-section faq-section home-faq" aria-labelledby="home-faq-title"><div class="ng-container faq-layout"><div data-motion="fade-up"><span class="eyebrow">@L["FREQUENTLY ASKED QUESTIONS"]</span><h2 id="home-faq-title">@L["Your questions,"]<br /><span>@L["answered."]</span></h2><p class="section-intro">@L["Still figuring things out? Our team is here to help you find the right fit."]</p><a href="/contact" class="text-link">@L["Let’s talk"] <span aria-hidden="true">↗</span></a></div><div class="faq-list">@for (var i = 0; i < _faqs.Length; i++) { var idx = i; var faq = _faqs[idx]; var isOpen = _openFaqIndex == idx; <div class="faq-item @(isOpen ? "is-open" : "")"><button @onclick="() => ToggleFaq(idx)" aria-expanded="@(isOpen ? "true" : "false")" aria-controls="faq-answer-@idx"><span>@L[faq.Question]</span><span class="faq-plus" aria-hidden="true">+</span></button><div id="faq-answer-@idx" class="faq-answer" inert="@(!isOpen)"><div><p>@L[faq.Answer]</p></div></div></div> }</div></div></section>
+</div>
+
+@code {
+    private IReadOnlyList<CourseSummaryDto> _courses = CourseApiClient.LocalCatalog;
+    private int? _openFaqIndex;
+    protected override async Task OnInitializedAsync()
+    {
+        using var requestTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(4));
+        var courses = await Courses.GetCoursesAsync(ct: requestTimeout.Token);
+        if (courses is { Count: > 0 }) _courses = courses;
+    }
+    private void ToggleFaq(int idx) => _openFaqIndex = _openFaqIndex == idx ? null : idx;
+    private static string CourseFocus(string slug) => slug switch {
+        "data-science" => "Build foundations in data, analytics and AI.",
+        "sql" => "Query, transform and understand your data.",
+        "python" => "Analyse data and automate everyday tasks.",
+        "power-bi" => "Create dashboards that answer business questions.",
+        "snowflake" => "Work with modern cloud data warehouses.",
+        "azure-data-factory" => "Connect data sources and build cloud pipelines.",
+        _ => "Build practical skills for your next chapter."
+    };
+    private record Skill(string Name, string Icon, string Color, string Description);
+    private static readonly Skill[] Skills = {
+        new("Python", "code", "blue", "Analyse. Automate. Build."),
+        new("SQL", "database", "blue", "Query. Transform. Explore."),
+        new("Power BI", "chart", "amber", "Visualise. Tell a story."),
+        new("Snowflake", "snow", "sky", "Work with cloud data."),
+        new("Azure", "cloud", "violet", "Build in the cloud.")
+    };
+    private record FaqItem(string Question, string Answer);
+    private static readonly FaqItem[] _faqs = {
+        new("Do I need a technical or coding background to join?", "Start with the foundations in a beginner-friendly program. Our team can help you choose a course that fits your current skills."),
+        new("Can I learn from anywhere in India?", "Yes. NextGen classes are online, so you can join from your own space anywhere in India."),
+        new("How do I choose the right program?", "Start with the skills you want to learn and the work you want to do. Explore the program details or speak with an advisor about your goals."),
+        new("What if I miss a live session?", "Ask our team about recordings and catch-up resources for your chosen program.")
+    };
+}

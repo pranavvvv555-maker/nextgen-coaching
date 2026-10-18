@@ -1,0 +1,132 @@
+@page "/login"
+@inject AuthApiClient AuthApi
+@inject NavigationManager Nav
+@inject AuthStateService AuthState
+
+<PageTitle>@L["Sign In · NextGen Portal"]</PageTitle>
+
+<section class="min-h-[calc(100vh-140px)] relative bg-gradient-to-b from-[#060b19] via-[#0b1329] to-[#0f172a] flex items-center justify-center px-4 py-16 overflow-hidden">
+    <!-- Glowing background ambient blobs -->
+    <div class="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-brand-primary/20 rounded-full blur-[130px] animate-blob"></div>
+    <div class="pointer-events-none absolute bottom-10 right-10 w-[400px] h-[400px] bg-brand-cyan/15 rounded-full blur-[120px] animate-float"></div>
+
+    <div class="w-full max-w-md relative z-10" data-motion="fade-up">
+        <!-- Main Card -->
+        <div class="card-glass spotlight-card rounded-3xl p-8 sm:p-10 border border-white/15 bg-slate-900/85 shadow-2xl backdrop-blur-xl">
+            <!-- Brand Badge -->
+            <div class="flex items-center gap-3 mb-8">
+                <BrandLogo Class="official-logo--account" />
+                <div>
+                    <div class="font-bold text-white text-base tracking-tight">NextGen Coaching</div>
+                    <div class="text-[11px] text-brand-cyan font-semibold uppercase tracking-wider">@L["Unified Portal Sign-In"]</div>
+                </div>
+            </div>
+
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">@L["Welcome back"]</h1>
+            <p class="text-xs text-slate-400 mt-1 mb-6">
+                @L["Sign in to access your courseware, mock sessions, or admin portal."]
+            </p>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                        @L["Email Address"]
+                    </label>
+                    <input id="login-email" @bind="_req.Email" @bind:event="oninput"
+                           type="email"
+                           autocomplete="username"
+                           class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                           placeholder="you@nextgencoaching.local" />
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="login-password" class="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                            @L["Password"]
+                        </label>
+                        <a href="/contact" class="text-[11px] text-brand-cyan hover:underline">@L["Forgot password?"]</a>
+                    </div>
+                    <input id="login-password" @bind="_req.Password" @bind:event="oninput"
+                           type="password"
+                           autocomplete="current-password"
+                           @onkeydown="OnKeyDown"
+                           class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                           placeholder="••••••••" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="p-3 rounded-xl text-xs bg-rose-500/15 border border-rose-500/30 text-rose-300 font-medium">
+                        @L[_error]
+                    </div>
+                }
+
+                <button @onclick="SubmitAsync"
+                        disabled="@(_submitting || !CanSubmit)"
+                        class="btn-gradient w-full py-3.5 text-sm font-semibold shadow-glow-indigo mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    @if (_submitting)
+                    {
+                        <span class="inline-flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            @L["Authenticating..."]
+                        </span>
+                    }
+                    else
+                    {
+                        <span>@L["Sign In to Dashboard"]</span>
+                    }
+                </button>
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                <span>@L["New candidate?"] <a href="/signup" class="text-brand-cyan hover:underline font-medium">@L["Create account"]</a></span>
+                <a href="/" class="text-slate-400 hover:text-white transition-colors">@L["Back to site →"]</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private readonly LoginRequest _req = new();
+    private string? _error;
+    private bool _submitting;
+
+    private bool CanSubmit =>
+        !string.IsNullOrWhiteSpace(_req.Email)
+        && !string.IsNullOrWhiteSpace(_req.Password);
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && CanSubmit && !_submitting)
+            await SubmitAsync();
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_submitting || !CanSubmit) return;
+        _error = null;
+        _submitting = true;
+
+        var resp = await AuthApi.LoginAsync(_req);
+        _submitting = false;
+
+        if (resp is { Success: true, Data: not null })
+        {
+            if (AuthState.IsInRole(RoleNames.Admin) || AuthState.IsInRole(RoleNames.Counsellor))
+                Nav.NavigateTo("/admin");
+            else if (AuthState.IsInRole(RoleNames.Instructor))
+                Nav.NavigateTo("/instructor");
+            else if (AuthState.IsInRole(RoleNames.HrReviewer))
+                Nav.NavigateTo("/hr");
+            else if (AuthState.IsInRole(RoleNames.Student))
+                Nav.NavigateTo("/student");
+            else
+                Nav.NavigateTo("/");
+        }
+        else
+        {
+            _error = resp?.Message ?? "Invalid email or password.";
+        }
+    }
+}
+

@@ -1,0 +1,188 @@
+@page "/student/projects/{Id:guid}"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+
+<PageTitle>Project · NextGen</PageTitle>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else
+{
+    <div class="flex items-center gap-2 text-caption text-text-secondary mb-2">
+        <a href="/student/projects" class="text-brand-primary">← All projects</a>
+        <span>·</span><span>@_data.CourseTitle</span>
+    </div>
+
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <div class="text-meta text-text-muted uppercase tracking-wider">Project #@_data.ProjectNumber</div>
+            <h1 class="text-h2">@_data.Title</h1>
+            <p class="text-caption text-text-secondary mt-1">
+                Recommended duration: @_data.RecommendedDurationWeeks weeks
+            </p>
+        </div>
+        <span class="@StatusPillClass(_data.Status)">@StatusLabel(_data.Status)</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="card p-6 lg:col-span-2">
+            <h2 class="text-h3 mb-3">Brief</h2>
+            <div class="text-sm text-text-primary whitespace-pre-wrap">@_data.Brief</div>
+
+            @if (!string.IsNullOrEmpty(_data.DatasetUrl))
+            {
+                <div class="mt-4 p-3 bg-surface-muted rounded-btn">
+                    <div class="text-meta text-text-muted uppercase tracking-wider mb-1">Dataset</div>
+                    <a href="@_data.DatasetUrl" target="_blank" class="text-sm text-brand-primary break-all">@_data.DatasetUrl</a>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(_data.RubricJson))
+            {
+                <div class="mt-4">
+                    <h3 class="text-h3 mb-2">Rubric</h3>
+                    <pre class="text-meta bg-surface-muted rounded-btn p-3 overflow-x-auto">@_data.RubricJson</pre>
+                </div>
+            }
+
+            @if (_data.Status == "Graded" && !string.IsNullOrEmpty(_data.EvaluationJson))
+            {
+                <div class="mt-4">
+                    <h3 class="text-h3 mb-2">Evaluation breakdown</h3>
+                    <pre class="text-meta bg-surface-muted rounded-btn p-3 overflow-x-auto">@_data.EvaluationJson</pre>
+                </div>
+            }
+        </div>
+
+        <div class="card p-6">
+            @if (_data.Status == "Graded")
+            {
+                <h2 class="text-h3 mb-2">Result</h2>
+                <div class="text-h2 text-status-success mb-1">@_data.TotalScore?.ToString("0.#")</div>
+                <div class="text-meta text-text-muted">Submitted @_data.SubmittedAtUtc?.ToLocalTime().ToString("dd MMM HH:mm")</div>
+
+                @if (!string.IsNullOrEmpty(_data.Feedback))
+                {
+                    <div class="mt-4 p-3 bg-surface-muted rounded-btn">
+                        <div class="text-meta text-text-muted uppercase tracking-wider mb-1">Feedback</div>
+                        <p class="text-sm text-text-primary whitespace-pre-wrap">@_data.Feedback</p>
+                    </div>
+                }
+            }
+            else if (_data.EnrollmentId is null)
+            {
+                <div class="text-sm text-text-muted">You're not enrolled in this course, so you can't submit.</div>
+            }
+            else
+            {
+                <h2 class="text-h3 mb-3">@(_data.Status == "Submitted" ? "Resubmit" : "Submit")</h2>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">GitHub repo URL</label>
+                        <input @bind="_form.RepoUrl" placeholder="https://github.com/you/repo"
+                               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Deployed URL (optional)</label>
+                        <input @bind="_form.DeployedUrl" placeholder="https://yourapp.example.com"
+                               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Presentation URL (optional)</label>
+                        <input @bind="_form.PresentationUrl" placeholder="Slide deck or demo video"
+                               class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Description</label>
+                        <textarea @bind="_form.Description" rows="4" placeholder="What did you build? Any trade-offs to call out?"
+                                  class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2">@_error</div>
+                    }
+                    @if (!string.IsNullOrEmpty(_toast))
+                    {
+                        <div class="text-sm text-status-success bg-status-success/10 rounded-btn p-2">@_toast</div>
+                    }
+
+                    <button @onclick="SubmitAsync" disabled="@(_busy || !CanSubmit)" class="btn-primary w-full text-sm">
+                        @(_busy ? "Submitting…" : (_data.Status == "Submitted" ? "Resubmit" : "Submit"))
+                    </button>
+
+                    @if (_data.Status == "Submitted" && _data.SubmittedAtUtc.HasValue)
+                    {
+                        <div class="text-meta text-text-muted text-center">
+                            Last submitted @_data.SubmittedAtUtc.Value.ToLocalTime().ToString("dd MMM HH:mm")
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ProjectDetailDto? _data;
+    private readonly SubmitProjectRequest _form = new();
+    private bool _busy;
+    private string? _error;
+    private string? _toast;
+
+    private bool CanSubmit =>
+        !string.IsNullOrWhiteSpace(_form.RepoUrl)
+        || !string.IsNullOrWhiteSpace(_form.DeployedUrl)
+        || !string.IsNullOrWhiteSpace(_form.PresentationUrl);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _data = await StudentApi.GetProjectAsync(Id);
+        if (_data is not null)
+        {
+            _form.RepoUrl = _data.RepoUrl;
+            _form.DeployedUrl = _data.DeployedUrl;
+            _form.PresentationUrl = _data.PresentationUrl;
+            _form.Description = _data.Description;
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+        _toast = null;
+
+        var resp = await StudentApi.SubmitProjectAsync(Id, _form);
+        _busy = false;
+
+        if (resp?.Success == true)
+        {
+            _toast = "Submitted. You can keep editing until your instructor grades it.";
+            _data = await StudentApi.GetProjectAsync(Id);
+        }
+        else
+        {
+            _error = resp?.Message ?? "Could not submit.";
+        }
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "NotStarted"  => "bg-status-warning/15 text-status-warning",
+        "Submitted"   => "bg-status-info/15 text-status-info",
+        "Graded"      => "bg-status-success/15 text-status-success",
+        _             => "bg-surface-muted text-text-secondary"
+    };
+
+    private static string StatusLabel(string status) => status switch
+    {
+        "NotStarted"  => "Not started",
+        _             => status
+    };
+}

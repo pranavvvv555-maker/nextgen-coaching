@@ -1,0 +1,59 @@
+@page "/student/sessions"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+
+<PageTitle>Sessions · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-h2">@L["Sessions"]</h1>
+</div>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else if (_data.UpcomingSessions.Count == 0)
+{
+    <div class="card p-8 text-center text-text-muted">No sessions scheduled.</div>
+}
+else
+{
+    <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Title</th>
+                    <th class="px-4 py-3 font-medium">Course</th>
+                    <th class="px-4 py-3 font-medium">When</th>
+                    <th class="px-4 py-3 font-medium">Duration</th>
+                    <th class="px-4 py-3 font-medium text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var s in _data.UpcomingSessions)
+                {
+                    <tr class="hover:bg-surface-muted/50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@s.Title</div>
+                            <div class="text-meta text-text-muted">@s.SessionType</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@s.CourseTitle</td>
+                        <td class="px-4 py-3 text-text-secondary">@s.ScheduledAtUtc.ToLocalTime().ToString("ddd, dd MMM · HH:mm")</td>
+                        <td class="px-4 py-3 text-text-muted">@s.DurationMinutes min</td>
+                        <td class="px-4 py-3 text-right">
+                            @if (!string.IsNullOrEmpty(s.MeetingUrl))
+                            {
+                                <a href="@s.MeetingUrl" target="_blank" class="btn-primary text-caption px-3 py-1.5">Join</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private StudentDashboardDto? _data;
+    protected override async Task OnInitializedAsync() => _data = await StudentApi.GetDashboardAsync();
+}

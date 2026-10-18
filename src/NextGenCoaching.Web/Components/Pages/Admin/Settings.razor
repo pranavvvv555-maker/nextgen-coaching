@@ -1,0 +1,193 @@
+@page "/admin/settings"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Settings · Admin · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Settings"]</h1>
+    <p class="text-caption text-text-secondary">Email and SMTP configuration. These values are stored in the database and take effect without a redeploy.</p>
+</div>
+
+@if (_message is not null)
+{
+    <div class="@MessageClass">@_message</div>
+}
+
+@if (_loading)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else
+{
+    <div class="grid lg:grid-cols-3 gap-6">
+
+        @* ---------- SMTP configuration ---------- *@
+        <div class="lg:col-span-2 card p-6">
+            <h2 class="text-h3 mb-1">Email (SMTP)</h2>
+            <p class="text-caption text-text-muted mb-5">When sending is off, emails are written to the server log instead of being delivered.</p>
+
+            <label class="flex items-center gap-3 mb-5 cursor-pointer">
+                <input type="checkbox" @bind="_form.Enabled" class="h-4 w-4 rounded border-border-base" />
+                <span class="text-sm font-medium text-text-primary">Enable outbound email</span>
+            </label>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2">
+                    <label class="text-caption text-text-secondary mb-1 block">SMTP host</label>
+                    <input @bind="_form.SmtpHost" placeholder="smtp.example.com" class="@FieldClass" />
+                </div>
+
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Port</label>
+                    <input @bind="_form.SmtpPort" type="number" min="1" max="65535" class="@FieldClass" />
+                </div>
+                <div class="flex items-end pb-2.5">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" @bind="_form.UseStartTls" class="h-4 w-4 rounded border-border-base" />
+                        <span class="text-sm text-text-primary">Use STARTTLS</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">From email</label>
+                    <input @bind="_form.FromEmail" placeholder="noreply@yourdomain.com" class="@FieldClass" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">From name</label>
+                    <input @bind="_form.FromName" placeholder="NextGen Coaching" class="@FieldClass" />
+                </div>
+
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">SMTP username</label>
+                    <input @bind="_form.SmtpUser" placeholder="(blank = no authentication)" class="@FieldClass" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">SMTP password</label>
+                    <input @bind="_form.SmtpPassword" type="password"
+                           placeholder="@(_settings?.HasPassword == true ? "•••••••• (leave blank to keep current)" : "Not set")"
+                           class="@FieldClass" />
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 mt-6">
+                <button @onclick="SaveAsync" disabled="@(_saving || !CanSave)" class="btn-primary text-sm">
+                    @(_saving ? "Saving…" : "Save settings")
+                </button>
+                @if (!CanSave)
+                {
+                    <span class="text-caption text-text-muted">Host and From email are required.</span>
+                }
+            </div>
+        </div>
+
+        @* ---------- Test email ---------- *@
+        <div class="card p-6 h-fit">
+            <h2 class="text-h3 mb-1">Send a test email</h2>
+            <p class="text-caption text-text-muted mb-4">Verify the settings above by sending a test message. Save first so the test uses the latest values.</p>
+
+            <label class="text-caption text-text-secondary mb-1 block">Recipient</label>
+            <input @bind="_testTo" placeholder="you@example.com" class="@FieldClass mb-4" />
+
+            <button @onclick="SendTestAsync" disabled="@(_testing || string.IsNullOrWhiteSpace(_testTo))" class="btn-outline text-sm w-full">
+                @(_testing ? "Sending…" : "Send test email")
+            </button>
+
+            @if (_settings is { Enabled: false })
+            {
+                <p class="text-caption text-text-muted mt-3">Email is currently off, so a test will be logged on the server, not delivered.</p>
+            }
+        </div>
+
+    </div>
+}
+
+@code {
+    private EmailSettingsDto? _settings;
+    private UpdateEmailSettingsRequest _form = new();
+    private string _testTo = string.Empty;
+
+    private bool _loading = true;
+    private bool _saving;
+    private bool _testing;
+    private string? _message;
+    private bool _messageIsError;
+
+    private const string FieldClass = "w-full border border-border-base rounded-btn px-3 py-2 text-sm";
+
+    private string MessageClass =>
+        "rounded-btn px-4 py-2.5 text-sm mb-5 border " +
+        (_messageIsError
+            ? "bg-status-danger/10 text-status-danger border-status-danger/30"
+            : "bg-status-success/10 text-status-success border-status-success/30");
+
+    private bool CanSave =>
+        !string.IsNullOrWhiteSpace(_form.SmtpHost) &&
+        !string.IsNullOrWhiteSpace(_form.FromEmail);
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _settings = await AdminApi.GetEmailSettingsAsync();
+        if (_settings is not null)
+        {
+            _form = new UpdateEmailSettingsRequest
+            {
+                Enabled = _settings.Enabled,
+                SmtpHost = _settings.SmtpHost,
+                SmtpPort = _settings.SmtpPort,
+                FromEmail = _settings.FromEmail,
+                FromName = _settings.FromName,
+                SmtpUser = _settings.SmtpUser,
+                UseStartTls = _settings.UseStartTls,
+                SmtpPassword = null // never round-trip the stored password
+            };
+            if (string.IsNullOrWhiteSpace(_testTo))
+                _testTo = _settings.FromEmail;
+        }
+        else
+        {
+            ShowMessage("Could not load email settings.", isError: true);
+        }
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _message = null;
+        var resp = await AdminApi.UpdateEmailSettingsAsync(_form);
+        _saving = false;
+
+        if (resp is { Success: true })
+        {
+            ShowMessage("Email settings saved.");
+            await LoadAsync(); // refresh HasPassword and clear the password field
+        }
+        else
+        {
+            ShowMessage(resp?.Message ?? "Failed to save settings.", isError: true);
+        }
+    }
+
+    private async Task SendTestAsync()
+    {
+        _testing = true;
+        _message = null;
+        var resp = await AdminApi.SendTestEmailAsync(_testTo.Trim());
+        _testing = false;
+
+        if (resp is { Success: true })
+            ShowMessage(resp.Message ?? "Test email dispatched.");
+        else
+            ShowMessage(resp?.Message ?? "Failed to send test email.", isError: true);
+    }
+
+    private void ShowMessage(string message, bool isError = false)
+    {
+        _message = message;
+        _messageIsError = isError;
+    }
+}

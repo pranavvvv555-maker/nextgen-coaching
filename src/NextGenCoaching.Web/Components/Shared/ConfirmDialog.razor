@@ -1,0 +1,53 @@
+@* Reusable confirmation dialog. Usage:
+   <ConfirmDialog @ref="_confirm" />
+   ...
+   await _confirm.ShowAsync("Delete tool?", "This can't be undone.", async () => { await DeleteAsync(id); });
+*@
+
+@if (_visible)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @onclick="CancelAsync">
+        <div class="card p-6 max-w-sm w-full mx-4" @onclick:stopPropagation="true">
+            <h3 class="text-h3 mb-2">@_title</h3>
+            <p class="text-sm text-text-secondary mb-5">@_message</p>
+            <div class="flex justify-end gap-2">
+                <button class="btn-outline" @onclick="CancelAsync">@L["Cancel"]</button>
+                <button class="btn-primary !bg-status-danger" @onclick="ConfirmAsync">@_confirmText</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private string _title = "Are you sure?";
+    private string _message = "";
+    private string _confirmText = "Delete";
+    private Func<Task>? _onConfirm;
+
+    public Task ShowAsync(string title, string message, Func<Task> onConfirm, string confirmText = "Delete")
+    {
+        _title = title;
+        _message = message;
+        _onConfirm = onConfirm;
+        _confirmText = confirmText;
+        _visible = true;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmAsync()
+    {
+        _visible = false;
+        if (_onConfirm is not null) await _onConfirm.Invoke();
+        StateHasChanged();
+    }
+
+    private Task CancelAsync()
+    {
+        _visible = false;
+        _onConfirm = null;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+}

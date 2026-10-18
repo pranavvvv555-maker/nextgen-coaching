@@ -1,0 +1,138 @@
+@page "/contact"
+@inject LeadApiClient Leads
+
+<PageTitle>@L["Contact & Admissions Desk · NextGen Coaching"]</PageTitle>
+<HeadContent><meta name="description" content="Talk to NextGen about Data Science, AI and cloud programs. Get personal guidance, contact admissions or send an enquiry." /></HeadContent>
+
+<div class="contact-page">
+    <section class="contact-hero" aria-labelledby="contact-title">
+        <div class="ng-container contact-hero-layout">
+            <div class="contact-hero-copy" data-motion="fade-up">
+                <span class="eyebrow"><span class="status-dot"></span>@L["GOOD CONVERSATIONS START HERE"]</span>
+                <h1 id="contact-title">@L["Let’s build your"]<br /><span>@L["next chapter."]</span></h1>
+                <p>@L["Talk to our team about Data Science, AI and cloud programs. Explore your options and find the right next step for your goals."]</p>
+                <a href="/contact#contact-enquiry" class="contact-primary">@L["Talk to an advisor"]<ContactGlyph Name="arrow" /></a>
+                <div class="contact-hero-benefits">
+                    <span><ContactGlyph Name="book" />@L["Practical skills"]</span>
+                    <span><ContactGlyph Name="target" />@L["Personal guidance"]</span>
+                    <span><ContactGlyph Name="spark" />@L["New possibilities."]</span>
+                </div>
+            </div>
+            <figure class="contact-advisor-scene @(_pausedArt ? "is-paused" : "")">
+                <div class="contact-advisor-backdrop"></div>
+                <img src="images/contact-advisor-branded.webp" alt="@L["A NextGen advisor discussing learning goals with a student at a laptop"]" width="1448" height="1086" fetchpriority="high" decoding="async" />
+                <span class="contact-float contact-float--guidance"><ContactGlyph Name="target" />@L["Career guidance"]</span>
+                <span class="contact-float contact-float--programs"><ContactGlyph Name="book" />@L["Program details"]</span>
+                <span class="contact-float contact-float--cloud" aria-hidden="true"><ContactGlyph Name="cloud" /></span>
+                <span class="contact-float contact-float--sql" aria-hidden="true">SQL</span>
+                <span class="contact-float contact-float--ai" aria-hidden="true">AI</span>
+                <button class="contact-art-toggle" type="button" @onclick="() => _pausedArt = !_pausedArt" aria-pressed="@(_pausedArt ? "true" : "false")" aria-label="@L[_pausedArt ? "Resume animation" : "Pause animation"]"><span aria-hidden="true">@(_pausedArt ? "▶" : "Ⅱ")</span></button>
+            </figure>
+        </div>
+    </section>
+
+    <section class="ng-container contact-channels" aria-label="@L["Contact options"]">
+        <a href="tel:+917666834161" class="contact-channel contact-channel--phone" data-motion="fade-up">
+            <span class="contact-channel-icon"><ContactGlyph Name="phone" /></span>
+            <div><h2>@L["Call us"]</h2><p>@L["Speak to our team about programs and admissions."]</p><strong>+91 76668 34161</strong><small>@L["Available Mon–Sun: 9:00 AM – 9:00 PM IST"]</small></div>
+            <span class="contact-channel-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a href="https://wa.me/917666834161" target="_blank" rel="noopener noreferrer" class="contact-channel contact-channel--whatsapp" data-motion="fade-up">
+            <span class="contact-channel-icon"><ContactGlyph /></span>
+            <div><h2>WhatsApp</h2><p>@L["Ask about courses, upcoming batches and your next step."]</p><strong>@L["Chat on WhatsApp"] <span aria-hidden="true">↗</span></strong><small>@L["Message our admissions team"]</small></div>
+        </a>
+        <a href="mailto:info@nextgencoaching.in" class="contact-channel contact-channel--email" data-motion="fade-up">
+            <span class="contact-channel-icon"><ContactGlyph Name="email" /></span>
+            <div><h2>@L["Email us"]</h2><p>@L["Share your questions and we’ll help you explore your options."]</p><strong class="contact-email">info@nextgencoaching.in</strong><small>@L["Admissions & Inquiries"]</small></div>
+            <span class="contact-channel-arrow" aria-hidden="true">↗</span>
+        </a>
+    </section>
+
+    <section id="contact-enquiry" class="ng-container contact-enquiry-layout" aria-labelledby="enquiry-title">
+        <div class="contact-form-panel" data-motion="fade-up">
+            <span class="eyebrow">@L["SEND US AN ENQUIRY"]</span>
+            <h2 id="enquiry-title">@L["We’re here to help."]</h2>
+            <p class="contact-panel-intro">@L["Share a few details and our team will get in touch with you."]</p>
+            @if (_success)
+            {
+                <div class="contact-success" role="status">
+                    <span class="contact-success-check" aria-hidden="true">✓</span>
+                    <h3>@L["Enquiry Received!"]</h3>
+                    <p>@L.Format("Thank you, {0}. Our team will contact you at {1} about your enquiry.", _req.Name, _req.Email)</p>
+                    <button type="button" @onclick="ResetForm" class="contact-secondary">@L["Send another inquiry"]</button>
+                </div>
+            }
+            else
+            {
+                <form @onsubmit="Submit" @onsubmit:preventDefault class="contact-form" aria-busy="@(_submitting ? "true" : "false")">
+                    <div class="contact-fields">
+                        <div class="contact-field"><label for="enquiry-name">@L["Your Full Name"] <span aria-hidden="true">*</span></label><input id="enquiry-name" name="name" type="text" autocomplete="name" required maxlength="150" @bind="_req.Name" @bind:event="oninput" placeholder="@L["e.g. Rahul Sharma"]" /></div>
+                        <div class="contact-field"><label for="enquiry-email">@L["Email Address"] <span aria-hidden="true">*</span></label><input id="enquiry-email" name="email" type="email" autocomplete="email" required maxlength="256" @bind="_req.Email" @bind:event="oninput" placeholder="you@example.com" /></div>
+                        <div class="contact-field"><label for="enquiry-phone">@L["Contact / WhatsApp Number"]</label><input id="enquiry-phone" name="phone" type="tel" autocomplete="tel" maxlength="20" @bind="_req.Phone" @bind:event="oninput" placeholder="+91 98765 43210" /></div>
+                        <div class="contact-field"><label for="enquiry-program">@L["Subject / Program of Interest"]</label><input id="enquiry-program" name="subject" type="text" maxlength="200" @bind="_req.Subject" @bind:event="oninput" placeholder="@L["e.g. Data Science Flagship Cohort"]" /></div>
+                        <div class="contact-field contact-field--wide"><label for="enquiry-goals">@L["Tell Us About Your Background & Goals"] <span aria-hidden="true">*</span></label><textarea id="enquiry-goals" name="message" rows="5" required maxlength="2000" @bind="_req.Message" @bind:event="oninput" placeholder="@L["Share your graduation stream, any current coding experience, or specific questions about the curriculum..."]"></textarea></div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(_resultMessage)) { <p class="contact-form-error" role="alert">@L[_resultMessage]</p> }
+                    <button type="submit" class="contact-primary contact-submit" disabled="@_submitting">@L[_submitting ? "Sending enquiry..." : "Send enquiry"]<ContactGlyph Name="arrow" /></button>
+                    <p class="contact-privacy">@L["We respect your privacy. Your details are used to respond to your enquiry."]</p>
+                </form>
+            }
+        </div>
+        <aside class="contact-next-panel" data-motion="fade-up" aria-labelledby="contact-next-title">
+            <span class="eyebrow">@L["HERE’S WHAT HAPPENS NEXT"]</span>
+            <h2 id="contact-next-title">@L["From your enquiry"]<br />@L["to your next step."]</h2>
+            <ol class="contact-next-steps">
+                <li><span class="contact-step-number">1</span><span class="contact-step-icon"><ContactGlyph Name="target" /></span><div><h3>@L["Your goals"]</h3><p>@L["We’ll understand your background, interests and career goals."]</p></div></li>
+                <li><span class="contact-step-number">2</span><span class="contact-step-icon"><ContactGlyph Name="book" /></span><div><h3>@L["Your program"]</h3><p>@L["Explore the curriculum, projects, learning format and program options with an advisor."]</p></div></li>
+                <li><span class="contact-step-number">3</span><span class="contact-step-icon"><ContactGlyph Name="arrow" /></span><div><h3>@L["Your next step"]</h3><p>@L["Get your questions answered and discuss a masterclass or a program that fits your plans."]</p></div></li>
+            </ol>
+            <a href="/webinar" class="contact-next-link">@L["Explore a free masterclass"]<ContactGlyph Name="arrow" /></a>
+        </aside>
+    </section>
+
+    <section class="ng-container contact-online" aria-labelledby="contact-online-title">
+        <div class="contact-online-copy" data-motion="fade-up">
+            <span class="eyebrow">@L["ONLINE CLASSES · PAN INDIA"]</span>
+            <h2 id="contact-online-title">@L["Your classroom."]<br /><span>@L["Wherever you are."]</span></h2>
+            <p>@L["Learn live with NextGen from anywhere in India. Join online classes, build practical projects and connect with mentors—all from your own space."]</p>
+            <ul class="contact-online-benefits"><li><ContactGlyph Name="cloud" />@L["Live online classes"]</li><li><ContactGlyph Name="target" />@L["Personal mentor guidance"]</li><li><ContactGlyph Name="pin" />@L["Access across India"]</li></ul>
+            <a href="/courses" class="contact-online-link">@L["Explore programs"]<ContactGlyph Name="arrow" /></a>
+        </div>
+        <div class="contact-online-scene" aria-hidden="true" data-motion="fade-up">
+            <span class="contact-online-orbit"></span>
+            <span class="contact-online-chip contact-online-chip--cloud"><ContactGlyph Name="cloud" /></span>
+            <span class="contact-online-chip contact-online-chip--home">@L["Learn from home"]</span>
+            <div class="contact-online-laptop">
+                <div class="contact-online-toolbar"><span class="status-dot"></span>NEXTGEN<span>@L["Live online classes"]</span></div>
+                <div class="contact-online-screen"><img src="images/contact-advisor-branded.webp" alt="" width="1448" height="1086" loading="lazy" /><div><span class="contact-online-live">@L["LIVE"]</span><strong>@L["Learn. Build. Grow."]</strong><span>Data Science · AI · Cloud</span><div class="contact-online-screen-tools"><ContactGlyph Name="book" /><ContactGlyph Name="cloud" /><ContactGlyph Name="target" /></div></div></div>
+                <div class="contact-online-controls"><span><ContactGlyph /></span><span><ContactGlyph Name="book" /></span><span><ContactGlyph Name="phone" /></span></div>
+            </div>
+            <div class="contact-online-laptop-base"></div>
+            <span class="contact-online-panindia"><span class="status-dot"></span>@L["Connected across India"]</span>
+        </div>
+    </section>
+</div>
+
+@code {
+    private readonly CreateEnquiryRequest _req = new() { SourcePage = "/contact" };
+    private string? _resultMessage;
+    private bool _submitting;
+    private bool _success;
+    private bool _pausedArt;
+    private bool CanSubmit => !string.IsNullOrWhiteSpace(_req.Name) && !string.IsNullOrWhiteSpace(_req.Email) && !string.IsNullOrWhiteSpace(_req.Message);
+    private async Task Submit()
+    {
+        if (_submitting) return;
+        if (!CanSubmit) { _resultMessage = "Please enter your name, email and enquiry."; return; }
+        _submitting = true;
+        _resultMessage = null;
+        try {
+            _req.Name = _req.Name.Trim(); _req.Email = _req.Email.Trim(); _req.Message = _req.Message.Trim();
+            var resp = await Leads.CreateEnquiryAsync(_req);
+            _success = resp?.Success ?? false;
+            _resultMessage = _success ? null : resp?.Message ?? "We couldn’t send your enquiry. Please try again or contact us directly.";
+        }
+        finally { _submitting = false; }
+    }
+    private void ResetForm() { _req.Name = string.Empty; _req.Email = string.Empty; _req.Phone = null; _req.Subject = null; _req.Message = string.Empty; _success = false; _resultMessage = null; }
+}

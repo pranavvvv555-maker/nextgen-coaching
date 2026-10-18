@@ -1,0 +1,319 @@
+@page "/admin/batches"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Batches · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Batches"]</h1>
+        <p class="text-caption text-text-secondary">Cohorts running across courses. Status tracks the lifecycle from planning through delivery.</p>
+    </div>
+    <button @onclick="OpenCreate" class="btn-primary">+ New batch</button>
+</div>
+
+@* Filters *@
+<div class="card p-3 mb-4 flex flex-wrap items-center gap-3">
+    <div>
+        <label class="text-meta text-text-muted uppercase tracking-wider mb-0.5 block">Course</label>
+        <select @bind="_filterCourseId" @bind:after="LoadAsync" class="border border-border-base rounded-btn px-3 py-1.5 text-sm">
+            <option value="">All</option>
+            @if (_courseOptions is not null)
+            {
+                @foreach (var c in _courseOptions)
+                {
+                    <option value="@c.Id">@c.Label</option>
+                }
+            }
+        </select>
+    </div>
+    <div>
+        <label class="text-meta text-text-muted uppercase tracking-wider mb-0.5 block">@L["Status"]</label>
+        <select @bind="_filterStatus" @bind:after="LoadAsync" class="border border-border-base rounded-btn px-3 py-1.5 text-sm">
+            <option value="">All</option>
+            <option value="Planned">Planned</option>
+            <option value="Active">Active</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+        </select>
+    </div>
+</div>
+
+<div class="card overflow-hidden">
+    @if (_data is null)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No batches match. Click <strong>New batch</strong> to add one.</div>
+    }
+    else
+    {
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Batch / course</th>
+                    <th class="px-4 py-3 font-medium">@L["Instructor"]</th>
+                    <th class="px-4 py-3 font-medium">Schedule</th>
+                    <th class="px-4 py-3 font-medium">Mode</th>
+                    <th class="px-4 py-3 font-medium">Enrolled</th>
+                    <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var b in _data)
+                {
+                    <tr class="hover:bg-surface-muted/50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@b.Name</div>
+                            <div class="text-meta text-text-muted">@b.CourseTitle</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@(b.PrimaryInstructorName ?? "—")</td>
+                        <td class="px-4 py-3 text-text-secondary">
+                            <div>@b.StartDate.ToString("dd MMM yyyy")</div>
+                            <div class="text-meta text-text-muted">@(b.EndDate?.ToString("dd MMM yyyy") ?? "—")</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@b.Mode</td>
+                        <td class="px-4 py-3 text-text-secondary">
+                            @b.EnrolledCount@(b.Capacity.HasValue ? $" / {b.Capacity}" : "")
+                        </td>
+                        <td class="px-4 py-3">
+                            <select value="@b.Status" @onchange="@(e => SetStatusAsync(b.Id, e.Value?.ToString() ?? b.Status))"
+                                    class="border border-border-base rounded-btn px-2 py-1 text-sm">
+                                <option value="Planned">Planned</option>
+                                <option value="Active">Active</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <button @onclick="() => OpenEdit(b.Id)" class="btn-outline text-caption px-2.5 py-1">@L["Edit"]</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@if (_modalOpen)
+{
+    <div class="fixed inset-0 z-40 bg-brand-navy/40" @onclick="CloseModal"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div class="bg-surface rounded-card shadow-card-hover w-full max-w-xl pointer-events-auto" @onclick:stopPropagation="true">
+            <div class="px-5 py-4 border-b border-border-base flex items-center justify-between">
+                <h2 class="text-h3">@(_editingId is null ? "New batch" : "Edit batch")</h2>
+                <button @onclick="CloseModal" class="text-text-muted text-2xl leading-none">×</button>
+            </div>
+            <div class="p-5 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Batch name</label>
+                    <input @bind="_form.Name" placeholder="DS-2026-Autumn-Weekend" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    <div class="text-meta text-text-muted mt-1">Must be unique. Convention: course-year-season-mode.</div>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Course</label>
+                    <select @bind="_form.CourseId" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                        <option value="00000000-0000-0000-0000-000000000000">— pick a course —</option>
+                        @if (_courseOptions is not null)
+                        {
+                            @foreach (var c in _courseOptions)
+                            {
+                                <option value="@c.Id">@c.Label</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Primary instructor</label>
+                    <select @bind="_form.PrimaryInstructorId" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                        <option value="">— unassigned —</option>
+                        @if (_instructorOptions is not null)
+                        {
+                            @foreach (var i in _instructorOptions)
+                            {
+                                <option value="@i.Id">@i.Label@(string.IsNullOrEmpty(i.Sublabel) ? "" : " — " + i.Sublabel)</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Start date</label>
+                        <input @bind="_form.StartDate" type="date" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">End date</label>
+                        <input @bind="_form.EndDate" type="date" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Mode</label>
+                        <select @bind="_form.Mode" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                            <option value="Weekend">Weekend</option>
+                            <option value="Daily">Daily</option>
+                            <option value="Hybrid">@L["Hybrid"]</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Schedule description</label>
+                    <input @bind="_form.ScheduleDescription" placeholder="Sat-Sun 10am–1pm" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Capacity</label>
+                        <input @bind="_form.Capacity" type="number" min="1" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Meeting room URL</label>
+                        <input @bind="_form.MeetingRoomUrl" placeholder="https://meet.google.com/…" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+
+                @if (_editingId is not null)
+                {
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">@L["Status"]</label>
+                        <select @bind="_form.Status" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                            <option value="Planned">Planned</option>
+                            <option value="Active">Active</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_modalError))
+                {
+                    <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2.5">@_modalError</div>
+                }
+            </div>
+            <div class="px-5 py-3 border-t border-border-base flex justify-end gap-2">
+                <button @onclick="CloseModal" class="btn-outline text-sm">@L["Cancel"]</button>
+                <button @onclick="SaveAsync" disabled="@(_saving || !CanSave)" class="btn-primary text-sm">
+                    @(_saving ? "Saving…" : (_editingId is null ? "Create" : "Save"))
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_toast))
+{
+    <div class="fixed bottom-6 right-6 bg-status-success text-white px-4 py-2 rounded-btn shadow-card-hover">@_toast</div>
+}
+
+@code {
+    private IReadOnlyList<AdminBatchListItemDto>? _data;
+    private IReadOnlyList<SelectOptionDto>? _courseOptions;
+    private IReadOnlyList<SelectOptionDto>? _instructorOptions;
+    private string? _toast;
+
+    private string _filterCourseId = string.Empty;
+    private string _filterStatus = string.Empty;
+
+    private bool _modalOpen;
+    private Guid? _editingId;
+    private UpsertBatchRequest _form = new();
+    private bool _saving;
+    private string? _modalError;
+
+    private bool CanSave =>
+        !string.IsNullOrWhiteSpace(_form.Name)
+        && _form.CourseId != Guid.Empty
+        && _form.StartDate != default
+        && !string.IsNullOrWhiteSpace(_form.Mode);
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load lookups in parallel; UI is happier with options ready before the modal opens.
+        var coursesTask = AdminApi.GetCoursesLookupAsync();
+        var instructorsTask = AdminApi.GetInstructorsLookupAsync();
+        await Task.WhenAll(coursesTask, instructorsTask);
+        _courseOptions = coursesTask.Result;
+        _instructorOptions = instructorsTask.Result;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        Guid? courseId = Guid.TryParse(_filterCourseId, out var cid) ? cid : null;
+        _data = await AdminApi.GetBatchesAsync(courseId, string.IsNullOrWhiteSpace(_filterStatus) ? null : _filterStatus);
+    }
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form = new UpsertBatchRequest
+        {
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
+            Mode = "Weekend"
+        };
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private async Task OpenEdit(Guid id)
+    {
+        _editingId = id;
+        _form = await AdminApi.GetBatchAsync(id) ?? new UpsertBatchRequest();
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private void CloseModal() => _modalOpen = false;
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _modalError = null;
+
+        bool ok; string? message;
+        if (_editingId is null)
+        {
+            var r = await AdminApi.CreateBatchAsync(_form);
+            ok = r?.Success == true; message = r?.Message;
+        }
+        else
+        {
+            var r = await AdminApi.UpdateBatchAsync(_editingId.Value, _form);
+            ok = r?.Success == true; message = r?.Message;
+        }
+
+        _saving = false;
+        if (ok)
+        {
+            _toast = _editingId is null ? "Batch created." : "Batch updated.";
+            _modalOpen = false;
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+        else
+        {
+            _modalError = message ?? "Could not save.";
+        }
+    }
+
+    private async Task SetStatusAsync(Guid id, string status)
+    {
+        var r = await AdminApi.UpdateBatchStatusAsync(id, status);
+        if (r?.Success == true)
+        {
+            _toast = $"Status: {status}";
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+    }
+
+    private async Task HideToastAsync()
+    {
+        await Task.Delay(2500);
+        _toast = null;
+        await InvokeAsync(StateHasChanged);
+    }
+}

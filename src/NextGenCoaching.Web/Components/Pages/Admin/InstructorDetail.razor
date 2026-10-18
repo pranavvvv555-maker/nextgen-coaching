@@ -1,0 +1,151 @@
+@page "/admin/instructors/{Id:guid}"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@inject NavigationManager Nav
+
+<PageTitle>Instructor · Admin · NextGen</PageTitle>
+
+<div class="mb-4">
+    <a href="/admin/instructors" class="text-caption text-brand-primary">← Back to instructors</a>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_d is null)
+{
+    <div class="card p-8 text-center text-text-secondary">Instructor not found.</div>
+}
+else
+{
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-h2">@_d.FullName</h1>
+            <p class="text-caption text-text-secondary">@_d.Email</p>
+        </div>
+        <span class="pill">@(_d.IsPublic ? "Public" : "Hidden")</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div class="lg:col-span-2 card p-5">
+            <h2 class="text-h3 mb-4">@L["Profile"]</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">@L["Full name"]</label>
+                    <input @bind="_edit.FullName" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">@L["Phone"]</label>
+                    <input @bind="_edit.Phone" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">@L["City"]</label>
+                    <input @bind="_edit.City" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Years of experience</label>
+                    <input @bind="_edit.YearsExperience" type="number" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-caption text-text-secondary mb-1 block">Headline</label>
+                    <input @bind="_edit.Headline" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-caption text-text-secondary mb-1 block">Expertise tags (comma-separated)</label>
+                    <input @bind="_tagsRaw" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div class="md:col-span-2">
+                    <label class="text-caption text-text-secondary mb-1 block">Bio</label>
+                    <textarea @bind="_edit.Bio" rows="3" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">LinkedIn URL</label>
+                    <input @bind="_edit.LinkedinUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Hourly rate (₹)</label>
+                    <input @bind="_edit.HourlyRate" type="number" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div class="flex items-center gap-2">
+                    <input id="pub" type="checkbox" @bind="_edit.IsPublic" />
+                    <label for="pub" class="text-sm">Show on public site</label>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(_msg))
+            {
+                <p class="text-sm mt-3 @(_ok ? "text-status-success" : "text-status-danger")">@_msg</p>
+            }
+            <div class="mt-4">
+                <button @onclick="SaveAsync" disabled="@_saving" class="btn-primary">@(_saving ? "Saving…" : "Save changes")</button>
+            </div>
+        </div>
+
+        <div class="card p-5">
+            <h2 class="text-h3 mb-4">Assigned batches</h2>
+            @if (_d.Batches.Count == 0)
+            {
+                <p class="text-caption text-text-secondary">Not assigned to any batches yet.</p>
+            }
+            else
+            {
+                <div class="space-y-2">
+                    @foreach (var b in _d.Batches)
+                    {
+                        <div class="border border-border-base rounded-btn p-3">
+                            <div class="font-medium text-sm">@b.Name</div>
+                            <div class="text-meta text-text-secondary">@b.CourseTitle · @b.Status</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private bool _loading;
+    private bool _saving;
+    private bool _ok;
+    private string? _msg;
+    private string _tagsRaw = string.Empty;
+    private AdminInstructorDetailDto? _d;
+    private UpdateInstructorRequest _edit = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _d = await AdminApi.GetInstructorAsync(Id);
+        if (_d is not null)
+        {
+            _edit = new UpdateInstructorRequest
+            {
+                FullName = _d.FullName,
+                Phone = _d.Phone,
+                City = _d.City,
+                Headline = _d.Headline,
+                Bio = _d.Bio,
+                ExpertiseTags = _d.ExpertiseTags,
+                YearsExperience = _d.YearsExperience,
+                LinkedinUrl = _d.LinkedinUrl,
+                HourlyRate = _d.HourlyRate,
+                IsPublic = _d.IsPublic
+            };
+            _tagsRaw = string.Join(", ", _d.ExpertiseTags);
+        }
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _msg = null;
+        _edit.ExpertiseTags = _tagsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        _saving = true;
+        var res = await AdminApi.UpdateInstructorAsync(Id, _edit);
+        _saving = false;
+        _ok = res is { Success: true };
+        _msg = _ok ? "Saved." : (res?.Message ?? "Could not save.");
+    }
+}

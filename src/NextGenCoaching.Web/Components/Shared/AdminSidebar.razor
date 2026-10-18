@@ -1,0 +1,87 @@
+@inject NavigationManager Nav
+@inject AuthStateService AuthState
+@implements IDisposable
+
+<aside class="hidden md:flex md:flex-col w-60 bg-brand-navy text-brand-sky-100 min-h-screen sticky top-0">
+    <div class="px-5 py-5 flex items-center gap-2 border-b border-brand-navy-light">
+        <BrandLogo Class="official-logo--portal" />
+        <div class="leading-tight">
+            <div class="text-white font-semibold text-sm">NextGen</div>
+            <div class="text-meta text-brand-sky-200 uppercase tracking-wider">@(_isAdmin ? "Admin" : "Counsellor")</div>
+        </div>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-0.5 text-sm">
+        @foreach (var item in _nav)
+        {
+            @if (_isAdmin || !item.AdminOnly)
+            {
+                <a href="@item.Href" class="@LinkClass(item.Href) flex items-center gap-3 px-3 py-2 rounded-btn">
+                    <span class="w-5 h-5 flex items-center justify-center">@item.Icon</span>
+                    <span>@L[item.Label]</span>
+                </a>
+            }
+        }
+    </nav>
+
+    <div class="px-3 py-4 border-t border-brand-navy-light text-meta text-brand-sky-200">
+        <div>v0.1 · Phase 4</div>
+    </div>
+</aside>
+
+@code {
+    private bool _isAdmin;
+    private record NavItem(string Label, string Href, string Icon, bool AdminOnly = false);
+
+    // AdminOnly = true items are hidden for Counsellors (their API endpoints require Admin).
+    private readonly NavItem[] _nav =
+    {
+        new("Dashboard",       "/admin",                 "▣"),
+        new("Leads",           "/admin/leads",           "👤"),
+        new("Webinars",        "/admin/webinars",        "📅"),
+        new("Courses",         "/admin/courses",         "🎓", true),
+        new("Curriculum",      "/admin/curriculum",      "🧩", true),
+        new("Batches",         "/admin/batches",         "📚", true),
+        new("Instructors",     "/admin/instructors",     "🧑‍🏫", true),
+        new("Students",        "/admin/students",        "👥"),
+        new("Users",           "/admin/users",           "🪪", true),
+        new("Mock interviews", "/admin/mock-interviews",  "🎤"),
+        new("Placements",      "/admin/placements",      "💼"),
+        new("Reports",         "/admin/reports",         "📊"),
+        new("Search",          "/admin/search",          "🔍"),
+        new("Payments",        "/admin/payments",        "💳"),
+        new("Settings",        "/admin/settings",        "⚙", true)
+    };
+
+    private string LinkClass(string href)
+    {
+        var current = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/');
+        var target = href.TrimEnd('/');
+        var isActive = current == target || (target != "/admin" && current.StartsWith(target + "/"));
+        return isActive
+            ? "bg-brand-primary text-white"
+            : "text-brand-sky-100 hover:bg-brand-navy-light hover:text-white";
+    }
+
+    protected override void OnInitialized()
+    {
+        _isAdmin = AuthState.IsInRole(RoleNames.Admin);
+        Nav.LocationChanged += OnLocationChanged;
+        AuthState.StateChanged += OnAuthChanged;
+    }
+
+    private void OnAuthChanged() => InvokeAsync(() =>
+    {
+        _isAdmin = AuthState.IsInRole(RoleNames.Admin);
+        StateHasChanged();
+    });
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+        AuthState.StateChanged -= OnAuthChanged;
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) => InvokeAsync(StateHasChanged);
+}
+

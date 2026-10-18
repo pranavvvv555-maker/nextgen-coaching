@@ -1,0 +1,24 @@
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = "●";
+    [Parameter] public string Accent { get; set; } = "blue";
+
+    private string IconWrapperClass => Accent switch
+    {
+        "blue"     => "bg-brand-sky-50 text-brand-primary",
+        "amber"    => "bg-status-warning/15 text-status-warning",
+        "purple"   => "bg-status-purple/15 text-status-purple",
+        "success"  => "bg-status-success/15 text-status-success",
+        "danger"   => "bg-status-danger/15 text-status-danger",
+        _          => "bg-brand-sky-50 text-brand-primary"
+    };
+}
+
+<div class="card p-4 flex items-center gap-3">
+    <div class="w-11 h-11 rounded-xl @IconWrapperClass flex items-center justify-center text-lg">@Icon</div>
+    <div>
+        <div class="text-meta text-text-muted uppercase tracking-wider">@L[Label]</div>
+        <div class="text-h2 text-brand-navy leading-tight">@Value</div>
+    </div>
+</div>

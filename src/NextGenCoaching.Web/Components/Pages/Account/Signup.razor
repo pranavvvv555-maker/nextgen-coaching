@@ -1,0 +1,202 @@
+@page "/signup"
+@inject AuthApiClient AuthApi
+@inject NavigationManager Nav
+@inject AuthStateService AuthState
+
+<PageTitle>@L["Create Free Account · NextGen Portal"]</PageTitle>
+
+<section class="min-h-[calc(100vh-140px)] relative bg-gradient-to-b from-[#060b19] via-[#0b1329] to-[#0f172a] flex items-center justify-center px-4 py-16 overflow-hidden">
+    <!-- Glowing background ambient blobs -->
+    <div class="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-brand-primary/20 rounded-full blur-[130px] animate-blob"></div>
+    <div class="pointer-events-none absolute bottom-10 right-10 w-[400px] h-[400px] bg-brand-cyan/15 rounded-full blur-[120px] animate-float"></div>
+
+    <div class="w-full max-w-lg relative z-10" data-motion="fade-up">
+        <!-- Main Card -->
+        <div class="card-glass spotlight-card rounded-3xl p-8 sm:p-10 border border-white/15 bg-slate-900/85 shadow-2xl backdrop-blur-xl">
+            <!-- Brand Badge -->
+            <div class="flex items-center gap-3 mb-6">
+                <BrandLogo Class="official-logo--account" />
+                <div>
+                    <div class="font-bold text-white text-base tracking-tight">NextGen Coaching</div>
+                    <div class="text-[11px] text-brand-cyan font-semibold uppercase tracking-wider">@L["Candidate Registration"]</div>
+                </div>
+            </div>
+
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">@L["Start Learning Free"]</h1>
+            <p class="text-xs text-slate-400 mt-1 mb-6">
+                @L["Create your student account to access free webinars, learning paths, and curriculum samples."]
+            </p>
+
+            @if (!string.IsNullOrEmpty(_courseInterest))
+            {
+                <div class="mb-5 p-3 rounded-xl bg-brand-cyan/10 border border-brand-cyan/30 flex items-center gap-2 text-xs text-brand-cyan">
+                    <span>@L["Targeting Specialisation:"]</span>
+                    <strong class="text-white capitalize">@_courseInterest</strong>
+                </div>
+            }
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                        @L["Full Name"] <span class="text-rose-400">*</span>
+                    </label>
+                    <input @bind="_req.FullName" @bind:event="oninput"
+                           autocomplete="name"
+                           class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                           placeholder="e.g. Aarav Sharma" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                        @L["Email Address"] <span class="text-rose-400">*</span>
+                    </label>
+                    <input @bind="_req.Email" @bind:event="oninput"
+                           type="email"
+                           autocomplete="username"
+                           class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                           placeholder="aarav@example.com" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                            @L["Phone / WhatsApp"] <span class="text-rose-400">*</span>
+                        </label>
+                        <input @bind="_req.Phone" @bind:event="oninput"
+                               type="tel"
+                               autocomplete="tel"
+                               class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                               placeholder="+91 98765 43210" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                            @L["Current City"] <span class="text-slate-500 font-normal">@L["(optional)"]</span>
+                        </label>
+                        <input @bind="_req.City" @bind:event="oninput"
+                               autocomplete="address-level2"
+                               class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                               placeholder="Bengaluru" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                            @L["Password"] <span class="text-rose-400">*</span>
+                        </label>
+                        <input @bind="_req.Password" @bind:event="oninput"
+                               type="password"
+                               autocomplete="new-password"
+                               class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                               placeholder="Min 8 characters" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+                            @L["Confirm Password"] <span class="text-rose-400">*</span>
+                        </label>
+                        <input @bind="_req.ConfirmPassword" @bind:event="oninput"
+                               type="password"
+                               autocomplete="new-password"
+                               @onkeydown="OnKeyDown"
+                               class="w-full px-4 py-3 rounded-xl border border-white/15 bg-white/5 text-white text-sm focus:outline-none focus:border-brand-cyan focus:bg-white/10 focus:ring-4 focus:ring-brand-cyan/20 transition-all placeholder:text-slate-500"
+                               placeholder="Re-enter password" />
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <div class="p-3 rounded-xl text-xs bg-rose-500/15 border border-rose-500/30 text-rose-300 font-medium">
+                        @L[_error]
+                    </div>
+                }
+
+                <button @onclick="SubmitAsync"
+                        disabled="@(_submitting || !CanSubmit)"
+                        class="btn-gradient w-full py-3.5 text-sm font-semibold shadow-glow-indigo mt-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                    @if (_submitting)
+                    {
+                        <span class="inline-flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            @L["Creating Account..."]
+                        </span>
+                    }
+                    else
+                    {
+                        <span>@L["Create Free Candidate Account"]</span>
+                    }
+                </button>
+
+                <p class="text-[11px] text-slate-400 text-center leading-relaxed">
+                    @L["By signing up, you agree to our"] <a href="/terms" class="text-brand-cyan hover:underline">@L["Terms of Service"]</a> @L["and"] <a href="/privacy" class="text-brand-cyan hover:underline">@L["Privacy Policy"]</a>.
+                </p>
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                <span>@L["Already registered?"] <a href="/login" class="text-brand-cyan hover:underline font-medium">@L["Sign in"]</a></span>
+                <a href="/" class="text-slate-400 hover:text-white transition-colors">@L["Back to site →"]</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private readonly RegisterRequest _req = new();
+    private string? _error;
+    private bool _submitting;
+    private string? _courseInterest;
+
+    private bool CanSubmit =>
+        !string.IsNullOrWhiteSpace(_req.FullName)
+        && !string.IsNullOrWhiteSpace(_req.Email)
+        && !string.IsNullOrWhiteSpace(_req.Phone)
+        && !string.IsNullOrWhiteSpace(_req.Password)
+        && _req.Password == _req.ConfirmPassword
+        && _req.Password.Length >= 8;
+
+    protected override void OnInitialized()
+    {
+        if (AuthState.IsAuthenticated)
+        {
+            Nav.NavigateTo("/student", replace: true);
+            return;
+        }
+
+        var uri = new Uri(Nav.Uri);
+        var qs = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var slug = qs["course"];
+        if (!string.IsNullOrWhiteSpace(slug))
+        {
+            _req.InterestedInCourseSlug = slug;
+            _courseInterest = slug.Replace('-', ' ');
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && CanSubmit && !_submitting)
+            await SubmitAsync();
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_submitting || !CanSubmit) return;
+        _submitting = true;
+        _error = null;
+
+        var resp = await AuthApi.RegisterAsync(_req);
+        _submitting = false;
+
+        if (resp is { Success: true, Data: not null })
+        {
+            if (!string.IsNullOrWhiteSpace(_req.InterestedInCourseSlug))
+                Nav.NavigateTo($"/enroll?course={_req.InterestedInCourseSlug}");
+            else
+                Nav.NavigateTo("/student");
+        }
+        else
+        {
+            _error = resp?.Message ?? "Sign-up failed. Please check your information and try again.";
+        }
+    }
+}
+

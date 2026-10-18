@@ -1,0 +1,47 @@
+<figure class="skill-galaxy" data-skill-galaxy data-playing="false">
+    <div class="galaxy-stage" aria-hidden="true">
+        <div class="galaxy-halo"></div>
+        <div class="galaxy-orbit galaxy-orbit--outer"></div>
+        <div class="galaxy-orbit galaxy-orbit--inner"></div>
+        <svg class="galaxy-connections" viewBox="0 0 560 500" fill="none">
+            <path d="M280 250 110 110M280 250 435 105M280 250 485 260M280 250 420 410M280 250 130 410M280 250 70 265" />
+            <path class="galaxy-signals" d="M110 110 280 250 435 105M70 265 280 250 485 260M130 410 280 250 420 410" />
+        </svg>
+        <div class="galaxy-core @(Matches("ai artificial intelligence machine learning एआय कृत्रिम बुद्धिमत्ता") ? "is-highlighted" : "")">
+            <span class="galaxy-core-pin galaxy-core-pin--left"></span><span class="galaxy-core-pin galaxy-core-pin--right"></span>
+            <span class="galaxy-core-top">NEXTGEN</span><strong>AI</strong><span class="galaxy-core-bottom">LEARN · BUILD · GROW</span>
+        </div>
+        @foreach (var skill in Skills)
+        {
+            <div class="galaxy-node galaxy-node--@skill.Id @(Matches(skill.SearchTerms) ? "is-highlighted" : "")" style="--node-color:@skill.Color" data-galaxy-node>
+                <div class="galaxy-node-face">
+                    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        @if (skill.Id == "sql") { <ellipse cx="32" cy="15" rx="20" ry="8" /><path d="M12 15v33c0 11 40 11 40 0V15M12 31c0 11 40 11 40 0" /> }
+                        else if (skill.Id == "bi") { <path d="M11 52V34h10v18M27 52V22h10v30M43 52V10h10v42M8 56h48" /> }
+                        else if (skill.Id == "cloud") { <path d="M16 44h32a12 12 0 0 0 1-24A18 18 0 0 0 15 21a12 12 0 0 0 1 23ZM32 30v22m-7-7 7 7 7-7" /> }
+                        else if (skill.Id == "snow") { <path d="M32 7v50M10 19l44 26M10 45l44-26M25 12l7 7 7-7M25 52l7-7 7 7M12 27l10-2-2-10M44 49l-2-10 10-2M12 37l10 2-2 10M44 15l-2 10 10 2" /> }
+                        else if (skill.Id == "python") { <path d="M24 9h16a9 9 0 0 1 9 9v14H22a8 8 0 0 0-8 8v7H9V24a9 9 0 0 1 9-9h15M40 55H24a9 9 0 0 1-9-9V32h27a8 8 0 0 0 8-8v-7h5v23a9 9 0 0 1-9 9H31" /><circle cx="27" cy="17" r="1" /><circle cx="37" cy="47" r="1" /> }
+                        else { <path d="m20 21-12 11 12 11M44 21l12 11-12 11M36 13 27 51" /> }
+                    </svg>
+                </div>
+                <strong>@skill.Label</strong>
+            </div>
+        }
+        <span class="galaxy-star galaxy-star--one">✦</span><span class="galaxy-star galaxy-star--two">✦</span><span class="galaxy-star galaxy-star--three">✧</span>
+    </div>
+    <figcaption><span class="status-dot"></span>@L["Connected skills. Endless possibilities."]</figcaption>
+    <button type="button" class="galaxy-toggle" data-galaxy-toggle aria-pressed="false" aria-label="@L["Pause or resume skill galaxy animation"]"><span aria-hidden="true">Ⅱ / ▶</span></button>
+</figure>
+@code {
+    [Parameter] public string SearchQuery { get; set; } = string.Empty;
+    private bool Matches(string terms) => !string.IsNullOrWhiteSpace(SearchQuery) && terms.Contains(SearchQuery.Trim(), StringComparison.OrdinalIgnoreCase);
+    private record Skill(string Id, string Label, string Color, string SearchTerms);
+    private static readonly Skill[] Skills = {
+        new("python", "Python", "#ffd76a", "python पायथन पाइथन"),
+        new("sql", "SQL", "#90bdff", "sql database डेटा डेटाबेस"),
+        new("cloud", "Cloud", "#80ead6", "cloud azure क्लाउड क्लाऊड"),
+        new("bi", "Power BI", "#ffad85", "power bi analytics विश्लेषण"),
+        new("snow", "Snowflake", "#c6a4ff", "snowflake स्नोफ्लेक"),
+        new("data", "Data Science", "#d0f589", "data science डेटा सायन्स साइंस")
+    };
+}

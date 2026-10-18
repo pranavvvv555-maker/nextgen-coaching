@@ -1,0 +1,78 @@
+@page "/hr/profile"
+@layout HrLayout
+@inject HrApiClient HrApi
+
+<PageTitle>My profile · HR · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["My profile"]</h1>
+    <p class="text-caption text-text-secondary">Your account details.</p>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_p is null)
+{
+    <div class="card p-8 text-center text-text-secondary">Account not found.</div>
+}
+else
+{
+    <div class="card p-5 max-w-2xl">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Full name"]</label>
+                <input @bind="_edit.FullName" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Email"]</label>
+                <input value="@_p.Email" disabled class="w-full border border-border-base rounded-btn px-3 py-2 text-sm bg-surface-muted text-text-secondary" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Phone"]</label>
+                <input @bind="_edit.Phone" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["City"]</label>
+                <input @bind="_edit.City" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_msg))
+        {
+            <p class="text-sm mt-3 @(_ok ? "text-status-success" : "text-status-danger")">@_msg</p>
+        }
+        <div class="mt-4">
+            <button class="btn-primary" disabled="@_saving" @onclick="SaveAsync">@(_saving ? "Saving…" : "Save profile")</button>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private bool _saving;
+    private bool _ok;
+    private string? _msg;
+    private HrProfileDto? _p;
+    private UpdateAccountRequest _edit = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _p = await HrApi.GetProfileAsync();
+        if (_p is not null)
+            _edit = new UpdateAccountRequest { FullName = _p.FullName, Phone = _p.Phone, City = _p.City };
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _msg = null;
+        _saving = true;
+        var res = await HrApi.UpdateProfileAsync(_edit);
+        _saving = false;
+        _ok = res is { Success: true };
+        _msg = _ok ? "Profile saved." : (res?.Message ?? "Could not save.");
+    }
+}

@@ -1,0 +1,259 @@
+@page "/services"
+
+<PageTitle>@L["Student Employability & Career-Readiness Services · NextGen Coaching"]</PageTitle>
+
+<section class="career-hero ng-hero" data-career-hero aria-labelledby="career-hero-title">
+    <div class="career-hero-glow" aria-hidden="true"></div>
+    <div class="ng-container career-hero-layout">
+        <div class="career-hero-copy">
+            <span class="career-hero-eyebrow" data-hero-enter><i aria-hidden="true"></i> @L["NEXTGEN CAREER SUPPORT"]</span>
+            <h1 id="career-hero-title" data-hero-enter>@L["Skills open doors."]<br /><span>@L["Confidence takes"] <br />@L["you through."]</span></h1>
+            <p data-hero-enter>@L["Big ambitions deserve people in your corner. Build your skills, find your direction and prepare for your next opportunity with NextGen."]</p>
+            <div class="career-hero-actions" data-hero-enter>
+                <a href="/services#career-support" class="btn-primary" data-hero-hover>@L["Explore career support"] <span aria-hidden="true">↗</span></a>
+                <a href="/contact" class="career-hero-contact" data-hero-hover>@L["Talk to an advisor"] <span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="career-hero-proof" data-hero-enter>
+                <span class="career-hero-proof-icon" aria-hidden="true">✦</span>
+                <span><strong>@L["Personal guidance. Practical progress."]</strong><small>@L["From your first project to your next interview."]</small></span>
+            </div>
+        </div>
+        <div class="career-hero-scene">
+            <div class="career-hero-orbit" aria-hidden="true"></div>
+            <svg class="career-hero-path" viewBox="0 0 600 500" fill="none" aria-hidden="true"><path d="M60 380C-40 180 340 440 450 190S610 20 540 70" stroke="#b7c8ec" stroke-width="2" stroke-dasharray="5 8" /></svg>
+            <div class="career-hero-main-enter" data-hero-enter>
+                <figure class="career-hero-main-card" data-hero-float="8">
+                    <img src="images/career/career-progress.jpg" alt="@L["A student climbing learning milestones towards a career goal, supported by a coach and a skills dashboard."]" width="2752" height="1536" fetchpriority="high" decoding="async" />
+                    <figcaption class="sr-only">@L["Your future, moving forward."]</figcaption>
+                </figure>
+            </div>
+            <div class="career-hero-mentor-enter" data-hero-enter>
+                <figure class="career-hero-mentor-card" data-hero-float="5">
+                    <img src="images/career/industry-mentorship.jpg" alt="@L["An experienced engineer helping a junior developer plan his next steps."]" width="2752" height="1536" decoding="async" />
+                    <figcaption><i aria-hidden="true"></i> @L["A mentor in your corner."]</figcaption>
+                </figure>
+            </div>
+            <div class="career-hero-plan-enter" data-hero-enter>
+                <div class="career-hero-plan" data-hero-float="6"><span aria-hidden="true">✓</span><div><small>@L["YOUR NEXT CHAPTER"]</small><strong>@L["Starts with a plan."]</strong></div></div>
+            </div>
+            <div class="career-hero-count-enter" data-hero-enter>
+                <a href="/services#career-support" class="career-hero-count" data-hero-hover><strong>@AllServices.Length</strong><span>@L["ways to grow"]<br /><small>@L["Explore your support ↗"]</small></span></a>
+            </div>
+            <span class="career-hero-spark" data-hero-float="7" aria-hidden="true">✳</span>
+        </div>
+    </div>
+    <div class="ng-container career-hero-footer"><span>@L["YOUR AMBITION. YOUR JOURNEY. NEXTGEN."]</span><a href="/services#career-support">@L["Discover what comes next"] <span aria-hidden="true">↓</span></a></div>
+</section>
+<!-- Twelve distinct career support services -->
+<section id="career-support" class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16" data-motion="fade-up">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-semibold uppercase tracking-wider mb-3">
+            @L["The Complete Framework"]
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            @L["12 ways to build your career confidence."]
+        </h2>
+        <p class="mt-4 text-base text-slate-600 leading-relaxed">
+            @L["Build a stronger profile, sharpen your skills and prepare for your next opportunity. Each service has a clear purpose and practical steps you can work towards."]
+        </p>
+
+        <div class="mt-8 flex flex-wrap justify-center gap-2" role="group" aria-label="@L["Filter career support services"]">
+            @foreach (var category in Categories)
+            {
+                <button @onclick="() => FilterCategory(category.Id)"
+                        aria-pressed="@(_activeCategory == category.Id ? "true" : "false")"
+                        class="px-4 py-2 rounded-xl text-xs font-bold transition-all @(_activeCategory == category.Id ? "bg-slate-900 text-white shadow-md" : "bg-slate-100 hover:bg-slate-200 text-slate-700")">
+                    @CategoryFilterLabel(category)
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Matching artwork and specific deliverables for every service -->
+    <div class="career-services-grid">
+        @foreach (var s in FilteredServices)
+        {
+            <article @key="s.Id" data-motion="fade-up" class="career-service-card" data-service-id="@s.Id">
+                <div class="career-service-image">
+                    <img src="images/career/@s.ImageFile" alt="@s.ImageAlt" width="2752" height="1536" loading="lazy" decoding="async" />
+                </div>
+                <div class="career-service-content">
+                    <div class="career-service-heading">
+                        <span class="career-service-number" aria-hidden="true">@int.Parse(s.Id).ToString("00")</span>
+                        <span class="career-service-category @s.BadgeStyle">@L[s.CategoryLabel]</span>
+                    </div>
+                    <h3>@L[s.Title]</h3>
+                    <p class="career-service-description">@L[s.Description]</p>
+                    <ul class="career-service-deliverables" aria-label="@L["What you will work on"]">
+                        @foreach (var d in s.Deliverables)
+                        {
+                            <li><span aria-hidden="true">✓</span><span>@L[d]</span></li>
+                        }
+                    </ul>
+                    <div class="career-service-outcome">
+                        <span>@L["Outcome focus"]</span>
+                        <strong>@L[s.OutcomeTag]</strong>
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+</section>
+
+<!-- COMPARISON BANNER -->
+<section class="py-20 bg-slate-900 text-white relative overflow-hidden">
+    <div class="pointer-events-none absolute -bottom-32 -left-32 w-96 h-96 bg-brand-primary/20 rounded-full blur-[120px]"></div>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center" data-motion="fade-up">
+        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">@L["Your next move starts with a clear plan."]</h2>
+        <p class="mt-4 text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            @L["Get practical support across your profile, projects and interview preparation. Talk to us about your goals, your current skills and the next step that suits you."]
+        </p>
+
+        <div class="mt-10 flex flex-wrap justify-center gap-4">
+            <a href="/contact" class="btn-gradient px-8 py-3.5 text-base shadow-glow-cyan">@L["Inquire for Your College or Cohort"]</a>
+            <a href="/webinar" class="btn-glass px-8 py-3.5 text-base">@L["Watch Free Demo Class"]</a>
+        </div>
+    </div>
+</section>
+
+@code {
+    private string _activeCategory = "all";
+    private void FilterCategory(string category) => _activeCategory = category;
+
+    private record ServiceCategory(string Id, string Label);
+    private static readonly ServiceCategory[] Categories =
+    {
+        new("all", "All Services"),
+        new("interview", "Interviews & Careers"),
+        new("tech", "Projects & Practice"),
+        new("soft", "Professional Skills"),
+        new("mentorship", "Mentorship & Progress")
+    };
+
+    private string CategoryFilterLabel(ServiceCategory category)
+    {
+        var count = category.Id == "all" ? AllServices.Length : AllServices.Count(s => s.Category == category.Id);
+        return category.Id == "all" ? L.Format("All {0} Services", count) : $"{L[category.Label]} ({count})";
+    }
+
+    private record ServiceItem(
+        string Id, string Category, string CategoryLabel, string BadgeStyle,
+        string Title, string Description, string[] Deliverables, string OutcomeTag,
+        string ImageFile, string ImageAlt
+    );
+
+    private IEnumerable<ServiceItem> FilteredServices => _activeCategory == "all"
+        ? AllServices : AllServices.Where(s => s.Category == _activeCategory);
+
+    private static readonly ServiceItem[] AllServices =
+    {
+        new(
+            "1", "interview", "Resume & Profile", "bg-blue-50 text-brand-primary border border-blue-200",
+            "Resume, LinkedIn & Portfolio Presentation",
+            "Present your experience clearly to recruiters. Refine your resume structure and achievement statements, strengthen your LinkedIn profile, and organise your existing projects into a professional portfolio.",
+            new[] { "ATS-friendly formatting and targeted resume feedback", "LinkedIn headline, summary and experience review", "GitHub README and project presentation guidance" },
+            "A clear, professional candidate profile",
+            "resume-portfolio.jpg",
+            "A graduate presenting her resume and coding portfolio while a friendly robot reviews her skills."
+        ),
+        new(
+            "2", "interview", "Mock Interviews", "bg-emerald-50 text-emerald-700 border border-emerald-200",
+            "Mock Interviews & Expert Feedback",
+            "Practise a realistic interview with an industry professional. Work through technical and behavioural questions, explain your reasoning, and receive feedback on your answers, approach and delivery.",
+            new[] { "Simulated technical and HR interview rounds", "Individual scorecards with specific improvement points", "Recorded session reviews and an action plan" },
+            "Know what to improve before the real interview",
+            "mock-interviews.jpg",
+            "A graduate practising a video mock interview with an industry expert and receiving a scorecard."
+        ),
+        new(
+            "3", "mentorship", "Mentorship & Progress", "bg-purple-50 text-brand-purple border border-purple-200",
+            "Career Mentorship & Progress Reviews",
+            "Build a personal learning roadmap with a practising professional. Regular reviews connect your career goals with your current skills, highlight gaps and help you prioritise your next learning milestones.",
+            new[] { "One-to-one guidance on roles and learning priorities", "Skill assessments and milestone progress reviews", "Personalised next steps for identified learning gaps" },
+            "A focused roadmap with visible progress",
+            "industry-mentorship.jpg",
+            "A senior engineer guiding a junior developer through a cloud technology career roadmap."
+        ),
+        new(
+            "4", "soft", "Workplace Readiness", "bg-amber-50 text-amber-700 border border-amber-200",
+            "Workplace Etiquette & Teamwork",
+            "Learn how to contribute effectively in a professional team. Practise workplace etiquette, collaborative problem solving and task ownership through situations you may encounter in your first engineering role.",
+            new[] { "Professional email etiquette and workplace conduct", "Agile teamwork, task planning and collaboration", "Problem-solving exercises and constructive feedback" },
+            "Stronger habits for working with a team",
+            "professional-teamwork.jpg",
+            "Professionals collaborating on a project board and solving a teamwork challenge."
+        ),
+        new(
+            "5", "soft", "Communication", "bg-rose-50 text-rose-700 border border-rose-200",
+            "Communication & Presentation Skills",
+            "Make your ideas easier to understand. Practise speaking clearly, presenting technical work and participating in discussions, with feedback on structure, articulation and body language.",
+            new[] { "Public speaking and presentation practice", "Group discussions and active listening exercises", "Explaining technical ideas to different audiences" },
+            "Clearer expression and greater speaking confidence",
+            "communication-confidence.jpg",
+            "A student practising public speaking into a microphone with supportive classmates."
+        ),
+        new(
+            "6", "tech", "Assignments & Reviews", "bg-indigo-50 text-brand-indigo border border-indigo-200",
+            "Industry Assignments & Code Reviews",
+            "Turn a business brief into a working solution within a defined deadline. Submit your implementation for review and use technical feedback to improve correctness, readability and delivery discipline.",
+            new[] { "Business case assignments with clear requirements", "Scheduled submissions and Git-based progress tracking", "Code and architecture reviews with revision feedback" },
+            "Better quality and accountability in your work",
+            "project-delivery.jpg",
+            "An engineer deploying a reviewed project with a mentor, a deadline clock and an approval badge."
+        ),
+        new(
+            "7", "tech", "Technical Labs", "bg-cyan-50 text-cyan-700 border border-cyan-200",
+            "Hands-On Technical Labs",
+            "Strengthen day-to-day technical skills through guided practice. Use datasets and cloud environments to write queries, build small workflows and troubleshoot problems with support during the session.",
+            new[] { "SQL and Python exercises using practical datasets", "Cloud workflow practice with Snowflake, ADF and Azure", "Guided debugging and query performance exercises" },
+            "More fluency with everyday technical tasks",
+            "hands-on-labs.jpg",
+            "A software engineer practising SQL and cloud workflows at her workstation with Snowflake and Azure tools."
+        ),
+        new(
+            "8", "interview", "Screening Preparation", "bg-violet-50 text-violet-700 border border-violet-200",
+            "Aptitude & Interview Preparation",
+            "Prepare for recruitment screening with a structured study plan. Work on aptitude, logical reasoning and timed coding using question banks, preparation notes and company-format practice exercises.",
+            new[] { "Quantitative aptitude and logical reasoning drills", "Timed coding challenges and screening practice", "Interview question banks, study notes and walkthroughs" },
+            "A structured approach to recruitment assessments",
+            "interview-readiness.jpg",
+            "Graduates preparing together for aptitude tests, coding challenges and group discussion rounds."
+        ),
+        new(
+            "9", "tech", "Capstone Projects", "bg-emerald-50 text-emerald-700 border border-emerald-200",
+            "End-to-End Capstone Projects",
+            "Bring your skills together in an end-to-end project you can demonstrate. Develop, document and deploy your solution, and practise explaining your technical decisions.",
+            new[] { "End-to-end projects with deployment and documentation", "Project demos and technical decision walkthroughs", "Portfolio-ready project documentation and walkthroughs" },
+            "Concrete project work to demonstrate your skills",
+            "career-progress.jpg",
+            "A learner progressing through technical milestones towards a technology career."
+        ),
+        new(
+            "10", "interview", "Placement Support", "bg-blue-50 text-brand-primary border border-blue-200",
+            "Placement Connections & Application Support",
+            "Get support with the steps between preparation and applications. Explore relevant hiring opportunities, receive help with recruiter introductions, and organise your applications and follow-ups.",
+            new[] { "Relevant opportunity sharing and recruiter introductions", "Application coordination and placement drive support", "Application tracking and recruiter follow-up planning" },
+            "Practical support for your job search and next move",
+            "placement-liaison.jpg",
+            "A placement coordinator introducing a graduate to a recruiter with a job offer and partner company network."
+        ),
+        new(
+            "11", "tech", "Certification Preparation", "bg-violet-50 text-violet-700 border border-violet-200",
+            "Industry Certification Preparation",
+            "Plan your preparation for relevant cloud and data certifications. Understand exam objectives, practise topic-based questions and identify the areas that need more study.",
+            new[] { "Certification selection aligned with your target role", "Exam objectives and topic-based study planning", "Practice assessments and readiness reviews" },
+            "A focused plan for your certification exam",
+            "certifications-capstones.jpg",
+            "A graduate holding an industry certification beside cloud and analytics tools."
+        ),
+        new(
+            "12", "interview", "Offer & Salary Guidance", "bg-amber-50 text-amber-700 border border-amber-200",
+            "Offer Evaluation & Salary Negotiation",
+            "Understand your offer before taking the next step. Review compensation components, compare role expectations and prepare for professional salary conversations.",
+            new[] { "CTC breakdown and take-home salary considerations", "Role, benefits and offer comparison guidance", "Salary conversation practice and negotiation planning" },
+            "An informed decision about your next career move",
+            "direction-career-change.jpg",
+            "A professional moving confidently towards her next technology career opportunity."
+        )
+    };
+}

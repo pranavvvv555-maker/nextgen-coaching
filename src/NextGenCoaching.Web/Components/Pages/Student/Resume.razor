@@ -1,0 +1,140 @@
+@page "/student/resume"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+@using System.IO
+@using Microsoft.AspNetCore.Components.Forms
+
+<PageTitle>Resume · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Resume"]</h1>
+    <p class="text-caption text-text-secondary">Upload your resume for the placement team to review. Their feedback shows up here.</p>
+</div>
+
+<div class="card p-5 mb-6">
+    <label class="text-caption text-text-secondary mb-2 block">Upload a new version (PDF or Word, max 5 MB)</label>
+    <InputFile OnChange="OnFileSelected" accept=".pdf,.doc,.docx" disabled="@_uploading" class="block text-sm" />
+    @if (_uploading)
+    {
+        <p class="text-sm text-text-secondary mt-2">Uploading…</p>
+    }
+    @if (!string.IsNullOrEmpty(_msg))
+    {
+        <p class="text-sm mt-2 @(_ok ? "text-status-success" : "text-status-danger")">@_msg</p>
+    }
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_items is null || _items.Count == 0)
+{
+    <div class="card p-8 text-center">
+        <div class="text-3xl mb-2">📄</div>
+        <p class="text-body font-medium">No resume uploaded yet</p>
+        <p class="text-caption text-text-secondary">Upload one above and our placement team will review it.</p>
+    </div>
+}
+else
+{
+    <div class="card overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted text-text-secondary text-caption">
+                <tr>
+                    <th class="text-left px-4 py-3">Version</th>
+                    <th class="text-left px-4 py-3">@L["Status"]</th>
+                    <th class="text-left px-4 py-3">Uploaded</th>
+                    <th class="text-left px-4 py-3">Reviewer feedback</th>
+                    <th class="text-right px-4 py-3">File</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in _items)
+                {
+                    <tr class="border-t border-border-base align-top">
+                        <td class="px-4 py-3">
+                            v@r.Version
+                            @if (r.IsCurrent) { <span class="pill pill-category ml-1">Current</span> }
+                        </td>
+                        <td class="px-4 py-3"><span class="pill @StatusClass(r.Status)">@Humanize(r.Status)</span></td>
+                        <td class="px-4 py-3">@r.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="px-4 py-3 text-text-secondary max-w-md">
+                            @if (!string.IsNullOrWhiteSpace(r.ReviewerNotes))
+                            {
+                                @r.ReviewerNotes
+                            }
+                            else
+                            {
+                                <span class="text-text-muted">—</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            @if (!string.IsNullOrEmpty(r.FileUrl))
+                            {
+                                <a href="@r.FileUrl" target="_blank" class="text-brand-primary underline">@L["View"]</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private bool _uploading;
+    private bool _ok;
+    private string? _msg;
+    private IReadOnlyList<StudentResumeDto>? _items;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _items = await StudentApi.GetResumesAsync();
+        _loading = false;
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _msg = null;
+        var file = e.File;
+        const long max = 5 * 1024 * 1024;
+        if (file.Size > max)
+        {
+            _ok = false;
+            _msg = "File is too large (max 5 MB).";
+            return;
+        }
+
+        _uploading = true;
+        using var ms = new MemoryStream();
+        await file.OpenReadStream(max).CopyToAsync(ms);
+        ms.Position = 0;
+
+        var contentType = string.IsNullOrEmpty(file.ContentType) ? "application/octet-stream" : file.ContentType;
+        var res = await StudentApi.UploadResumeAsync(ms, file.Name, contentType);
+        _uploading = false;
+
+        _ok = res is { Success: true };
+        _msg = res?.Message ?? (_ok ? "Uploaded." : "Upload failed.");
+        if (_ok) await LoadAsync();
+    }
+
+    private static string Humanize(string status) => status switch
+    {
+        "UnderReview" => "Under review",
+        _ => status
+    };
+
+    private static string StatusClass(string status) => status switch
+    {
+        "Approved" => "text-status-success",
+        "Reviewed" => "text-status-info",
+        "UnderReview" => "text-status-warning",
+        _ => ""
+    };
+}

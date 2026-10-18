@@ -1,0 +1,205 @@
+@page "/admin/leads"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Leads · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Leads"]</h1>
+        <p class="text-caption text-text-secondary">All enquiries, webinar registrations, and counsellor follow-ups.</p>
+    </div>
+</div>
+
+@* ---------- Filters ---------- *@
+<div class="card p-4 mb-4">
+    <div class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[200px]">
+            <label class="text-caption text-text-secondary mb-1 block">@L["Search"]</label>
+            <input @bind="_query.Search" @bind:event="oninput" @onkeydown="OnSearchKeyDown"
+                   placeholder="Name, email, phone…"
+                   class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+        </div>
+        <div class="w-44">
+            <label class="text-caption text-text-secondary mb-1 block">@L["Status"]</label>
+            <select @bind="_query.Status" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                <option value="">All</option>
+                @foreach (var s in _statuses)
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </div>
+        <div class="w-44">
+            <label class="text-caption text-text-secondary mb-1 block">@L["Source"]</label>
+            <select @bind="_query.Source" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                <option value="">All</option>
+                <option value="Webinar">Webinar</option>
+                <option value="ContactForm">Contact form</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Referral">Referral</option>
+                <option value="Ad">Ad</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <button @onclick="LoadAsync" class="btn-primary">Apply</button>
+        <button @onclick="ResetFilters" class="btn-outline">Reset</button>
+    </div>
+</div>
+
+@* ---------- Table ---------- *@
+<div class="card overflow-hidden">
+    @if (_loading)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data is null || _data.Items.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No leads match these filters.</div>
+    }
+    else
+    {
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-surface-muted">
+                    <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                        <th class="px-4 py-3 font-medium">@L["Name"]</th>
+                        <th class="px-4 py-3 font-medium">@L["Contact"]</th>
+                        <th class="px-4 py-3 font-medium">@L["Course interest"]</th>
+                        <th class="px-4 py-3 font-medium">@L["Source"]</th>
+                        <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                        <th class="px-4 py-3 font-medium">@L["Created"]</th>
+                        <th class="px-4 py-3 font-medium text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border-base">
+                    @foreach (var l in _data.Items)
+                    {
+                        <tr class="hover:bg-surface-muted/50 cursor-pointer" @onclick="@(() => OpenDrawer(l.Id))">
+                            <td class="px-4 py-3">
+                                <div class="font-medium text-brand-navy">@l.FullName</div>
+                                @if (!string.IsNullOrEmpty(l.City))
+                                {
+                                    <div class="text-meta text-text-muted">@l.City</div>
+                                }
+                            </td>
+                            <td class="px-4 py-3 text-text-secondary">
+                                <div>@l.Email</div>
+                                <div class="text-meta text-text-muted">@l.Phone</div>
+                            </td>
+                            <td class="px-4 py-3 text-text-secondary">@(l.CourseInterestTitle ?? "—")</td>
+                            <td class="px-4 py-3"><span class="pill bg-surface-muted text-text-secondary">@l.Source</span></td>
+                            <td class="px-4 py-3"><span class="@StatusPillClass(l.Status)">@l.Status</span></td>
+                            <td class="px-4 py-3 text-text-muted text-caption">@l.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                            <td class="px-4 py-3 text-right" @onclick:stopPropagation="true">
+                                <select @onchange="@(e => UpdateStatusAsync(l.Id, e.Value?.ToString() ?? l.Status))"
+                                        value="@l.Status"
+                                        class="border border-border-base rounded-btn px-2 py-1 text-sm">
+                                    @foreach (var s in _statuses)
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="flex items-center justify-between px-4 py-3 border-t border-border-base text-caption text-text-muted">
+            <div>
+                Showing @((_query.Page - 1) * _query.PageSize + 1)–@(Math.Min(_query.Page * _query.PageSize, _data.TotalCount)) of @_data.TotalCount
+            </div>
+            <div class="flex items-center gap-2">
+                <button @onclick="PrevPage" disabled="@(!_data.HasPrevious)" class="px-3 py-1 rounded-btn border border-border-base disabled:opacity-40">Prev</button>
+                <span>Page @_data.Page of @_data.TotalPages</span>
+                <button @onclick="NextPage" disabled="@(!_data.HasNext)" class="px-3 py-1 rounded-btn border border-border-base disabled:opacity-40">Next</button>
+            </div>
+        </div>
+    }
+</div>
+
+<LeadDrawer LeadId="_drawerLeadId" OnClosed="CloseDrawer" OnUpdated="LoadAsync" />
+
+@if (!string.IsNullOrEmpty(_toast))
+{
+    <div class="fixed bottom-6 right-6 bg-status-success text-white px-4 py-2 rounded-btn shadow-card-hover">@_toast</div>
+}
+
+@code {
+    private readonly LeadListQuery _query = new() { PageSize = 25 };
+    private PagedResult<AdminLeadListItemDto>? _data;
+    private bool _loading;
+    private string? _toast;
+    private Guid? _drawerLeadId;
+
+    private readonly string[] _statuses =
+    {
+        "New", "Contacted", "Qualified", "DemoScheduled", "Negotiation", "Enrolled", "Lost", "Dormant"
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private void OpenDrawer(Guid leadId) => _drawerLeadId = leadId;
+    private void CloseDrawer() => _drawerLeadId = null;
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _data = await AdminApi.GetLeadsAsync(_query);
+        _loading = false;
+    }
+
+    private async Task OnSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") { _query.Page = 1; await LoadAsync(); }
+    }
+
+    private async Task ResetFilters()
+    {
+        _query.Status = null;
+        _query.Source = null;
+        _query.Search = null;
+        _query.Page = 1;
+        await LoadAsync();
+    }
+
+    private async Task PrevPage() { if (_data?.HasPrevious == true) { _query.Page--; await LoadAsync(); } }
+    private async Task NextPage() { if (_data?.HasNext     == true) { _query.Page++; await LoadAsync(); } }
+
+    private async Task UpdateStatusAsync(Guid id, string newStatus)
+    {
+        var resp = await AdminApi.UpdateLeadStatusAsync(id, new UpdateLeadStatusRequest { Status = newStatus });
+        if (resp?.Success == true)
+        {
+            _toast = $"Lead status updated to {newStatus}";
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+        else
+        {
+            _toast = resp?.Message ?? "Failed to update status";
+            _ = HideToastAsync();
+        }
+    }
+
+    private async Task HideToastAsync()
+    {
+        await Task.Delay(2500);
+        _toast = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "New"            => "bg-brand-sky-100 text-brand-primary-dark",
+        "Contacted"      => "bg-status-info/15 text-status-info",
+        "Qualified"      => "bg-status-success/15 text-status-success",
+        "DemoScheduled"  => "bg-status-purple/15 text-status-purple",
+        "Negotiation"    => "bg-status-warning/15 text-status-warning",
+        "Enrolled"       => "bg-status-success/15 text-status-success",
+        "Lost"           => "bg-status-danger/15 text-status-danger",
+        _                => "bg-surface-muted text-text-secondary"
+    };
+}

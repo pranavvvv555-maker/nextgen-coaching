@@ -1,0 +1,314 @@
+@page "/admin/courses"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Courses · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Courses"]</h1>
+        <p class="text-caption text-text-secondary">Add, edit, publish/unpublish your course catalogue.</p>
+    </div>
+    <button @onclick="OpenCreate" class="btn-primary">+ New course</button>
+</div>
+
+<div class="card overflow-hidden">
+    @if (_data is null)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">No courses yet. Click <strong>New course</strong> to add one.</div>
+    }
+    else
+    {
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Course</th>
+                    <th class="px-4 py-3 font-medium">Pricing</th>
+                    <th class="px-4 py-3 font-medium">Active batches</th>
+                    <th class="px-4 py-3 font-medium">@L["Students"]</th>
+                    <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var c in _data)
+                {
+                    <tr class="hover:bg-surface-muted/50">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                                <div class="font-medium text-brand-navy">@c.Title</div>
+                                @if (c.IsFlagship)
+                                {
+                                    <span class="pill bg-brand-primary/10 text-brand-primary text-meta">Flagship</span>
+                                }
+                            </div>
+                            <div class="text-meta text-text-muted">/@c.Slug · @c.DurationMonths mo · @c.Level / @c.Mode</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">
+                            <div>@c.Currency @c.Price.ToString("N0")</div>
+                            @if (c.DiscountPrice is not null)
+                            {
+                                <div class="text-meta text-status-success">Offer: @c.Currency @c.DiscountPrice.Value.ToString("N0")</div>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@c.ActiveBatchesCount</td>
+                        <td class="px-4 py-3 text-text-secondary">@c.EnrolledStudentsCount</td>
+                        <td class="px-4 py-3">
+                            <span class="@(c.IsPublished ? "pill bg-status-success/15 text-status-success" : "pill bg-surface-muted text-text-muted")">
+                                @(c.IsPublished ? "Published" : "Draft")
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex gap-1 justify-end">
+                                <button @onclick="() => OpenEdit(c.Id)" class="btn-outline text-caption px-2.5 py-1">@L["Edit"]</button>
+                                <button @onclick="() => TogglePublishedAsync(c.Id)" class="btn-outline text-caption px-2.5 py-1">
+                                    @(c.IsPublished ? "Unpublish" : "Publish")
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@if (_modalOpen)
+{
+    <div class="fixed inset-0 z-40 bg-brand-navy/40" @onclick="CloseModal"></div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <div class="bg-surface rounded-card shadow-card-hover w-full max-w-2xl pointer-events-auto" @onclick:stopPropagation="true">
+            <div class="px-5 py-4 border-b border-border-base flex items-center justify-between">
+                <h2 class="text-h3">@(_editingId is null ? "New course" : "Edit course")</h2>
+                <button @onclick="CloseModal" class="text-text-muted text-2xl leading-none">×</button>
+            </div>
+            <div class="p-5 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="text-caption text-text-secondary mb-1 block">Title</label>
+                        <input @bind="_form.Title" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Slug</label>
+                        <input @bind="_form.Slug" placeholder="data-science" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm font-mono" />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Tagline</label>
+                    <input @bind="_form.Tagline" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="text-caption text-text-secondary mb-1 block">Description</label>
+                    <textarea @bind="_form.Description" rows="4" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                </div>
+
+                <div class="grid grid-cols-4 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Duration (mo)</label>
+                        <input @bind="_form.DurationMonths" type="number" min="1" max="36" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Total hrs</label>
+                        <input @bind="_form.TotalHours" type="number" min="1" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Level</label>
+                        <select @bind="_form.Level" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                            <option value="beginner">@L["Beginner"]</option>
+                            <option value="intermediate">@L["Intermediate"]</option>
+                            <option value="advanced">@L["Advanced"]</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Mode</label>
+                        <select @bind="_form.Mode" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                            <option value="live-online">@L["Live online classes"]</option>
+                            <option value="online">@L["Online"]</option>
+                            <option value="hybrid">@L["Hybrid"]</option>
+                            <option value="onsite">Onsite</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Price</label>
+                        <input @bind="_form.Price" type="number" step="0.01" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Discount price</label>
+                        <input @bind="_form.DiscountPrice" type="number" step="0.01" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Currency</label>
+                        <select @bind="_form.Currency" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm">
+                            <option value="INR">INR</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Category</label>
+                        <input @bind="_form.Category" placeholder="Data, Cloud, …" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Sort order</label>
+                        <input @bind="_form.SortOrder" type="number" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Hero image URL</label>
+                        <input @bind="_form.HeroImageUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Brochure URL</label>
+                        <input @bind="_form.BrochureUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                    </div>
+                </div>
+
+                <div class="border-t border-border-base pt-3">
+                    <h3 class="text-h3 mb-2 text-sm">SEO</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">SEO title</label>
+                            <input @bind="_form.SeoTitle" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                            <label class="text-caption text-text-secondary mb-1 block">SEO description</label>
+                            <textarea @bind="_form.SeoDescription" rows="2" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 pt-2">
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" @bind="_form.IsPublished" /> Published
+                    </label>
+                    <label class="flex items-center gap-2 text-sm">
+                        <input type="checkbox" @bind="_form.IsFlagship" /> Flagship
+                    </label>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_modalError))
+                {
+                    <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2.5">@_modalError</div>
+                }
+            </div>
+            <div class="px-5 py-3 border-t border-border-base flex justify-end gap-2">
+                <button @onclick="CloseModal" class="btn-outline text-sm">@L["Cancel"]</button>
+                <button @onclick="SaveAsync" disabled="@(_saving || !CanSave)" class="btn-primary text-sm">
+                    @(_saving ? "Saving…" : (_editingId is null ? "Create" : "Save"))
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_toast))
+{
+    <div class="fixed bottom-6 right-6 bg-status-success text-white px-4 py-2 rounded-btn shadow-card-hover">@_toast</div>
+}
+
+@code {
+    private IReadOnlyList<AdminCourseListItemDto>? _data;
+    private string? _toast;
+
+    private bool _modalOpen;
+    private Guid? _editingId;
+    private UpsertCourseRequest _form = new();
+    private bool _saving;
+    private string? _modalError;
+
+    private bool CanSave =>
+        !string.IsNullOrWhiteSpace(_form.Title)
+        && !string.IsNullOrWhiteSpace(_form.Slug)
+        && _form.DurationMonths > 0
+        && _form.Price >= 0;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync() => _data = await AdminApi.GetCoursesAsync();
+
+    private void OpenCreate()
+    {
+        _editingId = null;
+        _form = new UpsertCourseRequest
+        {
+            DurationMonths = 6,
+            Currency = "INR",
+            Level = "beginner",
+            Mode = "live-online",
+            SortOrder = (_data?.Count ?? 0) * 10
+        };
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private async Task OpenEdit(Guid id)
+    {
+        _editingId = id;
+        _form = await AdminApi.GetCourseAsync(id) ?? new UpsertCourseRequest();
+        _modalError = null;
+        _modalOpen = true;
+    }
+
+    private void CloseModal() => _modalOpen = false;
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _modalError = null;
+
+        bool ok; string? message;
+        if (_editingId is null)
+        {
+            var r = await AdminApi.CreateCourseAsync(_form);
+            ok = r?.Success == true; message = r?.Message;
+        }
+        else
+        {
+            var r = await AdminApi.UpdateCourseAsync(_editingId.Value, _form);
+            ok = r?.Success == true; message = r?.Message;
+        }
+
+        _saving = false;
+        if (ok)
+        {
+            _toast = _editingId is null ? "Course created." : "Course updated.";
+            _modalOpen = false;
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+        else
+        {
+            _modalError = message ?? "Could not save.";
+        }
+    }
+
+    private async Task TogglePublishedAsync(Guid id)
+    {
+        var r = await AdminApi.ToggleCoursePublishedAsync(id);
+        if (r?.Success == true)
+        {
+            _toast = r.Message;
+            await LoadAsync();
+            _ = HideToastAsync();
+        }
+    }
+
+    private async Task HideToastAsync()
+    {
+        await Task.Delay(2500);
+        _toast = null;
+        await InvokeAsync(StateHasChanged);
+    }
+}

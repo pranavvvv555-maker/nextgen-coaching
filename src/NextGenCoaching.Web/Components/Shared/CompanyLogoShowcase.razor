@@ -1,0 +1,44 @@
+<section id="company-showcase" class="company-showcase" data-company-ribbons data-playing="false" aria-labelledby="company-showcase-title">
+    <div class="company-showcase-heading ng-container" data-motion="fade-up">
+        <span class="company-eyebrow"><span aria-hidden="true">✦</span> @L["NEXTGEN · A WORLD OF POSSIBILITIES"]</span>
+        <h2 id="company-showcase-title">@L["Dream big."] <span>@L["Build your place in tech."]</span></h2>
+        <p>@L["Develop the skills and confidence to pursue opportunities with leading technology companies."]</p>
+    </div>
+    <div class="company-ribbons" aria-label="@L["Company showcase"]">
+        @for (var row = 0; row < Rows.Length; row++)
+        {
+            <div class="company-ribbon" data-direction="@(row == 0 ? "left" : "right")">
+                <div class="company-track">
+                    @for (var copy = 0; copy < 2; copy++)
+                    {
+                        <ul class="company-group" aria-hidden="@(copy == 1 ? "true" : null)">
+                            @foreach (var company in Rows[row])
+                            {
+                                <li class="company-logo-card" data-company="@company.Name">
+                                    <img src="/images/companies/@company.File" alt="@(copy == 0 ? company.Name : "")" width="180" height="64" loading="lazy" decoding="async" draggable="false" />
+                                    <span>@company.Name</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+    <div class="company-showcase-footer ng-container">
+        <div class="company-topic-list"><span>@L["Software"]</span><span>@L["Data & AI"]</span><span>@L["Financial technology"]</span></div>
+        <button type="button" class="company-motion-toggle" data-company-toggle aria-pressed="false">
+            <span class="company-pause"><span aria-hidden="true">Ⅱ</span> @L["Pause logos"]</span>
+            <span class="company-play"><span aria-hidden="true">▶</span> @L["Play logos"]</span>
+        </button>
+    </div>
+</section>
+
+@code {
+    private sealed record Company(string Name, string File);
+    private static readonly Company[][] Rows =
+    [
+        [new("Deloitte", "deloitte.png"), new("Microsoft", "microsoft.png"), new("HCLTech", "hcltech.svg"), new("Google", "google.png"), new("Infosys", "infosys.svg"), new("Amazon", "amazon.svg"), new("Cognizant", "cognizant.svg"), new("Salesforce", "salesforce.svg")],
+        [new("Mastercard", "mastercard.svg"), new("Bajaj Finserv", "bajajfinserv.png"), new("TCS", "tcs.svg"), new("Accenture", "accenture.svg"), new("IBM", "ibm.svg"), new("Capgemini", "capgemini.svg"), new("Oracle", "oracle.jpg"), new("Wipro", "wipro.svg")]
+    ];
+}

@@ -1,0 +1,122 @@
+@page "/hr"
+@layout HrLayout
+@inject HrApiClient HrApi
+@inject NavigationManager Nav
+
+<PageTitle>Dashboard · HR · NextGen</PageTitle>
+
+@if (_data is null)
+{
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        @for (var i = 0; i < 4; i++)
+        {
+            <div class="card p-4 h-24 animate-pulse"></div>
+        }
+    </div>
+}
+else
+{
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-h2">Welcome, @FirstName.</h1>
+            <p class="text-caption text-text-secondary">Resume reviews and placement pipeline.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <StatTile Label="Resumes under review" Value="@_data.Stats.ResumesUnderReview.ToString()" Icon="📄" Accent="amber" />
+        <StatTile Label="Open jobs"            Value="@_data.Stats.OpenJobs.ToString()"           Icon="💼" Accent="blue" />
+        <StatTile Label="Active referrals"     Value="@_data.Stats.ActiveReferrals.ToString()"    Icon="🤝" Accent="purple" />
+        <StatTile Label="Placed this year"     Value="@_data.Stats.StudentsPlacedThisYear.ToString()" Icon="🎉" Accent="success" />
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        @* Pending resumes *@
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-h3">Resumes waiting</h2>
+                <a href="/hr/resumes" class="text-caption text-brand-primary">All →</a>
+            </div>
+            @if (_data.RecentPendingResumes.Count == 0)
+            {
+                <div class="text-caption text-text-muted text-center py-6">Nothing waiting. 👍</div>
+            }
+            else
+            {
+                <ul class="divide-y divide-border-base">
+                    @foreach (var r in _data.RecentPendingResumes)
+                    {
+                        <li class="py-2.5 cursor-pointer hover:bg-surface-muted/50 -mx-2 px-2 rounded"
+                            @onclick="@(() => Nav.NavigateTo($"/hr/resumes/{r.Id}"))">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium text-brand-navy">@r.StudentName <span class="text-meta text-text-muted">· v@r.Version</span></div>
+                                    <div class="text-caption text-text-secondary">@(r.TargetRole ?? "Target role not set")</div>
+                                </div>
+                                <span class="@AgeClass(r.AgeHours ?? 0)">@AgeLabel(r.AgeHours ?? 0)</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        @* Recent open jobs *@
+        <div class="card p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-h3">Open positions</h2>
+                <a href="/hr/jobs" class="text-caption text-brand-primary">All →</a>
+            </div>
+            @if (_data.RecentJobs.Count == 0)
+            {
+                <div class="text-caption text-text-muted text-center py-6">No jobs posted yet.</div>
+            }
+            else
+            {
+                <ul class="divide-y divide-border-base">
+                    @foreach (var j in _data.RecentJobs)
+                    {
+                        <li class="py-2.5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium text-brand-navy">@j.RoleTitle</div>
+                                    <div class="text-caption text-text-secondary">@j.CompanyName @(string.IsNullOrEmpty(j.Location) ? "" : "· " + j.Location)</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-caption text-text-muted">@j.ReferralsCount referred</div>
+                                    @if (j.PlacedCount > 0)
+                                    {
+                                        <div class="text-meta text-status-success">@j.PlacedCount placed</div>
+                                    }
+                                </div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private HrDashboardDto? _data;
+
+    private string FirstName =>
+        (_data?.FullName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "there";
+
+    protected override async Task OnInitializedAsync() => _data = await HrApi.GetDashboardAsync();
+
+    private static string AgeClass(int hours) => "pill " + hours switch
+    {
+        < 24       => "bg-status-success/15 text-status-success",
+        < 72       => "bg-status-warning/15 text-status-warning",
+        _          => "bg-status-danger/15 text-status-danger"
+    };
+
+    private static string AgeLabel(int hours) => hours switch
+    {
+        < 1   => "just now",
+        < 24  => $"{hours}h",
+        _     => $"{hours / 24}d"
+    };
+}

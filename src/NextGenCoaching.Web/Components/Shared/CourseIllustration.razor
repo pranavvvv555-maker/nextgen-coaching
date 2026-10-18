@@ -1,0 +1,121 @@
+<div class="course-art course-art--@CourseSlug" data-course-art="@CourseSlug">
+    <svg viewBox="0 0 360 200" width="360" height="200" style="display:block;width:100%;height:auto" role="img" aria-label="@L[Description]" focusable="false">
+        <circle cx="180" cy="97" r="81" fill="var(--art-wash, #eef2ff)" />
+        <circle cx="53" cy="42" r="4" fill="var(--art-accent, #4263f5)" opacity=".25" />
+        <circle cx="306" cy="137" r="6" fill="var(--art-accent, #4263f5)" opacity=".18" />
+        <path d="M292 37v12m-6-6h12M65 139v10m-5-5h10" stroke="var(--art-accent, #4263f5)" stroke-width="2" stroke-linecap="round" opacity=".45" />
+        <ellipse cx="180" cy="180" rx="101" ry="8" fill="var(--art-accent, #4263f5)" opacity=".08" />
+        @switch (CourseSlug)
+        {
+            case "data-science":
+                <g fill="none" stroke="#5268a9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path class="art-dash" d="M83 91Q61 41 107 39M254 92Q297 76 280 40" opacity=".35" />
+                    <g class="art-float art-float--late">
+                        <rect x="54" y="52" width="67" height="53" rx="13" fill="#fff" stroke="#d0dafa" />
+                        <path d="m67 91 12-13 10 5 18-19" stroke="#4263f5" stroke-width="3" />
+                        <circle cx="107" cy="64" r="4" fill="#4263f5" stroke="none" />
+                    </g>
+                    <g class="art-float">
+                        <circle cx="281" cy="54" r="23" fill="#fff" stroke="#d0dafa" />
+                        <path d="m268 55 12-12 12 15m-12-15 1 25m-13-13 24 3-11 10-13-13" stroke="#a192ef" />
+                        <circle cx="280" cy="43" r="3" fill="#a192ef" stroke="none" /><circle cx="268" cy="55" r="3" fill="#a192ef" stroke="none" /><circle cx="292" cy="58" r="3" fill="#a192ef" stroke="none" /><circle cx="281" cy="68" r="3" fill="#a192ef" stroke="none" />
+                    </g>
+                    <g class="art-bob">
+                        <path d="M128 151v15l-13 5m103-20v15l13 5M119 111l-13 15-15-7m138-8 12 15 15-7" stroke="#5268a9" stroke-width="5" />
+                        <rect x="124" y="115" width="100" height="44" rx="16" fill="#c5d3ff" />
+                        <rect x="112" y="62" width="124" height="72" rx="25" fill="#fff" stroke-width="3" />
+                        <path d="M174 62V44" stroke-width="3" /><circle class="art-pulse" cx="174" cy="40" r="7" fill="#9f8aed" stroke="none" />
+                        <rect x="126" y="78" width="95" height="38" rx="15" fill="#e8eeff" stroke="none" />
+                        <g class="art-eyes" fill="#294479" stroke="none"><circle cx="151" cy="94" r="5" /><circle cx="194" cy="94" r="5" /></g>
+                        <path d="M164 103q9 8 18 0" stroke="#294479" />
+                        <circle cx="173" cy="145" r="5" fill="#4263f5" stroke="none" /><path d="M145 145h12m33 0h12" stroke="#8c9fe0" />
+                    </g>
+                </g>
+                break;
+            case "sql":
+                <g fill="none" stroke="#7760ad" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path class="art-dash" d="M106 112h22m104 0h23" stroke="#b09ad9" stroke-dasharray="3 6" stroke-width="3" />
+                    <g class="art-float art-float--late">
+                        <path d="M57 77v44c0 17 54 17 54 0V77" fill="#fff" /><ellipse cx="84" cy="77" rx="27" ry="10" fill="#e6dcfa" /><path d="M57 99c0 16 54 16 54 0" stroke="#b9a7dc" />
+                        <circle cx="76" cy="119" r="2" fill="#7760ad" /><circle cx="92" cy="119" r="2" fill="#7760ad" /><path d="M80 125q4 3 8 0" />
+                    </g>
+                    <g class="art-float">
+                        <path d="M251 77v44c0 17 54 17 54 0V77" fill="#fff" /><ellipse cx="278" cy="77" rx="27" ry="10" fill="#e6dcfa" /><path d="M251 99c0 16 54 16 54 0" stroke="#b9a7dc" />
+                        <circle cx="270" cy="119" r="2" fill="#7760ad" /><circle cx="286" cy="119" r="2" fill="#7760ad" /><path d="M274 125q4 3 8 0" />
+                    </g>
+                    <g class="art-bob">
+                        <path d="M139 63v83c0 25 82 25 82 0V63" fill="#cbb5ef" stroke-width="2.5" />
+                        <path d="M139 89c0 22 82 22 82 0m-82 27c0 22 82 22 82 0" stroke="#a788ce" />
+                        <ellipse cx="180" cy="63" rx="41" ry="15" fill="#f8f4ff" stroke-width="2.5" /><ellipse cx="180" cy="63" rx="23" ry="7" fill="#e3d6f7" stroke="none" />
+                        <g class="art-eyes" fill="#513875" stroke="none"><circle cx="164" cy="133" r="4" /><circle cx="196" cy="133" r="4" /></g><path d="M173 142q7 6 14 0" stroke="#513875" />
+                        <path d="M139 126l-10 10m92-10 10 10M162 164v8m36-8v8" stroke-width="4" />
+                    </g>
+                    <g class="art-float"><rect x="151" y="20" width="58" height="23" rx="11" fill="#fff" stroke="#ddd0f1" /><path d="m172 27-6 5 6 5m16-10 6 5-6 5m-9-11-3 12" /></g>
+                </g>
+                break;
+            case "python":
+                <g fill="none" stroke="#2b7d69" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <g class="art-float art-float--late"><circle cx="283" cy="55" r="23" fill="#fff" stroke="#b7ddcf" /><g class="art-spin"><path d="m282 37 3 7 8-2-2 8 7 3-7 3 2 8-8-2-3 7-3-7-8 2 2-8-7-3 7-3-2-8 8 2Z" fill="#a7d8c6" stroke="none" /><circle cx="282" cy="53" r="6" fill="#fff" stroke="none" /></g></g>
+                    <rect x="161" y="82" width="106" height="75" rx="11" fill="#fff" stroke="#79bba7" stroke-width="2.5" /><rect x="170" y="93" width="88" height="51" rx="5" fill="#e6f5ee" stroke="none" />
+                    <path d="m189 108-7 7 7 7m32-14 7 7-7 7m-13-18-6 22" stroke="#409981" stroke-width="3" /><path d="M157 163h115l-9 8h-97Z" fill="#b2d9c9" />
+                    <g class="art-bob">
+                        <path d="M155 155c-43 21-90 13-90-12 0-19 30-24 49-15s40 5 40-16c0-24-41-20-41-40" stroke="#5bb89a" stroke-width="23" />
+                        <path d="M155 155c-43 21-90 13-90-12 0-19 30-24 49-15s40 5 40-16" stroke="#9cdec7" stroke-width="5" />
+                        <path d="M92 70c-7-9-5-31 9-37 13-6 38-3 43 10 6 15-3 32-19 34-15 2-25-1-33-7Z" fill="#7eceac" stroke-width="2.5" />
+                        <g class="art-eyes" fill="#224c42" stroke="none"><circle cx="116" cy="48" r="4" /><circle cx="135" cy="49" r="4" /></g><path d="M122 59q7 6 14-1" stroke="#224c42" /><path class="art-pulse" d="m142 59 9 3 6-4m-6 4 4 4" stroke="#eb998e" />
+                        <circle cx="100" cy="58" r="5" fill="#a5e5c8" stroke="none" />
+                    </g>
+                    <g class="art-float"><path d="M53 74h-9v20h9m6-20h9v20h-9" stroke="#75bca8" stroke-width="3" /></g>
+                </g>
+                break;
+            case "power-bi":
+                <g fill="none" stroke="#a27c32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <g class="art-float art-float--late"><rect x="244" y="37" width="57" height="50" rx="13" fill="#fff" stroke="#e9d59c" /><circle cx="272" cy="62" r="15" fill="#ffe49b" stroke="none" /><path d="M272 47v15h15a15 15 0 0 0-15-15" fill="#edb943" stroke="none" /><circle cx="272" cy="62" r="7" fill="#fff" stroke="none" /></g>
+                    <rect x="86" y="57" width="165" height="101" rx="15" fill="#fff" stroke="#cfac59" stroke-width="2.5" /><path d="M87 79h163" stroke="#eddcb4" /><circle cx="99" cy="69" r="3" fill="#e7bd60" stroke="none" /><path d="M111 69h29" stroke="#d9c79f" />
+                    <path d="M111 137h105" stroke="#e9dcbe" /><rect class="art-chart-bar" x="117" y="115" width="16" height="21" rx="4" fill="#ffe8a9" stroke="none" /><rect class="art-chart-bar art-delay-one" x="143" y="102" width="16" height="34" rx="4" fill="#f5d279" stroke="none" /><rect class="art-chart-bar art-delay-two" x="169" y="91" width="16" height="45" rx="4" fill="#edb943" stroke="none" /><rect class="art-chart-bar art-delay-three" x="195" y="86" width="16" height="50" rx="4" fill="#d39a22" stroke="none" />
+                    <path d="M151 158v13m-15 4h58m-10-17v13" stroke="#b59a65" stroke-width="4" />
+                    <g class="art-bob"><path d="M69 169v-37c0-15 31-15 31 0v37" fill="#efc968" stroke-width="2.5" /><circle cx="84" cy="113" r="17" fill="#ffe2bc" stroke-width="2.5" /><path d="M67 109c-2-19 25-24 32-10l2 11-11-10-10 8Z" fill="#665141" stroke="none" /><g class="art-eyes" fill="#624d31" stroke="none"><circle cx="79" cy="114" r="2" /><circle cx="91" cy="114" r="2" /></g><path d="M81 121q4 3 8 0m11 19 18-10m-42 39v7m18-7v7" /><path d="m114 131 9-6" stroke-width="3" /></g>
+                    <g class="art-float"><path d="m279 118 9 9-9 9m-10-9h19" stroke="#d3a333" stroke-width="3" /></g>
+                </g>
+                break;
+            case "snowflake":
+                <g fill="none" stroke="#4485a7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <g class="art-float art-float--late"><rect x="59" y="107" width="64" height="59" rx="10" fill="#fff" stroke="#add7e6" /><path d="M67 119h48m-48 12h48m-48 12h48m-33-24v36m16-36v36" stroke="#c0e4ef" /><path d="M75 155h11m7 0h11" stroke="#74b7cd" /></g>
+                    <g class="art-float"><path d="M251 128v29c0 15 50 15 50 0v-29" fill="#fff" stroke="#8dc4d9" /><ellipse cx="276" cy="128" rx="25" ry="9" fill="#d8f0f8" stroke="#8dc4d9" /><path d="M251 141c0 15 50 15 50 0" stroke="#b8e0ed" /></g>
+                    <path class="art-dash" d="M125 141h34m71 0h18" stroke="#7fbbd0" stroke-dasharray="3 6" />
+                    <g class="art-bob"><path d="M128 125c-44 0-47-52-9-59 8-35 62-48 84-16 33-16 64 12 58 43 23 20 11 42-17 42H139" fill="#fff" stroke="#63a6c3" stroke-width="2.5" /><g class="art-eyes" fill="#306986" stroke="none"><circle cx="169" cy="91" r="4" /><circle cx="205" cy="91" r="4" /></g><path d="M179 102q9 8 18 0" stroke="#306986" /><ellipse cx="153" cy="100" rx="7" ry="4" fill="#d8f0f8" stroke="none" /><ellipse cx="222" cy="100" rx="7" ry="4" fill="#d8f0f8" stroke="none" /></g>
+                    <g class="art-spin art-snow"><path d="M183 126v39m-17-29 34 20m-34 0 34-20m-22-7 5 5 5-5m-10 33 5-5 5 5m-21-18 7-1-2-7m25 25-2-7 7-1m-38 0 7 1-2 7m25-25-2 7 7 1" stroke="#5dacca" stroke-width="2.5" /></g>
+                    <g class="art-float"><path d="M77 39v15m-7-11 14 7m-14 0 14-7" stroke="#7fc1d8" /></g>
+                </g>
+                break;
+            case "azure-data-factory":
+                <g fill="none" stroke="#486fa7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path class="art-dash" d="M180 69V50h70" stroke="#8caed9" stroke-dasharray="3 6" />
+                    <g class="art-float"><path d="M261 69c-29 0-36-30-13-38 9-23 42-22 48-3 23-7 37 20 17 30-1 11-21 11-52 11Z" fill="#fff" stroke="#a4c4e7" /><path d="m273 50 8 7 14-17" stroke="#72bca6" stroke-width="3" /></g>
+                    <g class="art-bob"><path d="M96 155V88l33-20v25l34-21v23h57v60Z" fill="#a8c9f1" stroke-width="2.5" /><path d="M199 95V56h19v39" fill="#c9def8" stroke-width="2.5" /><path d="M95 103h125" stroke="#77a2d6" /><rect x="111" y="114" width="24" height="23" rx="5" fill="#eff6ff" stroke="none" /><rect x="179" y="114" width="24" height="23" rx="5" fill="#eff6ff" stroke="none" /><g class="art-eyes" fill="#3d6092" stroke="none"><circle cx="148" cy="119" r="3" /><circle cx="166" cy="119" r="3" /></g><path d="M150 129q7 6 14 0" stroke="#3d6092" /></g>
+                    <rect x="79" y="152" width="191" height="19" rx="9" fill="#fff" stroke="#95b4df" /><path d="M88 164h173" stroke="#d3e1f4" /><g class="art-conveyor"><rect x="91" y="145" width="19" height="16" rx="4" fill="#8fabe1" stroke="none" /><rect x="139" y="145" width="19" height="16" rx="4" fill="#b2a2e0" stroke="none" /><rect x="187" y="145" width="19" height="16" rx="4" fill="#77bdb0" stroke="none" /></g>
+                    <g class="art-smoke"><circle cx="210" cy="43" r="8" fill="#c9def8" stroke="none" /><circle cx="202" cy="29" r="6" fill="#e0ecfb" stroke="none" /></g>
+                    <path d="M287 110v18m-9-9h18" stroke="#93b6dd" />
+                </g>
+                break;
+            default:
+                <g fill="none" stroke="#637bb1" stroke-width="2.5" stroke-linecap="round"><g class="art-bob"><rect x="117" y="57" width="125" height="95" rx="24" fill="#fff" /><path d="M151 92h56m-56 18h35" /><circle cx="163" cy="130" r="3" fill="#637bb1" /><circle cx="196" cy="130" r="3" fill="#637bb1" /><path d="M173 136q6 5 12 0" /></g></g>
+                break;
+        }
+    </svg>
+</div>
+
+@code {
+    [Parameter] public string CourseSlug { get; set; } = string.Empty;
+
+    private string Description => CourseSlug switch
+    {
+        "data-science" => "A friendly AI robot exploring charts and a neural network",
+        "sql" => "A smiling database connecting tables and organizing data",
+        "python" => "A playful Python snake coding beside an automation laptop",
+        "power-bi" => "A cartoon analyst presenting colorful dashboard charts",
+        "snowflake" => "A cheerful cloud connecting a snowflake, data tables, and a warehouse",
+        "azure-data-factory" => "A smiling cloud factory moving data along a pipeline",
+        _ => "A friendly learning companion"
+    };
+}

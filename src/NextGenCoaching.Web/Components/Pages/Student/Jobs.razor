@@ -1,0 +1,110 @@
+@page "/student/jobs"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+
+<PageTitle>Job board · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Job board"]</h1>
+    <p class="text-caption text-text-secondary">Open roles from our hiring partners. Apply and our placement team will pick it up.</p>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_jobs is null || _jobs.Count == 0)
+{
+    <div class="card p-8 text-center">
+        <div class="text-3xl mb-2">💼</div>
+        <p class="text-body font-medium">No open roles right now</p>
+        <p class="text-caption text-text-secondary">Check back soon — new openings are posted regularly.</p>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach (var j in _jobs)
+        {
+            <div class="card p-5 flex flex-col">
+                <div class="flex items-start justify-between mb-2">
+                    <div>
+                        <div class="font-semibold text-body">@j.RoleTitle</div>
+                        <div class="text-caption text-text-secondary">@j.CompanyName</div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(j.CompanyLogoUrl))
+                    {
+                        <img src="@j.CompanyLogoUrl" alt="@j.CompanyName" class="w-10 h-10 rounded object-contain" />
+                    }
+                </div>
+
+                <div class="flex flex-wrap gap-2 text-meta text-text-secondary mb-3">
+                    @if (!string.IsNullOrEmpty(j.Location)) { <span class="pill">📍 @j.Location</span> }
+                    @if (!string.IsNullOrEmpty(j.WorkMode)) { <span class="pill">@j.WorkMode</span> }
+                    @if (j.MinCtcLpa is not null || j.MaxCtcLpa is not null) { <span class="pill">💰 @CtcRange(j)</span> }
+                    @if (j.MinExperienceYears is not null) { <span class="pill">@j.MinExperienceYears+ yrs</span> }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(j.Description))
+                {
+                    <p class="text-sm text-text-secondary mb-3 line-clamp-3">@j.Description</p>
+                }
+
+                @if (j.SkillsRequired.Count > 0)
+                {
+                    <div class="flex flex-wrap gap-1 mb-4">
+                        @foreach (var s in j.SkillsRequired)
+                        {
+                            <span class="pill pill-category">@s</span>
+                        }
+                    </div>
+                }
+
+                <div class="mt-auto flex items-center gap-2">
+                    @if (j.HasApplied)
+                    {
+                        <span class="btn-outline opacity-60 cursor-default">✓ Applied</span>
+                    }
+                    else
+                    {
+                        <button class="btn-primary" disabled="@(_applying == j.Id)" @onclick="() => ApplyAsync(j.Id)">@(_applying == j.Id ? "Applying…" : "Apply")</button>
+                    }
+                    @if (!string.IsNullOrEmpty(j.ApplicationUrl))
+                    {
+                        <a href="@j.ApplicationUrl" target="_blank" class="btn-outline">Company page</a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private Guid? _applying;
+    private IReadOnlyList<StudentJobDto>? _jobs;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _jobs = await StudentApi.GetJobsAsync();
+        _loading = false;
+    }
+
+    private async Task ApplyAsync(Guid id)
+    {
+        _applying = id;
+        await StudentApi.ApplyToJobAsync(id);
+        _applying = null;
+        await LoadAsync();
+    }
+
+    private string CtcRange(StudentJobDto j)
+    {
+        if (j.MinCtcLpa is not null && j.MaxCtcLpa is not null) return $"{j.MinCtcLpa}–{j.MaxCtcLpa} LPA";
+        if (j.MinCtcLpa is not null) return $"{j.MinCtcLpa}+ LPA";
+        return $"up to {j.MaxCtcLpa} LPA";
+    }
+}

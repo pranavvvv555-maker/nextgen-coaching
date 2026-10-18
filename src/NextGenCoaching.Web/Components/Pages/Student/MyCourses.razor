@@ -1,0 +1,108 @@
+@page "/student/courses"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+
+<PageTitle>My courses · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["My courses"]</h1>
+        <p class="text-caption text-text-secondary">All your active and past enrollments.</p>
+    </div>
+</div>
+
+@if (_data is null)
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @for (var i = 0; i < 2; i++)
+        {
+            <div class="card p-5 h-40 animate-pulse"></div>
+        }
+    </div>
+}
+else if (_data.Enrollments.Count == 0)
+{
+    <div class="card p-8 text-center text-text-muted">
+        You're not enrolled in any courses yet.
+        <div class="mt-3"><a href="/courses" class="btn-primary inline-block">Browse courses</a></div>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach (var e in _data.Enrollments)
+        {
+            <div class="card p-5">
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="@CourseIconClass(e.CourseSlug) w-12 h-12 rounded-xl flex items-center justify-center font-semibold">
+                            @CourseInitial(e.CourseSlug)
+                        </div>
+                        <div>
+                            <h3 class="text-h3">@e.CourseTitle</h3>
+                            <div class="text-caption text-text-muted">@e.BatchName</div>
+                        </div>
+                    </div>
+                    <span class="@StatusPillClass(e.Status)">@e.Status</span>
+                </div>
+
+                <div class="text-caption text-text-secondary mb-3">
+                    Started @e.BatchStartDate.ToString("dd MMM yyyy")
+                    @if (e.BatchEndDate.HasValue)
+                    {
+                        <text> · ends @e.BatchEndDate.Value.ToString("dd MMM yyyy")</text>
+                    }
+                </div>
+
+                <div class="flex items-center justify-between text-caption mb-1.5">
+                    <span class="text-text-secondary">@e.CompletedSessions of @e.TotalSessions sessions</span>
+                    <span class="font-medium text-brand-navy">@e.CompletionPercentage.ToString("0.#")%</span>
+                </div>
+                <div class="h-2 bg-surface-muted rounded-full overflow-hidden mb-4">
+                    <div class="h-full bg-brand-primary rounded-full" style="width:@(e.CompletionPercentage)%"></div>
+                </div>
+
+                <div class="flex gap-2">
+                    <a href="/courses/@e.CourseSlug" class="btn-outline flex-1 text-center text-sm">@L["Course details"]</a>
+                    <a href="/student/sessions" class="btn-primary flex-1 text-center text-sm">@L["Sessions"]</a>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private StudentDashboardDto? _data;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await StudentApi.GetDashboardAsync();
+    }
+
+    private static string CourseIconClass(string slug) => slug switch
+    {
+        "data-science"        => "bg-brand-sky-50 text-brand-primary",
+        "snowflake"           => "bg-status-info/15 text-status-info",
+        "azure-data-factory"  => "bg-brand-sky-50 text-brand-primary",
+        _                     => "bg-status-warning/15 text-status-warning"
+    };
+
+    private static string CourseInitial(string slug) => slug switch
+    {
+        "data-science"        => "DS",
+        "sql"                 => "SQ",
+        "python"              => "Py",
+        "power-bi"            => "Bi",
+        "snowflake"           => "❄",
+        "azure-data-factory"  => "Az",
+        _                     => "•"
+    };
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Active"     => "bg-status-success/15 text-status-success",
+        "Paused"     => "bg-status-warning/15 text-status-warning",
+        "Completed"  => "bg-status-info/15 text-status-info",
+        _            => "bg-surface-muted text-text-secondary"
+    };
+}

@@ -1,0 +1,83 @@
+@inject AuthStateService AuthState
+@inject AuthApiClient AuthApi
+@inject StudentApiClient StudentApi
+@inject NavigationManager Nav
+
+<div class="portal-preferences"><PreferenceControls /></div>
+<header class="bg-surface border-b border-border-base h-14 flex items-center justify-between px-6">
+    <div class="text-sm text-text-secondary">
+        @* Page breadcrumb slot *@
+    </div>
+
+    <div class="flex items-center gap-4">
+        <a href="/student/notifications" class="relative text-text-muted hover:text-text-primary" title="@L["Notifications"]">
+            <span class="text-lg">🔔</span>
+            @if (_unreadCount > 0)
+            {
+                <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-status-danger text-white text-meta font-medium flex items-center justify-center">
+                    @(_unreadCount > 9 ? "9+" : _unreadCount.ToString())
+                </span>
+            }
+        </a>
+
+        <div class="relative">
+            <button @onclick="ToggleMenu" class="flex items-center gap-2 text-sm">
+                <div class="w-8 h-8 rounded-full bg-brand-sky-100 text-brand-primary flex items-center justify-center font-semibold">
+                    @Initial
+                </div>
+                <div class="hidden sm:block text-left leading-tight">
+                    <div class="font-medium text-brand-navy">@(AuthState.Current?.FullName ?? "Student")</div>
+                    <div class="text-meta text-text-muted">@L["Student"]</div>
+                </div>
+            </button>
+
+            @if (_open)
+            {
+                <div class="absolute right-0 top-10 w-44 bg-surface border border-border-base rounded-card shadow-card-hover py-1 z-50">
+                    <a href="/student/profile" class="block px-3 py-2 text-sm text-text-primary hover:bg-surface-muted">@L["Profile"]</a>
+                    <button @onclick="LogoutAsync" class="w-full text-left px-3 py-2 text-sm text-text-primary hover:bg-surface-muted">@L["Sign out"]</button>
+                </div>
+            }
+        </div>
+    </div>
+</header>
+
+@code {
+    private bool _open;
+    private int _unreadCount;
+    private System.Threading.Timer? _pollTimer;
+
+    private string Initial => (AuthState.Current?.FullName ?? "S").Substring(0, 1).ToUpperInvariant();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+        // Light polling — every 60s. Real-time push would be Phase 10+.
+        _pollTimer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(RefreshAsync);
+        }, null, 60_000, 60_000);
+    }
+
+    private async Task RefreshAsync()
+    {
+        try
+        {
+            var list = await StudentApi.GetNotificationsAsync();
+            _unreadCount = list?.Count(n => !n.IsRead) ?? 0;
+            StateHasChanged();
+        }
+        catch { /* fail quiet — top bar should never crash the page */ }
+    }
+
+    private void ToggleMenu() => _open = !_open;
+
+    private async Task LogoutAsync()
+    {
+        _pollTimer?.Dispose();
+        await AuthApi.LogoutAsync();
+        Nav.NavigateTo("/login");
+    }
+
+    public void Dispose() => _pollTimer?.Dispose();
+}

@@ -1,0 +1,73 @@
+@page "/hr/resumes"
+@layout HrLayout
+@inject HrApiClient HrApi
+@inject NavigationManager Nav
+
+<PageTitle>Resumes · HR · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">Resumes waiting for review</h1>
+        <p class="text-caption text-text-secondary">Oldest first. Open a resume to approve it or send feedback.</p>
+    </div>
+</div>
+
+<div class="card overflow-hidden">
+    @if (_data is null)
+    {
+        <div class="p-8 text-center text-text-muted">@L["Loading…"]</div>
+    }
+    else if (_data.Count == 0)
+    {
+        <div class="p-8 text-center text-text-muted">Nothing waiting. 👏</div>
+    }
+    else
+    {
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">@L["Student"]</th>
+                    <th class="px-4 py-3 font-medium">Target role</th>
+                    <th class="px-4 py-3 font-medium">Version</th>
+                    <th class="px-4 py-3 font-medium text-right">Waiting</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var r in _data)
+                {
+                    <tr class="hover:bg-surface-muted/50 cursor-pointer"
+                        @onclick="@(() => Nav.NavigateTo($"/hr/resumes/{r.Id}"))">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@r.StudentName</div>
+                            <div class="text-meta text-text-muted">@r.StudentEmail</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@(r.TargetRole ?? "—")</td>
+                        <td class="px-4 py-3 text-text-secondary">v@r.Version</td>
+                        <td class="px-4 py-3 text-right">
+                            <span class="@AgeClass(r.AgeHours ?? 0)">@AgeLabel(r.AgeHours ?? 0)</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private IReadOnlyList<HrResumeListItemDto>? _data;
+    protected override async Task OnInitializedAsync() => _data = await HrApi.GetPendingResumesAsync();
+
+    private static string AgeClass(int hours) => "pill " + hours switch
+    {
+        < 24       => "bg-status-success/15 text-status-success",
+        < 72       => "bg-status-warning/15 text-status-warning",
+        _          => "bg-status-danger/15 text-status-danger"
+    };
+
+    private static string AgeLabel(int hours) => hours switch
+    {
+        < 1   => "just now",
+        < 24  => $"{hours}h",
+        _     => $"{hours / 24}d"
+    };
+}

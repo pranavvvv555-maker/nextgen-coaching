@@ -1,0 +1,177 @@
+@page "/hr/resumes/{Id:guid}"
+@layout HrLayout
+@inject HrApiClient HrApi
+@inject NavigationManager Nav
+
+<PageTitle>Review resume · HR · NextGen</PageTitle>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else
+{
+    <div class="flex items-center gap-2 text-caption text-text-secondary mb-2">
+        <a href="/hr/resumes" class="text-brand-primary">← Resume queue</a>
+    </div>
+
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h1 class="text-h2">@_data.StudentName</h1>
+            <p class="text-caption text-text-secondary">@_data.StudentEmail @(string.IsNullOrEmpty(_data.StudentPhone) ? "" : "· " + _data.StudentPhone)</p>
+            <p class="text-caption text-text-secondary mt-0.5">Resume v@_data.Version · submitted @_data.CreatedAtUtc.ToLocalTime().ToString("ddd, dd MMM yyyy")</p>
+        </div>
+        <span class="@StatusPillClass(_data.Status)">@_data.Status</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        @* ---------- Left: student summary + resume link ---------- *@
+        <div class="card p-5 lg:col-span-2 space-y-4">
+            <div>
+                <h2 class="text-h3 mb-2">Resume file</h2>
+                <a href="@_data.FileUrl" target="_blank" class="text-sm text-brand-primary break-all">📄 @_data.FileUrl</a>
+                <div class="text-meta text-text-muted mt-1">Opens in a new tab.</div>
+            </div>
+
+            <div class="border-t border-border-base pt-4">
+                <h2 class="text-h3 mb-3">Profile snapshot</h2>
+                <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                    <div>
+                        <dt class="text-meta text-text-muted uppercase tracking-wider">Target role</dt>
+                        <dd class="text-text-primary">@(_data.TargetRole ?? "—")</dd>
+                    </div>
+                    <div>
+                        <dt class="text-meta text-text-muted uppercase tracking-wider">Current</dt>
+                        <dd class="text-text-primary">@(_data.CurrentRole ?? "—")</dd>
+                    </div>
+                    <div class="col-span-2">
+                        <dt class="text-meta text-text-muted uppercase tracking-wider">Education</dt>
+                        <dd class="text-text-primary">@(_data.GraduationDegree ?? "—") @(_data.GraduationYear?.ToString() ?? "")@(string.IsNullOrEmpty(_data.GraduationCollege) ? "" : ", " + _data.GraduationCollege)</dd>
+                    </div>
+                    @if (!string.IsNullOrEmpty(_data.Bio))
+                    {
+                        <div class="col-span-2">
+                            <dt class="text-meta text-text-muted uppercase tracking-wider">Bio</dt>
+                            <dd class="text-text-primary whitespace-pre-wrap">@_data.Bio</dd>
+                        </div>
+                    }
+                </dl>
+
+                <div class="mt-4 flex flex-wrap gap-3 text-sm">
+                    @if (!string.IsNullOrEmpty(_data.LinkedinUrl))
+                    {
+                        <a href="@_data.LinkedinUrl" target="_blank" class="text-brand-primary">🔗 LinkedIn</a>
+                    }
+                    @if (!string.IsNullOrEmpty(_data.GithubUrl))
+                    {
+                        <a href="@_data.GithubUrl" target="_blank" class="text-brand-primary">🐙 GitHub</a>
+                    }
+                    @if (!string.IsNullOrEmpty(_data.PortfolioUrl))
+                    {
+                        <a href="@_data.PortfolioUrl" target="_blank" class="text-brand-primary">🌐 Portfolio</a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* ---------- Right: review action ---------- *@
+        <div class="card p-5">
+            @if (_data.Status == "Approved")
+            {
+                <h2 class="text-h3 mb-2">Already approved</h2>
+                <p class="text-caption text-text-secondary mb-3">Reviewed @_data.ReviewedAtUtc?.ToLocalTime().ToString("dd MMM HH:mm")</p>
+                @if (!string.IsNullOrEmpty(_data.ReviewerNotes))
+                {
+                    <div class="p-3 bg-surface-muted rounded-btn">
+                        <div class="text-meta text-text-muted uppercase tracking-wider mb-1">Notes</div>
+                        <p class="text-sm text-text-primary whitespace-pre-wrap">@_data.ReviewerNotes</p>
+                    </div>
+                }
+            }
+            else if (_data.Status == "Reviewed")
+            {
+                <h2 class="text-h3 mb-2">Sent back for revisions</h2>
+                <p class="text-caption text-text-secondary mb-3">Reviewed @_data.ReviewedAtUtc?.ToLocalTime().ToString("dd MMM HH:mm")</p>
+                @if (!string.IsNullOrEmpty(_data.ReviewerNotes))
+                {
+                    <div class="p-3 bg-surface-muted rounded-btn">
+                        <div class="text-meta text-text-muted uppercase tracking-wider mb-1">Feedback shared</div>
+                        <p class="text-sm text-text-primary whitespace-pre-wrap">@_data.ReviewerNotes</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <h2 class="text-h3 mb-3">Review action</h2>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-caption text-text-secondary mb-1 block">Notes for the student</label>
+                        <textarea @bind="_notes" rows="6"
+                                  placeholder="Specific feedback that will help them improve the next version"
+                                  class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+                        <div class="text-meta text-text-muted mt-1">Shown to the student verbatim.</div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_error))
+                    {
+                        <div class="text-sm text-status-danger bg-status-danger/10 rounded-btn p-2">@_error</div>
+                    }
+
+                    <div class="space-y-2">
+                        <button @onclick="@(() => SubmitAsync("Approved"))" disabled="@_busy"
+                                class="btn-primary w-full text-sm">
+                            @(_busy ? "Saving…" : "✓ Approve — ready for employers")
+                        </button>
+                        <button @onclick="@(() => SubmitAsync("Reviewed"))" disabled="@_busy"
+                                class="btn-outline w-full text-sm">
+                            ✎ Send back for revisions
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private HrResumeDetailDto? _data;
+    private string? _notes;
+    private bool _busy;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _data = await HrApi.GetResumeAsync(Id);
+        _notes = _data?.ReviewerNotes;
+    }
+
+    private async Task SubmitAsync(string status)
+    {
+        _busy = true;
+        _error = null;
+
+        var resp = await HrApi.ReviewResumeAsync(Id, new ReviewResumeRequest { Status = status, Notes = _notes });
+        _busy = false;
+
+        if (resp?.Success == true)
+        {
+            Nav.NavigateTo("/hr/resumes");
+        }
+        else
+        {
+            _error = resp?.Message ?? "Could not save review.";
+        }
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "UnderReview"  => "bg-status-warning/15 text-status-warning",
+        "Reviewed"     => "bg-status-info/15 text-status-info",
+        "Approved"     => "bg-status-success/15 text-status-success",
+        "Draft"        => "bg-surface-muted text-text-secondary",
+        _              => "bg-surface-muted text-text-secondary"
+    };
+}

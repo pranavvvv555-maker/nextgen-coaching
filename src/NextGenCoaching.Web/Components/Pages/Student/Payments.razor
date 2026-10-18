@@ -1,0 +1,85 @@
+@page "/student/payments"
+@layout StudentLayout
+@inject PaymentApiClient PayApi
+@inject NavigationManager Nav
+
+<PageTitle>Payments · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">Payments &amp; invoices</h1>
+        <p class="text-caption text-text-secondary">Your enrolment payments and downloadable tax invoices.</p>
+    </div>
+</div>
+
+@if (_data is null)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else if (_data.Count == 0)
+{
+    <div class="card p-8 text-center text-text-muted">No payments yet.</div>
+}
+else
+{
+    <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted">
+                <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                    <th class="px-4 py-3 font-medium">Course</th>
+                    <th class="px-4 py-3 font-medium">Amount</th>
+                    <th class="px-4 py-3 font-medium">@L["Status"]</th>
+                    <th class="px-4 py-3 font-medium">Date</th>
+                    <th class="px-4 py-3 font-medium text-right">Invoice</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-base">
+                @foreach (var p in _data)
+                {
+                    <tr class="hover:bg-surface-muted/50">
+                        <td class="px-4 py-3">
+                            <div class="font-medium text-brand-navy">@(p.CourseTitle ?? "—")</div>
+                            @if (!string.IsNullOrEmpty(p.BatchName))
+                            {
+                                <div class="text-meta text-text-muted">@p.BatchName</div>
+                            }
+                            <div class="text-meta text-text-muted font-mono mt-1">@(p.ProviderPaymentId ?? p.ProviderOrderId)</div>
+                        </td>
+                        <td class="px-4 py-3 font-medium text-brand-navy">@p.Currency @p.Amount.ToString("N0")</td>
+                        <td class="px-4 py-3"><span class="@StatusPillClass(p.Status)">@p.Status</span></td>
+                        <td class="px-4 py-3 text-text-secondary">@p.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                        <td class="px-4 py-3 text-right">
+                            @if (p.InvoiceAvailable)
+                            {
+                                <a href="@PayApi.GetStudentInvoiceUrl(p.Id)" target="_blank" class="btn-outline text-caption px-3 py-1.5">Download</a>
+                            }
+                            else
+                            {
+                                <span class="text-meta text-text-muted">—</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private IReadOnlyList<PaymentSummaryDto>? _data;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _data = await PayApi.GetMyPaymentsAsync();
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Captured"   => "bg-status-success/15 text-status-success",
+        "Created"    => "bg-status-warning/15 text-status-warning",
+        "Authorized" => "bg-status-info/15 text-status-info",
+        "Failed"     => "bg-status-danger/15 text-status-danger",
+        "Refunded"   => "bg-status-purple/15 text-status-purple",
+        _            => "bg-surface-muted text-text-secondary"
+    };
+}

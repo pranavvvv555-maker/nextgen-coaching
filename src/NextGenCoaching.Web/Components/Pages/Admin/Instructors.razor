@@ -1,0 +1,159 @@
+@page "/admin/instructors"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+@inject NavigationManager Nav
+
+<PageTitle>Instructors · Admin · NextGen</PageTitle>
+
+<div class="flex items-center justify-between mb-6">
+    <div>
+        <h1 class="text-h2">@L["Instructors"]</h1>
+        <p class="text-caption text-text-secondary">Teaching staff, their profiles, and batch assignments.</p>
+    </div>
+    <button @onclick="() => _showCreate = !_showCreate" class="btn-primary">@(_showCreate ? "Cancel" : "Add instructor")</button>
+</div>
+
+@if (_showCreate)
+{
+    <div class="card p-5 mb-5">
+        <h2 class="text-h3 mb-4">New instructor</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Full name *"]</label>
+                <input @bind="_new.FullName" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Email *</label>
+                <input @bind="_new.Email" type="email" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["Phone"]</label>
+                <input @bind="_new.Phone" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">@L["City"]</label>
+                <input @bind="_new.City" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Headline</label>
+                <input @bind="_new.Headline" placeholder="e.g. Senior Data Scientist" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">Years of experience</label>
+                <input @bind="_new.YearsExperience" type="number" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-caption text-text-secondary mb-1 block">Expertise tags (comma-separated)</label>
+                <input @bind="_tagsRaw" placeholder="Python, SQL, Machine Learning" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div class="md:col-span-2">
+                <label class="text-caption text-text-secondary mb-1 block">Bio</label>
+                <textarea @bind="_new.Bio" rows="3" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm"></textarea>
+            </div>
+            <div>
+                <label class="text-caption text-text-secondary mb-1 block">LinkedIn URL</label>
+                <input @bind="_new.LinkedinUrl" class="w-full border border-border-base rounded-btn px-3 py-2 text-sm" />
+            </div>
+            <div class="flex items-center gap-2 mt-6">
+                <input id="ispublic" type="checkbox" @bind="_new.IsPublic" />
+                <label for="ispublic" class="text-sm">Show on public site</label>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="text-sm text-status-danger mt-3">@_error</p>
+        }
+        <div class="mt-4 flex gap-2">
+            <button @onclick="CreateAsync" disabled="@_saving" class="btn-primary">@(_saving ? "Creating…" : "Create + send invite")</button>
+        </div>
+        <p class="text-meta text-text-secondary mt-2">A set-password email is sent to the instructor so they can activate their account.</p>
+    </div>
+}
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_items is null || _items.Count == 0)
+{
+    <div class="card p-8 text-center text-text-secondary">No instructors yet.</div>
+}
+else
+{
+    <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-surface-muted text-text-secondary text-caption">
+                <tr>
+                    <th class="text-left px-4 py-3">@L["Name"]</th>
+                    <th class="text-left px-4 py-3">Headline</th>
+                    <th class="text-left px-4 py-3">Experience</th>
+                    <th class="text-left px-4 py-3">@L["Batches"]</th>
+                    <th class="text-left px-4 py-3">Public</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var i in _items)
+                {
+                    <tr class="border-t border-border-base hover:bg-surface-muted cursor-pointer" @onclick="() => Open(i.Id)">
+                        <td class="px-4 py-3">
+                            <div class="font-medium">@i.FullName</div>
+                            <div class="text-meta text-text-secondary">@i.Email</div>
+                        </td>
+                        <td class="px-4 py-3 text-text-secondary">@(i.Headline ?? "—")</td>
+                        <td class="px-4 py-3">@(i.YearsExperience.HasValue ? $"{i.YearsExperience} yrs" : "—")</td>
+                        <td class="px-4 py-3">@i.BatchCount</td>
+                        <td class="px-4 py-3">@(i.IsPublic ? "Yes" : "No")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private bool _loading;
+    private bool _showCreate;
+    private bool _saving;
+    private string? _error;
+    private string _tagsRaw = string.Empty;
+    private IReadOnlyList<AdminInstructorListItemDto>? _items;
+    private CreateInstructorRequest _new = new();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _items = await AdminApi.GetInstructorsAsync();
+        _loading = false;
+    }
+
+    private void Open(Guid id) => Nav.NavigateTo($"/admin/instructors/{id}");
+
+    private async Task CreateAsync()
+    {
+        _error = null;
+        if (string.IsNullOrWhiteSpace(_new.FullName) || string.IsNullOrWhiteSpace(_new.Email))
+        {
+            _error = "Full name and email are required.";
+            return;
+        }
+
+        _new.ExpertiseTags = _tagsRaw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        _saving = true;
+        var res = await AdminApi.CreateInstructorAsync(_new);
+        _saving = false;
+
+        if (res is { Success: true })
+        {
+            _new = new();
+            _tagsRaw = string.Empty;
+            _showCreate = false;
+            await LoadAsync();
+        }
+        else
+        {
+            _error = res?.Message ?? "Could not create instructor.";
+        }
+    }
+}

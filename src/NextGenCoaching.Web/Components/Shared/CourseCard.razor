@@ -1,0 +1,84 @@
+@code {
+    [Parameter] public CourseSummaryDto Course { get; set; } = default!;
+
+    private string IconClass => Course.Slug switch
+    {
+        "data-science"        => "course-icon--blue",
+        "snowflake"           => "course-icon--sky",
+        "azure-data-factory"  => "course-icon--blue",
+        "python"              => "course-icon--emerald",
+        "power-bi"            => "course-icon--amber",
+        _                     => "course-icon--purple"
+    };
+
+    private string IconChar => Course.Slug switch
+    {
+        "data-science"        => "DS",
+        "sql"                 => "SQL",
+        "python"              => "Py",
+        "power-bi"            => "BI",
+        "snowflake"           => "SF",
+        "azure-data-factory"  => "Az",
+        _                     => "↗"
+    };
+
+    private string[] Highlights => Course.Slug switch
+    {
+        "data-science" => new[] { "Python", "SQL", "Power BI", "Snowflake", "ADF" },
+        "sql" => new[] { "PostgreSQL", "Window Funcs", "Performance Tuning" },
+        "python" => new[] { "Pandas", "NumPy", "OOP", "Data Wrangling" },
+        "power-bi" => new[] { "DAX", "Power Query", "Data Modeling" },
+        "snowflake" => new[] { "Warehousing", "Time Travel", "Zero-Copy" },
+        "azure-data-factory" => new[] { "Pipelines", "Mapping Flows", "Triggers" },
+        _ => new[] { "Live Sessions", "Mentor Support" }
+    };
+
+    private string CourseHook => Course.Slug switch
+    {
+        "data-science" => "Turn data into possibility.",
+        "sql" => "Make every query count.",
+        "python" => "Code smarter. Automate more.",
+        "power-bi" => "Make your data tell a story.",
+        "snowflake" => "Build your world in the cloud.",
+        "azure-data-factory" => "Connect data. Create momentum.",
+        _ => "Build skills for your next chapter."
+    };
+    private string DurationText => Course.DurationMonths > 0
+        ? L.Format(Course.DurationMonths == 1 ? "{0} Month Intensive" : "{0} Months Intensive", Course.DurationMonths)
+        : L["60+ Hours Live"];
+}
+
+<article data-motion="fade-up" class="course-card spotlight-card card card-hover">
+    <a href="/courses/@Course.Slug" class="course-card-art-link" aria-label="@L[Course.Title]">
+        <CourseIllustration CourseSlug="@Course.Slug" />
+    </a>
+    <div class="course-card-head">
+        <span class="course-icon @IconClass" aria-hidden="true">@IconChar</span>
+        @if (Course.IsFlagship)
+        {
+            <span class="pill-flagship">@L["FLAGSHIP PROGRAM"]</span>
+        }
+        else
+        {
+            <span class="pill-category">@L[Course.Category ?? "PROGRAM"]</span>
+        }
+    </div>
+    <span class="course-kicker">@L[CourseHook]</span>
+    <h3><a href="/courses/@Course.Slug" class="course-card-title-link">@L[Course.Title]</a></h3>
+    <p>@L[Course.Tagline]</p>
+    <div class="course-tags">
+        @foreach (var tag in Highlights.Take(4))
+        {
+            <span>@L[tag]</span>
+        }
+    </div>
+    <div class="course-meta"><span>@DurationText</span><span aria-hidden="true">/</span><span>@L[Course.Mode.Replace("-", " ")]</span></div>
+    <div class="course-card-bottom">
+        <a href="@($"/enroll?course={Course.Slug}")" class="course-enroll" aria-label="@L.Format("Enroll Now — {0}", L[Course.Title])">
+            <span>@L["Enroll Now"]</span><ContactGlyph Name="arrow" />
+        </a>
+    </div>
+</article>
+
+
+

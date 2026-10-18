@@ -1,0 +1,181 @@
+@page "/student/mock-interviews"
+@layout StudentLayout
+@inject StudentApiClient StudentApi
+
+<PageTitle>Mock interviews · NextGen</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-h2">@L["Mock interviews"]</h1>
+    <p class="text-caption text-text-secondary">Your scheduled practice interviews and the feedback your interviewers shared.</p>
+</div>
+
+<div class="card p-4 mb-6 flex flex-col md:flex-row md:items-end gap-3">
+    <div class="flex-1">
+        <label class="text-caption text-text-secondary mb-1 block">Request a new session — preferred date &amp; time</label>
+        <input type="datetime-local" @bind="_preferred" class="w-full md:w-72 border border-border-base rounded-btn px-3 py-2 text-sm" />
+    </div>
+    <button class="btn-primary" disabled="@_requesting" @onclick="RequestAsync">@(_requesting ? "Requesting…" : "Request session")</button>
+    @if (!string.IsNullOrEmpty(_requestMsg))
+    {
+        <span class="text-sm @(_requestOk ? "text-status-success" : "text-status-danger")">@_requestMsg</span>
+    }
+</div>
+
+@if (_loading)
+{
+    <div class="card p-6 text-center text-text-secondary">@L["Loading…"]</div>
+}
+else if (_items is null || _items.Count == 0)
+{
+    <div class="card p-8 text-center">
+        <div class="text-3xl mb-2">🎤</div>
+        <p class="text-body font-medium">No mock interviews yet</p>
+        <p class="text-caption text-text-secondary">Once your counsellor schedules a session, it'll show up here.</p>
+    </div>
+}
+else
+{
+    @if (_upcoming.Count > 0)
+    {
+        <h2 class="text-h3 mb-3">Upcoming</h2>
+        <div class="space-y-3 mb-8">
+            @foreach (var m in _upcoming)
+            {
+                <div class="card p-4 flex items-center justify-between">
+                    <div>
+                        <div class="font-medium">@m.CourseTitle · Round @m.RoundNumber</div>
+                        <div class="text-caption text-text-secondary">
+                            @m.ScheduledAtUtc.ToLocalTime().ToString("ddd, dd MMM yyyy · HH:mm") · @m.DurationMinutes min
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(m.MeetingUrl))
+                    {
+                        <a href="@m.MeetingUrl" target="_blank" class="btn-primary">Join</a>
+                    }
+                    else
+                    {
+                        <span class="pill">@m.Status</span>
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (_past.Count > 0)
+    {
+        <h2 class="text-h3 mb-3">Past sessions</h2>
+        <div class="space-y-4">
+            @foreach (var m in _past)
+            {
+                <div class="card p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="font-medium">@m.CourseTitle · Round @m.RoundNumber</div>
+                        <span class="pill">@m.Status</span>
+                    </div>
+                    <div class="text-caption text-text-secondary mb-3">
+                        @m.ScheduledAtUtc.ToLocalTime().ToString("dd MMM yyyy · HH:mm")
+                    </div>
+
+                    @if (m.Status == "Completed")
+                    {
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            @Rating("Technical", m.TechnicalRating)
+                            @Rating("Communication", m.CommunicationRating)
+                            @Rating("Problem solving", m.ProblemSolvingRating)
+                            @Rating("Overall", m.OverallRating)
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(m.Strengths))
+                        {
+                            <div class="mb-2"><span class="text-caption font-medium text-status-success">Strengths:</span> <span class="text-sm">@m.Strengths</span></div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(m.AreasToImprove))
+                        {
+                            <div class="mb-2"><span class="text-caption font-medium text-status-warning">Areas to improve:</span> <span class="text-sm">@m.AreasToImprove</span></div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(m.RecommendedNextSteps))
+                        {
+                            <div class="mb-2"><span class="text-caption font-medium">Next steps:</span> <span class="text-sm">@m.RecommendedNextSteps</span></div>
+                        }
+                        @if (!string.IsNullOrEmpty(m.RecordingUrl))
+                        {
+                            <a href="@m.RecordingUrl" target="_blank" class="text-sm text-brand-primary underline">Watch recording</a>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-caption text-text-secondary">No feedback recorded for this session.</p>
+                    }
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private bool _loading;
+    private IReadOnlyList<StudentMockInterviewDetailDto>? _items;
+    private List<StudentMockInterviewDetailDto> _upcoming = new();
+    private List<StudentMockInterviewDetailDto> _past = new();
+
+    // Request-a-session form state
+    private DateTime _preferred = DateTime.Now.AddDays(1);
+    private bool _requesting;
+    private bool _requestOk;
+    private string? _requestMsg;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _loading = true;
+        _items = await StudentApi.GetMockInterviewsAsync();
+        RecomputeBuckets();
+        _loading = false;
+    }
+
+    private void RecomputeBuckets()
+    {
+        if (_items is null) return;
+        _upcoming = _items.Where(m => m.Status == "Scheduled").OrderBy(m => m.ScheduledAtUtc).ToList();
+        _past = _items.Where(m => m.Status != "Scheduled").OrderByDescending(m => m.ScheduledAtUtc).ToList();
+    }
+
+    private async Task RequestAsync()
+    {
+        _requestMsg = null;
+        if (_preferred <= DateTime.Now)
+        {
+            _requestOk = false;
+            _requestMsg = "Pick a future date and time.";
+            return;
+        }
+
+        _requesting = true;
+        var res = await StudentApi.RequestMockInterviewAsync(
+            new StudentMockInterviewRequest { PreferredAtUtc = _preferred.ToUniversalTime() });
+        _requesting = false;
+
+        _requestOk = res is { Success: true };
+        _requestMsg = res?.Message ?? (_requestOk ? "Request submitted." : "Could not submit your request.");
+
+        if (_requestOk)
+        {
+            _items = await StudentApi.GetMockInterviewsAsync();
+            RecomputeBuckets();
+        }
+    }
+
+    private RenderFragment Rating(string label, int? value) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "text-center border border-border-base rounded-btn py-2");
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "text-h3");
+        builder.AddContent(4, value.HasValue ? $"{value}/5" : "—");
+        builder.CloseElement();
+        builder.OpenElement(5, "div");
+        builder.AddAttribute(6, "class", "text-meta text-text-secondary");
+        builder.AddContent(7, label);
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+}

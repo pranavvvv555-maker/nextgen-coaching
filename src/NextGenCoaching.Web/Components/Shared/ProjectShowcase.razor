@@ -1,0 +1,57 @@
+<section id="projects" class="project-showcase ng-section @(Featured ? "project-showcase--featured" : "")" aria-labelledby="project-showcase-title">
+    <div class="ng-container">
+        <div class="project-showcase-heading" data-motion="fade-up">
+            <span class="eyebrow">@L["FROM LEARNING TO BUILDING"]</span>
+            <h2 id="project-showcase-title">@if (Featured) { @L["See the skills"]<br /><span>@L["in action."]</span> } else { @L["See what you’ll build."] }</h2>
+            @if (Featured) { <div class="project-feature-details" aria-live="polite" aria-atomic="true"><h3>@L[Current.Title]</h3><p>@L[Current.Description]</p><ul class="project-techs" aria-label="@L["Technologies taught"]">@foreach (var tech in Current.Techs) { <li>@L[tech]</li> }</ul><a href="@Current.Url" class="btn-primary project-feature-link">@L["Explore the program"] <span aria-hidden="true">↗</span></a></div> } else { <p>@L["Explore project ideas that turn data, AI and cloud skills into something you can demonstrate."]</p> }
+        </div>
+        <div class="project-choices" role="group" aria-label="@L["Choose a project preview"]">
+            @for (var i = 0; i < Projects.Length; i++) { var idx = i; var project = Projects[i];
+                <button type="button" class="project-choice @(_selected == i ? "is-selected" : "")" aria-pressed="@(_selected == i ? "true" : "false")" aria-controls="project-preview" @onclick="() => _selected = idx"><span class="project-choice-icon" aria-hidden="true">@project.Icon</span><span><strong>@L[project.Title]</strong><small>@L[project.Subtitle]</small></span><span class="project-choice-arrow" aria-hidden="true">@(_selected == i ? "✓" : "↗")</span></button>
+            }
+        </div>
+        <div id="project-preview" class="project-preview project-preview--@Current.Id" data-motion="fade-up">
+            @if (!Featured) {
+            <div class="project-preview-copy" aria-live="polite" aria-atomic="true"><span class="project-preview-index">0@(_selected + 1) / 03</span><h3>@L[Current.Title]</h3><p>@L[Current.Description]</p><ul class="project-techs" aria-label="@L["Technologies taught"]">@foreach (var tech in Current.Techs) { <li>@tech</li> }</ul><a href="@Current.Url" class="project-program-link">@L["Explore the skills behind it"]<span aria-hidden="true">↗</span></a></div>
+            }
+            <div class="project-demo @(_paused ? "is-paused" : "")" @key="_selected">
+                <div class="project-demo-chrome"><span aria-hidden="true"><i></i><i></i><i></i></span><strong>NEXTGEN · @L["PROJECT LAB"]</strong><span aria-hidden="true">✦</span></div>
+                <div class="project-demo-content">
+                    @if (_selected == 0) {
+                        <div class="project-ai-header"><span class="project-ai-chip" aria-hidden="true">AI</span><div><strong>@L["Your data. Clearer answers."]</strong><small>Python · Data Science</small></div></div>
+                        <div class="project-question">@L["What can this dataset tell us?"]<span aria-hidden="true">↗</span></div>
+                        <div class="project-ai-answer"><span aria-hidden="true">✦</span><div><strong>@L["Find the patterns that matter."]</strong><p>@L["Summarise trends, compare categories and explain insights in plain language."]</p><div class="project-answer-lines" aria-hidden="true"><i></i><i></i><i></i></div></div></div>
+                    } else if (_selected == 1) {
+                        <div class="project-analytics-header"><strong>@L["Make your data tell a story."]</strong><span>Power BI</span></div>
+                        <div class="project-chart" role="img" aria-label="@L["Illustrative bar chart showing a growth trend"]"><div class="project-bars" aria-hidden="true">@foreach (var height in new[] {32,48,43,66,74,92}) { <span style="--bar-height:@(height)%"></span> }</div><svg viewBox="0 0 340 140" fill="none" aria-hidden="true"><path d="M14 113 77 92 133 100 195 62 251 46 321 17" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" /><path d="m304 18 17-1-3 17" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></svg></div>
+                        <div class="project-dashboard-tags"><span>@L["Trends"]</span><span>@L["Comparisons"]</span><span>@L["Insights"]</span></div>
+                    } else {
+                        <strong class="project-pipeline-title">@L["From source to insight."]</strong>
+                        <div class="project-pipeline"><div><span class="project-pipeline-icon" aria-hidden="true"><ContactGlyph Name="book" /></span><strong>SQL</strong><small>@L["Collect"]</small></div><i aria-hidden="true">→</i><div><span class="project-pipeline-icon" aria-hidden="true"><ContactGlyph Name="cloud" /></span><strong>Cloud</strong><small>@L["Transform"]</small></div><i aria-hidden="true">→</i><div><span class="project-pipeline-icon" aria-hidden="true"><ContactGlyph Name="target" /></span><strong>Analytics</strong><small>@L["Explore"]</small></div></div>
+                        <div class="project-pipeline-trace" aria-hidden="true"><span></span></div><p class="project-pipeline-note">@L["Connect data sources. Build reliable workflows. Deliver useful insights."]</p>
+                    }
+                </div>
+                @if (Featured) { <div class="project-code-preview"><span>@CodeLanguage</span><pre aria-label="@L["Illustrative code preview"]"><code>@CodeSnippet</code></pre><small>@L["A glimpse of the tools behind the project"]</small></div> }
+                <div class="project-demo-footer"><p class="project-demo-caption">@L["Illustrative project preview"]</p><button type="button" class="project-pause" @onclick="() => _paused = !_paused" aria-pressed="@(_paused ? "true" : "false")" aria-label="@L[_paused ? "Resume animation" : "Pause animation"]"><span aria-hidden="true">@(_paused ? "▶" : "Ⅱ")</span></button></div>
+            </div>
+        </div>
+    </div>
+</section>
+@code {
+    [Parameter] public bool Featured { get; set; }
+    private int _selected;
+    private bool _paused;
+    private Project Current => Projects[_selected];
+    private string CodeLanguage => _selected == 1 ? "SQL" : _selected == 2 ? "Azure · Data Factory" : "Python";
+    private string CodeSnippet => _selected switch {
+        0 => "import pandas as pd\n\ndata = pd.read_csv(\n    'sales.csv'\n)\n\nsummary = data.describe()\nprint(summary)",
+        1 => "SELECT month,\n  SUM(revenue) AS total\nFROM sales\nGROUP BY month\nORDER BY month;",
+        _ => "{\n  \"source\": \"SQL\",\n  \"transform\": \"Data flow\",\n  \"destination\":\n    \"Warehouse\"\n}"
+    };
+    private record Project(string Id, string Icon, string Title, string Subtitle, string Description, string[] Techs, string Url);
+    private static readonly Project[] Projects = {
+        new("ai", "✦", "AI Data Assistant", "Turn questions into insights", "Explore how an assistant can help people understand a dataset. Practise data preparation, analysis and communicating useful findings.", new[] {"Python", "Data Science", "AI"}, "/courses/data-science"),
+        new("analytics", "▥", "Analytics Dashboard", "Bring your numbers to life", "Transform raw records into a clear visual story. Work with SQL, create meaningful measures and design dashboards that answer business questions.", new[] {"SQL", "Power BI", "Data Visualisation"}, "/courses/power-bi"),
+        new("cloud", "☁", "Cloud Data Pipeline", "Connect. Transform. Deliver.", "Explore how data moves from its source to an analytics-ready platform. Practise cloud workflows, transformations and reliable data delivery.", new[] {"Azure", "Data Factory", "Snowflake"}, "/courses/azure-data-factory")
+    };
+}

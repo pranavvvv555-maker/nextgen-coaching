@@ -1,0 +1,37 @@
+# Build outputs
+bin/
+obj/
+out/
+*.user
+*.suo
+.vs/
+.vscode/launch.json
+
+# Rider / Visual Studio
+.idea/
+*.DotSettings.user
+
+# Node / Tailwind
+node_modules/
+publish/
+
+# Logs / temp
+*.log
+logs/
+TestResults/
+
+# Secrets
+appsettings.Local.json
+appsettings.Production.json
+.env
+.env.local
+.local/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# EF Core - keep migrations, ignore generated SQL
+*.dbmdl
+*.dbproj.schemaview
+*.jfm

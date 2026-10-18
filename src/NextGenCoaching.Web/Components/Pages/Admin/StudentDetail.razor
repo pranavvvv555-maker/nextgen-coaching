@@ -1,0 +1,205 @@
+@page "/admin/students/{Id:guid}"
+@layout AdminLayout
+@inject AdminApiClient AdminApi
+
+<PageTitle>Student · Admin · NextGen</PageTitle>
+
+<div class="mb-6">
+    <a href="/admin/students" class="text-caption text-brand-primary hover:underline">← Back to students</a>
+</div>
+
+@if (_loading)
+{
+    <div class="card p-8 text-center text-text-muted">@L["Loading…"]</div>
+}
+else if (_student is null)
+{
+    <div class="card p-8 text-center text-text-muted">Student not found.</div>
+}
+else
+{
+    @* ---------- Header ---------- *@
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h1 class="text-h2">@_student.FullName</h1>
+            <p class="text-caption text-text-secondary">@_student.Email @(string.IsNullOrEmpty(_student.Phone) ? "" : $"· {_student.Phone}")</p>
+        </div>
+        <span class="@StatusPillClass(_student.Status)">@_student.Status</span>
+    </div>
+
+    @* ---------- Top stats ---------- *@
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="card p-4">
+            <div class="text-caption text-text-muted">Enrolments</div>
+            <div class="text-h2 text-brand-navy">@_student.Enrollments.Count</div>
+        </div>
+        <div class="card p-4">
+            <div class="text-caption text-text-muted">Total paid</div>
+            <div class="text-h2 text-brand-navy">@FormatInr(_student.TotalPaid)</div>
+        </div>
+        <div class="card p-4">
+            <div class="text-caption text-text-muted">Resumes</div>
+            <div class="text-h2 text-brand-navy">@_student.ResumeCount</div>
+        </div>
+        <div class="card p-4">
+            <div class="text-caption text-text-muted">Last login</div>
+            <div class="text-h3 text-brand-navy">@(_student.LastLoginAtUtc is null ? "Never" : _student.LastLoginAtUtc.Value.ToLocalTime().ToString("dd MMM yyyy"))</div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+
+        @* ---------- Profile / contact ---------- *@
+        <div class="card p-6">
+            <h2 class="text-h3 mb-4">@L["Profile"]</h2>
+            <dl class="space-y-3 text-sm">
+                @ProfileRow("Location", JoinNonEmpty(_student.City, _student.State))
+                @ProfileRow("Joined", _student.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy"))
+                @ProfileRow("Degree", _student.GraduationDegree ?? "—")
+                @ProfileRow("College", _student.GraduationCollege ?? "—")
+                @ProfileRow("Grad. year", _student.GraduationYear?.ToString() ?? "—")
+                @ProfileRow("Current role", _student.CurrentRole ?? "—")
+                @ProfileRow("Target role", _student.TargetRole ?? "—")
+            </dl>
+
+            @if (HasLinks)
+            {
+                <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border-base">
+                    @if (!string.IsNullOrEmpty(_student.LinkedinUrl))
+                    {
+                        <a href="@_student.LinkedinUrl" target="_blank" rel="noopener" class="btn-outline text-caption px-2.5 py-1">LinkedIn</a>
+                    }
+                    @if (!string.IsNullOrEmpty(_student.GithubUrl))
+                    {
+                        <a href="@_student.GithubUrl" target="_blank" rel="noopener" class="btn-outline text-caption px-2.5 py-1">GitHub</a>
+                    }
+                    @if (!string.IsNullOrEmpty(_student.PortfolioUrl))
+                    {
+                        <a href="@_student.PortfolioUrl" target="_blank" rel="noopener" class="btn-outline text-caption px-2.5 py-1">Portfolio</a>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_student.Bio))
+            {
+                <p class="text-text-secondary text-sm mt-4 pt-4 border-t border-border-base">@_student.Bio</p>
+            }
+        </div>
+
+        @* ---------- Enrolments + payments ---------- *@
+        <div class="lg:col-span-2 space-y-6">
+
+            <div class="card overflow-hidden">
+                <div class="px-5 py-3 border-b border-border-base"><h2 class="text-h3">Enrolments</h2></div>
+                @if (_student.Enrollments.Count == 0)
+                {
+                    <div class="p-6 text-center text-text-muted text-sm">No enrolments yet.</div>
+                }
+                else
+                {
+                    <table class="w-full text-sm">
+                        <thead class="bg-surface-muted">
+                            <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                                <th class="px-5 py-2.5 font-medium">Course</th>
+                                <th class="px-5 py-2.5 font-medium">Batch</th>
+                                <th class="px-5 py-2.5 font-medium">@L["Status"]</th>
+                                <th class="px-5 py-2.5 font-medium text-right">Progress</th>
+                                <th class="px-5 py-2.5 font-medium text-right">Paid</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-base">
+                            @foreach (var e in _student.Enrollments)
+                            {
+                                <tr>
+                                    <td class="px-5 py-3 font-medium text-brand-navy">@e.CourseTitle</td>
+                                    <td class="px-5 py-3 text-text-secondary">@e.BatchName</td>
+                                    <td class="px-5 py-3 text-text-secondary">@e.Status</td>
+                                    <td class="px-5 py-3 text-right text-text-secondary">@e.CompletionPercentage.ToString("0")%</td>
+                                    <td class="px-5 py-3 text-right text-text-secondary">@FormatInr(e.AmountPaid)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <div class="card overflow-hidden">
+                <div class="px-5 py-3 border-b border-border-base"><h2 class="text-h3">@L["Payments"]</h2></div>
+                @if (_student.Payments.Count == 0)
+                {
+                    <div class="p-6 text-center text-text-muted text-sm">No payments recorded.</div>
+                }
+                else
+                {
+                    <table class="w-full text-sm">
+                        <thead class="bg-surface-muted">
+                            <tr class="text-left text-meta uppercase tracking-wider text-text-muted">
+                                <th class="px-5 py-2.5 font-medium">Date</th>
+                                <th class="px-5 py-2.5 font-medium">Course</th>
+                                <th class="px-5 py-2.5 font-medium">@L["Status"]</th>
+                                <th class="px-5 py-2.5 font-medium text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-base">
+                            @foreach (var pmt in _student.Payments)
+                            {
+                                <tr>
+                                    <td class="px-5 py-3 text-text-muted text-caption">@pmt.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                    <td class="px-5 py-3 text-text-secondary">@(pmt.CourseTitle ?? "—")</td>
+                                    <td class="px-5 py-3 text-text-secondary">@pmt.Status</td>
+                                    <td class="px-5 py-3 text-right text-text-secondary">@FormatInr(pmt.Amount)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private AdminStudentDetailDto? _student;
+    private bool _loading = true;
+
+    private bool HasLinks =>
+        !string.IsNullOrEmpty(_student?.LinkedinUrl) ||
+        !string.IsNullOrEmpty(_student?.GithubUrl) ||
+        !string.IsNullOrEmpty(_student?.PortfolioUrl);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _student = await AdminApi.GetStudentAsync(Id);
+        _loading = false;
+    }
+
+    private static string FormatInr(decimal amount) => "₹" + amount.ToString("N0");
+
+    private static string JoinNonEmpty(params string?[] parts)
+    {
+        var joined = string.Join(", ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+        return string.IsNullOrEmpty(joined) ? "—" : joined;
+    }
+
+    private static string StatusPillClass(string status) => "pill " + status switch
+    {
+        "Active"  => "bg-status-success/15 text-status-success",
+        "OnHold"  => "bg-status-warning/15 text-status-warning",
+        "Dropped" => "bg-status-danger/15 text-status-danger",
+        "Placed"  => "bg-status-purple/15 text-status-purple",
+        _         => "bg-surface-muted text-text-secondary"
+    };
+
+    // Small inline label/value row for the profile list.
+    private RenderFragment ProfileRow(string label, string value) => __builder =>
+    {
+        <div class="flex justify-between gap-4">
+            <dt class="text-text-muted">@label</dt>
+            <dd class="text-text-primary text-right">@value</dd>
+        </div>
+    };
+}
