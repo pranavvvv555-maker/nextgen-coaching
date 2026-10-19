@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nextgen-coaching
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: singapore
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production

@@ -17,6 +17,7 @@ publish/
 
 # Logs / temp
 *.log
+cloudflared.exe
 logs/
 TestResults/
 

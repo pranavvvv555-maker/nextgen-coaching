@@ -1,5 +1,9 @@
 # NextGen Graduate IT Coaching
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/pranavvvv555-maker/nextgen-coaching)
+
+👉 **1-Click Free Cloud Deployment:** [Deploy NextGen to Render](https://render.com/deploy?repo=https://github.com/pranavvvv555-maker/nextgen-coaching)
+
 **Current local setup:** the website and persistent database-backed API can be started together with `./run.ps1 -Mobile`. See [BACKEND-SETUP.md](BACKEND-SETUP.md) for current startup instructions, admin access, verified flows and remaining external integrations.
 
 The API uses migrations and an isolated local development database. The older scaffold notes below describe earlier phases and are retained as historical context; follow the current setup guide above.

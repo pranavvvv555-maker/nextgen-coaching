@@ -5,4 +5,5 @@
 **/obj
 **/publish
 **/node_modules
+cloudflared.exe
 *.log
