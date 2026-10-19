@@ -1,0 +1,22 @@
+@inject AuthStateService Auth
+@inject NavigationManager Nav
+<details class="portal-mobile-nav" @key="Nav.Uri">
+    <summary><BrandLogo Class="official-logo--portal" /><span>@L["Workspace navigation"]</span><span aria-hidden="true">☰</span></summary>
+    <nav aria-label="@L["Workspace navigation"]">
+        @foreach (var item in Links)
+        {
+            <a href="@item.Url" aria-current="@(Nav.Uri.EndsWith(item.Url) ? "page" : null)">@L[item.Label]</a>
+        }
+        <a href="/">@L["Home"]</a>
+    </nav>
+</details>
+@code {
+    private IEnumerable<(string Url, string Label)> Links => Auth.IsInRole(RoleNames.Admin) || Auth.IsInRole(RoleNames.Counsellor)
+        ? new[] { ("/admin", "Dashboard"), ("/admin/leads", "Leads"), ("/admin/webinars", "Webinars") }.Concat(Auth.IsInRole(RoleNames.Admin)
+            ? new[] { ("/admin/courses", "Courses"), ("/admin/curriculum", "Curriculum"), ("/admin/batches", "Batches"), ("/admin/students", "Students"), ("/admin/instructors", "Instructors"), ("/admin/mock-interviews", "Mock Interviews"), ("/admin/placements", "Placements"), ("/admin/payments", "Payments"), ("/admin/reports", "Reports"), ("/admin/users", "Users"), ("/admin/settings", "Settings") } : Array.Empty<(string, string)>())
+        : Auth.IsInRole(RoleNames.Instructor)
+            ? new[] { ("/instructor", "Dashboard"), ("/instructor/batches", "Batches"), ("/instructor/attendance", "Attendance"), ("/instructor/grading", "Grading"), ("/instructor/profile", "Profile") }
+            : Auth.IsInRole(RoleNames.HrReviewer)
+                ? new[] { ("/hr", "Dashboard"), ("/hr/resumes", "Resumes"), ("/hr/jobs", "Jobs"), ("/hr/referrals", "Referrals"), ("/hr/profile", "Profile") }
+                : new[] { ("/student", "Dashboard"), ("/student/courses", "My Courses"), ("/student/sessions", "Sessions"), ("/student/attendance", "Attendance"), ("/student/assignments", "Assignments"), ("/student/projects", "Projects"), ("/student/resume", "Resume"), ("/student/mock-interviews", "Mock Interviews"), ("/student/jobs", "Jobs"), ("/student/placements", "Placements"), ("/student/notifications", "Notifications"), ("/student/profile", "Profile") };
+}

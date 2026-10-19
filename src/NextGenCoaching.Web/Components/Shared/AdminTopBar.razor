@@ -9,9 +9,7 @@
     </div>
 
     <div class="flex items-center gap-4">
-        <button class="text-text-muted hover:text-text-primary" title="@L["Notifications"]">
-            <span class="text-lg">🔔</span>
-        </button>
+        <a href="/admin/leads" class="portal-top-link">@L["Leads"]</a>
 
         <div class="relative">
             <button @onclick="ToggleMenu" class="flex items-center gap-2 text-sm">
@@ -37,7 +35,7 @@
 @code {
     private bool _open;
 
-    private string Initial => (AuthState.Current?.FullName ?? "U").Substring(0, 1).ToUpperInvariant();
+    private string Initial => (AuthState.Current?.FullName ?? "U").Trim() is { Length: > 0 } name ? name[..1].ToUpperInvariant() : "U";
 
     private void ToggleMenu() => _open = !_open;
 

@@ -1,0 +1,24 @@
+@inject ApiClient Api
+@inject IJSRuntime JS
+<button type="button" @onclick="Download" disabled="@_busy" class="text-brand-primary underline portal-download">@L[_busy ? "Loading…" : "Download resume"]</button>
+@if (_failed) { <span role="alert" class="text-status-danger text-xs">@L["The file is unavailable. Please try again."]</span> }
+@code {
+    [Parameter] public Guid Id { get; set; }
+    [Parameter] public string? Extension { get; set; }
+    private bool _busy, _failed;
+    private async Task Download()
+    {
+        if (_busy) return;
+        _busy = true; _failed = false;
+        try
+        {
+            var bytes = await Api.DownloadAsync($"/api/v1/files/resumes/{Id}");
+            if (bytes is null) { _failed = true; return; }
+            using var stream = new MemoryStream(bytes);
+            using var reference = new DotNetStreamReference(stream);
+            var extension = Extension?.ToLowerInvariant() is ".doc" or ".docx" or ".pdf" ? Extension.ToLowerInvariant() : ".pdf";
+            await JS.InvokeVoidAsync("downloadNextGenFile", "resume" + extension, reference);
+        }
+        finally { _busy = false; }
+    }
+}

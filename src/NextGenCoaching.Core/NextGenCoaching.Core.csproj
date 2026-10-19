@@ -32,15 +32,14 @@
     <PackageReference Include="FluentValidation" Version="11.10.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.10.0" />
 
-    <!-- MailKit / MimeKit bumped past the known advisories GHSA-9j88-vvj5-vhgr and GHSA-g7hc-96xr-gvvx.
-         MimeKit comes in transitively via MailKit, so bumping MailKit is enough. -->
-    <PackageReference Include="MailKit" Version="4.13.0" />
+    <!-- Includes the STARTTLS buffer and MimeKit security fixes. -->
+    <PackageReference Include="MailKit" Version="4.18.1" />
 
     <!-- Invoice PDF generation. Community licence covers us until $1M annual revenue. -->
     <PackageReference Include="QuestPDF" Version="2024.10.3" />
 
-    <!-- Explicit override of the vulnerable transitive (advisories GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf).
-         9.0.0 has known issues; pinning the 10.x line picks up the patched build. -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.0" />
+    <!-- Pin patched crypto dependencies, including the transitive PKCS dependency. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
   </ItemGroup>
 </Project>

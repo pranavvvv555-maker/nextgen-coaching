@@ -7,6 +7,7 @@ public class AdminDashboardStatsDto
     public int TotalCourses { get; init; }
     public int PlacedStudents { get; init; }
     public int OpenLeads { get; init; }
+    public IReadOnlyList<PlacementMonthItem> PlacementTrend { get; init; } = Array.Empty<PlacementMonthItem>();
 
     public IReadOnlyList<LeadsByStatusItem> LeadsByStatus { get; init; } = Array.Empty<LeadsByStatusItem>();
     public IReadOnlyList<RecentLeadItem> RecentLeads { get; init; } = Array.Empty<RecentLeadItem>();
@@ -14,6 +15,7 @@ public class AdminDashboardStatsDto
 }
 
 public record LeadsByStatusItem(string Status, int Count);
+public record PlacementMonthItem(string Month, int Count);
 
 public record RecentLeadItem(Guid Id, string FullName, string CourseInterestTitle, string Status, DateTime CreatedAtUtc);
 

@@ -4383,6 +4383,154 @@
     "डेटा स्रोतापासून विश्लेषणासाठी तयार प्रणालीपर्यंत कसा पोहोचतो ते जाणून घ्या. क्लाउड प्रक्रिया, रूपांतर आणि विश्वासार्ह डेटा वितरणाचा सराव करा.",
     "जानें कि डेटा अपने स्रोत से विश्लेषण के लिए तैयार प्लेटफॉर्म तक कैसे पहुंचता है। क्लाउड प्रक्रियाओं, रूपांतरण और विश्वसनीय डेटा वितरण का अभ्यास करें।"
   ],
+  "Workspace navigation": [
+    "वर्कस्पेस नेव्हिगेशन",
+    "वर्कस्पेस नेविगेशन"
+  ],
+  "Skip to content": [
+    "मुख्य मजकुराकडे जा",
+    "मुख्य सामग्री पर जाएँ"
+  ],
+  "Page not found · NextGen": [
+    "पृष्ठ सापडले नाही · NextGen",
+    "पृष्ठ नहीं मिला · NextGen"
+  ],
+  "Let's find your next step.": [
+    "तुमचे पुढचे पाऊल शोधूया.",
+    "आइए आपका अगला कदम खोजें।"
+  ],
+  "This page isn't available. Explore our programs or contact our team for help.": [
+    "हे पृष्ठ उपलब्ध नाही. आमचे अभ्यासक्रम पाहा किंवा मदतीसाठी आमच्या टीमशी संपर्क साधा.",
+    "यह पृष्ठ उपलब्ध नहीं है। हमारे प्रोग्राम देखें या सहायता के लिए हमारी टीम से संपर्क करें।"
+  ],
+  "Download resume": [
+    "रेझ्युमे डाउनलोड करा",
+    "रेज़्यूमे डाउनलोड करें"
+  ],
+  "The file is unavailable. Please try again.": [
+    "फाइल उपलब्ध नाही. कृपया पुन्हा प्रयत्न करा.",
+    "फ़ाइल उपलब्ध नहीं है। कृपया दोबारा प्रयास करें।"
+  ],
+  "The file content does not match a supported PDF or Word document.": [
+    "फाइल समर्थित PDF किंवा Word दस्तऐवजाशी जुळत नाही.",
+    "फ़ाइल समर्थित PDF या Word दस्तावेज़ से मेल नहीं खाती।"
+  ],
+  "Placements by month": [
+    "महिन्यानुसार नियुक्त्या",
+    "महीने के अनुसार नियुक्तियाँ"
+  ],
+  "Based on recorded placements.": [
+    "नोंदवलेल्या नियुक्त्यांवर आधारित.",
+    "दर्ज की गई नियुक्तियों पर आधारित।"
+  ],
+  "4.6 / 5 Alumni Rating": [
+    "माजी विद्यार्थ्यांचे रेटिंग 4.6 / 5",
+    "पूर्व छात्रों की रेटिंग 4.6 / 5"
+  ],
+  "Learning guides · NextGen": [
+    "अभ्यास मार्गदर्शिका · NextGen",
+    "अध्ययन मार्गदर्शिकाएँ · NextGen"
+  ],
+  "Learning resources": [
+    "अभ्यासाची साधने",
+    "सीखने के संसाधन"
+  ],
+  "Small insights. Stronger foundations.": [
+    "छोट्या शिकवणीतून भक्कम पाया.",
+    "छोटी सीख। मज़बूत नींव।"
+  ],
+  "Explore practical starting points for your learning journey.": [
+    "तुमच्या शिक्षण प्रवासासाठी उपयुक्त सुरुवातीचे मार्ग जाणून घ्या.",
+    "अपनी सीखने की यात्रा के लिए व्यावहारिक शुरुआती कदम जानें।"
+  ],
+  "Read guide": [
+    "मार्गदर्शिका वाचा",
+    "मार्गदर्शिका पढ़ें"
+  ],
+  "Start with SQL": [
+    "SQL पासून सुरुवात करा",
+    "SQL से शुरुआत करें"
+  ],
+  "Build confidence with Python": [
+    "Python मध्ये आत्मविश्वास वाढवा",
+    "Python में आत्मविश्वास बढ़ाएँ"
+  ],
+  "Tell a clear story with data": [
+    "डेटामधून स्पष्ट माहिती मांडा",
+    "डेटा से स्पष्ट कहानी बताएँ"
+  ],
+  "Understand cloud data workflows": [
+    "क्लाउड डेटाची कार्यपद्धती समजून घ्या",
+    "क्लाउड डेटा वर्कफ़्लो समझें"
+  ],
+  "Learn the foundations of AI": [
+    "AI चा पाया समजून घ्या",
+    "AI की बुनियाद सीखें"
+  ],
+  "Present your project clearly": [
+    "तुमचा प्रकल्प स्पष्टपणे मांडा",
+    "अपना प्रोजेक्ट स्पष्ट रूप से प्रस्तुत करें"
+  ],
+  "Practise filtering, grouping and joining tables. Compare a window function with GROUP BY, and explain which question each query answers.": [
+    "तक्त्यांमधील डेटा गाळणे, गट करणे आणि जोडणे यांचा सराव करा. विंडो फंक्शनची GROUP BY शी तुलना करा आणि प्रत्येक क्वेरी कोणत्या प्रश्नाचे उत्तर देते ते समजावून सांगा.",
+    "टेबल फ़िल्टर करने, समूह बनाने और जोड़ने का अभ्यास करें। विंडो फ़ंक्शन की GROUP BY से तुलना करें और बताएँ कि हर क्वेरी किस सवाल का जवाब देती है।"
+  ],
+  "Start with functions, lists and dictionaries. Read a small dataset with Pandas, handle missing values and document the decisions you make.": [
+    "फंक्शन्स, लिस्ट्स आणि डिक्शनरीपासून सुरुवात करा. Pandas वापरून छोटा डेटासेट वाचा, नसलेल्या मूल्यांवर काम करा आणि घेतलेल्या निर्णयांची नोंद ठेवा.",
+    "फ़ंक्शन, लिस्ट और डिक्शनरी से शुरुआत करें। Pandas से छोटा डेटासेट पढ़ें, गायब मानों को संभालें और अपने निर्णय लिखें।"
+  ],
+  "Choose one business question, define the metric and check your source data. Build a chart that answers the question and explain its limitations.": [
+    "व्यवसायाशी संबंधित एक प्रश्न निवडा, मोजमाप ठरवा आणि मूळ डेटा तपासा. त्या प्रश्नाचे उत्तर देणारा चार्ट तयार करा आणि त्याच्या मर्यादा स्पष्ट करा.",
+    "एक व्यावसायिक सवाल चुनें, मेट्रिक तय करें और स्रोत डेटा जाँचें। सवाल का जवाब देने वाला चार्ट बनाएँ और उसकी सीमाएँ समझाएँ।"
+  ],
+  "Trace how data moves from a source into storage and reporting. Think about schedules, failed runs, access permissions and how you would monitor the pipeline.": [
+    "स्रोतापासून स्टोरेज आणि रिपोर्टिंगपर्यंत डेटा कसा जातो ते पाहा. वेळापत्रक, अयशस्वी रन, प्रवेश परवानग्या आणि पाइपलाइनचे निरीक्षण यांचा विचार करा.",
+    "स्रोत से स्टोरेज और रिपोर्टिंग तक डेटा का प्रवाह समझें। शेड्यूल, असफल रन, अनुमतियाँ और पाइपलाइन की निगरानी पर विचार करें।"
+  ],
+  "Understand features, training and evaluation before comparing models. Keep training and test data separate, and check for leakage and unfair assumptions.": [
+    "मॉडेलची तुलना करण्यापूर्वी फीचर्स, प्रशिक्षण आणि मूल्यमापन समजून घ्या. प्रशिक्षण आणि चाचणी डेटा वेगळा ठेवा आणि डेटा लीक किंवा चुकीची गृहितके तपासा.",
+    "मॉडल की तुलना से पहले फ़ीचर, प्रशिक्षण और मूल्यांकन समझें। प्रशिक्षण और टेस्ट डेटा अलग रखें और डेटा लीकेज तथा अनुचित मान्यताएँ जाँचें।"
+  ],
+  "Explain the problem, your approach and what you learned. Include reproducible steps and describe the tradeoffs rather than listing tools alone.": [
+    "समस्या, तुमची पद्धत आणि काय शिकलात ते सांगा. पुन्हा वापरता येतील असे टप्पे द्या आणि केवळ साधनांची यादी न करता निवडींमधील तडजोडी स्पष्ट करा.",
+    "समस्या, अपना तरीका और सीखी गई बातें समझाएँ। दोहराए जा सकने वाले कदम दें और केवल टूल गिनाने के बजाय विकल्पों के समझौते बताएँ।"
+  ],
+  "Submitting the enrollment form is a request to speak with admissions. Our team will explain program availability, requirements and enrollment details before your place is confirmed.": [
+    "नोंदणी अर्ज भरणे म्हणजे प्रवेश विभागाशी संपर्क साधण्याची विनंती आहे. तुमची जागा निश्चित करण्यापूर्वी आमची टीम अभ्यासक्रमाची उपलब्धता, आवश्यकता आणि प्रवेशाचे तपशील समजावेल.",
+    "नामांकन फॉर्म भरना प्रवेश टीम से बात करने का अनुरोध है। आपकी जगह की पुष्टि से पहले हमारी टीम कार्यक्रम की उपलब्धता, आवश्यकताएँ और नामांकन की जानकारी बताएगी।"
+  ],
+  "Any paid enrollment, payment instructions and invoice details will be communicated separately by admissions. The website enrollment form does not take payment.": [
+    "सशुल्क प्रवेश, पेमेंट सूचना आणि बिलाचे तपशील प्रवेश विभाग स्वतंत्रपणे कळवेल. वेबसाइटवरील नोंदणी अर्जाद्वारे पेमेंट घेतले जात नाही.",
+    "सशुल्क नामांकन, भुगतान के निर्देश और चालान की जानकारी प्रवेश टीम अलग से देगी। वेबसाइट का नामांकन फॉर्म भुगतान नहीं लेता है।"
+  ],
+  "Contact admissions with your enrollment details for cancellation or refund questions. Any applicable conditions must be shared and agreed before completing a paid enrollment.": [
+    "रद्द करणे किंवा परताव्याबाबत प्रश्न असल्यास तुमच्या नोंदणीच्या तपशीलांसह प्रवेश विभागाशी संपर्क साधा. सशुल्क प्रवेश पूर्ण करण्यापूर्वी लागू अटी सांगितल्या जाणे आणि मान्य होणे आवश्यक आहे.",
+    "रद्द करने या रिफंड के प्रश्नों के लिए नामांकन की जानकारी के साथ प्रवेश टीम से संपर्क करें। सशुल्क नामांकन पूरा करने से पहले लागू शर्तें साझा करना और उन पर सहमति आवश्यक है।"
+  ],
+  "These Terms are governed by applicable Indian law. Please contact our team first to discuss concerns about the platform or your enrollment.": [
+    "या अटी लागू भारतीय कायद्यानुसार आहेत. प्लॅटफॉर्म किंवा तुमच्या नोंदणीबाबत अडचणी असल्यास प्रथम आमच्या टीमशी संपर्क साधा.",
+    "ये शर्तें लागू भारतीय कानून के अधीन हैं। प्लेटफॉर्म या नामांकन से जुड़ी चिंताओं पर चर्चा के लिए पहले हमारी टीम से संपर्क करें।"
+  ],
+  "For privacy questions or requests about your personal data, contact our team at": [
+    "गोपनीयतेबाबत प्रश्न किंवा तुमच्या वैयक्तिक माहितीबाबत विनंत्यांसाठी आमच्या टीमशी संपर्क साधा:",
+    "गोपनीयता के प्रश्नों या व्यक्तिगत डेटा से जुड़े अनुरोधों के लिए हमारी टीम से संपर्क करें:"
+  ],
+  "Attendance entries cannot be empty.": [
+    "उपस्थितीच्या नोंदी रिकाम्या असू शकत नाहीत.",
+    "उपस्थिति की प्रविष्टियाँ खाली नहीं हो सकतीं।"
+  ],
+  "Attendance entries must be unique.": [
+    "उपस्थितीची प्रत्येक नोंद वेगळी असणे आवश्यक आहे.",
+    "उपस्थिति की प्रत्येक प्रविष्टि अलग होनी चाहिए।"
+  ],
+  "Select a valid attendance status.": [
+    "उपस्थितीची योग्य स्थिती निवडा.",
+    "उपस्थिति की मान्य स्थिति चुनें।"
+  ],
+  "Attendance can only be saved for this batch's active roster.": [
+    "या बॅचमधील सक्रिय विद्यार्थ्यांचीच उपस्थिती नोंदवता येते.",
+    "केवल इस बैच के सक्रिय विद्यार्थियों की उपस्थिति दर्ज की जा सकती है।"
+  ],
   "Connected skills. Endless possibilities.": [
     "जोडलेली कौशल्ये. अमर्याद संधी.",
     "जुड़े कौशल। असीम संभावनाएं।"

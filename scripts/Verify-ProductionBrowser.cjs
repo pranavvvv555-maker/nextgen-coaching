@@ -1,0 +1,10 @@
+const fs=require('fs');let chromium;try{({chromium}=require('playwright'))}catch{({chromium}=require('C:/Users/prana/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'))}
+const cfg=JSON.parse(fs.readFileSync(process.argv[2],'utf8')),mode=process.argv[3],checks=[];
+(async()=>{const browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});try{const c=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce',...(mode==='after'?{storageState:cfg.storage}: {})}),p=await c.newPage();
+if(mode==='before'){
+ await p.goto(cfg.web+'/enroll?course=sql',{waitUntil:'domcontentloaded'});await p.locator('#enroll-name').fill('Production smoke verification');await p.locator('#enroll-email').fill('production-smoke@nextgen.invalid');await p.locator('#enroll-phone').fill('+919999999999');await p.locator('.enroll-submit').click();await p.locator('.enroll-success').waitFor();checks.push({name:'Enrollment works in Production',passed:true});
+ await p.goto(cfg.web+'/login',{waitUntil:'domcontentloaded'});await p.locator('#login-email').fill(cfg.email);await p.locator('#login-password').fill(cfg.password);await p.getByRole('button',{name:'Sign In to Dashboard'}).click();await p.waitForURL('**/admin');await p.locator('aside').waitFor({state:'attached'});await c.storageState({path:cfg.storage});checks.push({name:'Production admin login',passed:true});
+}else{
+ await p.goto(cfg.web+'/admin',{waitUntil:'domcontentloaded'});await p.locator('.workspace-shell').waitFor();await p.locator('.portal-mobile-nav summary').click();await p.locator('.portal-mobile-nav a[href="/admin/leads"]').click();await p.locator('main').getByText('production-smoke@nextgen.invalid',{exact:true}).waitFor();checks.push({name:'Session and enrollment data survive Production web restart',passed:true});
+}
+await c.close();}catch(e){checks.push({name:e.message,passed:false});process.exitCode=1;console.error(e.message)}finally{await browser.close();fs.writeFileSync(cfg.report+'-'+mode+'.json',JSON.stringify(checks,null,2));console.log(mode+': '+checks.filter(x=>x.passed).length+' passed')}})();

@@ -47,7 +47,7 @@
     private int _unreadCount;
     private System.Threading.Timer? _pollTimer;
 
-    private string Initial => (AuthState.Current?.FullName ?? "S").Substring(0, 1).ToUpperInvariant();
+    private string Initial => (AuthState.Current?.FullName ?? "U").Trim() is { Length: > 0 } name ? name[..1].ToUpperInvariant() : "U";
 
     protected override async Task OnInitializedAsync()
     {

@@ -67,17 +67,13 @@ else
                 <h2 class="text-h3">Placement Trend</h2>
                 <span class="text-meta text-text-muted uppercase tracking-wider">Last 6 months</span>
             </div>
-            @* Static placeholder bars — real data wiring deferred *@
-            <div class="flex items-end gap-3 h-32">
-                @foreach (var (m, h) in _placeholderTrend)
+            <div class="placement-trend" aria-label="@L["Placements by month"]">
+                @foreach (var month in _stats.PlacementTrend)
                 {
-                    <div class="flex-1 flex flex-col items-center justify-end gap-1.5">
-                        <div class="w-full bg-brand-sky-100 rounded-t" style="height:@(h)%"></div>
-                        <div class="text-meta text-text-muted">@m</div>
-                    </div>
+                    <div><strong>@month.Count</strong><span style="height:@(Math.Max(3, month.Count * 85 / Math.Max(1, _stats.PlacementTrend.Max(m => m.Count))))px"></span><small>@month.Month</small></div>
                 }
             </div>
-            <div class="mt-4 text-meta text-text-muted">Live chart will replace this in Phase 5.</div>
+            <p class="text-meta text-text-muted mt-4">@L["Based on recorded placements."]</p>
         </div>
     </div>
 
@@ -158,10 +154,6 @@ else
 
     private int TotalLeads => _stats?.LeadsByStatus.Sum(x => x.Count) ?? 0;
 
-    private readonly (string Month, int Height)[] _placeholderTrend =
-    {
-        ("Jan", 38), ("Feb", 52), ("Mar", 61), ("Apr", 73), ("May", 81), ("Jun", 92)
-    };
 
     protected override async Task OnInitializedAsync()
     {

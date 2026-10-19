@@ -4,7 +4,7 @@ namespace NextGenCoaching.Shared.Requests;
 
 public class GradeProjectRequest
 {
-    [Required, Range(0, 1000)]
+    [Required, Range(0, 100)]
     public decimal TotalScore { get; set; }
 
     [StringLength(3000)]

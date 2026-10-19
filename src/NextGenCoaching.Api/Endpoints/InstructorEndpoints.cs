@@ -588,6 +588,7 @@ public static class InstructorEndpoints
         {
             var session = await db.Sessions.AsNoTracking().Include(s => s.Batch).FirstOrDefaultAsync(s => s.Id == sessionId, ct);
             if (session is null) return Results.NotFound(ApiResponse<AttendanceRosterDto>.Fail("Session not found"));
+            if (!await CanManageBatchAsync(session.BatchId, currentUser, db, ct)) return Results.Forbid();
 
             var enrollments = await db.Enrollments.AsNoTracking()
                 .Include(e => e.StudentProfile).ThenInclude(sp => sp.User)
@@ -614,10 +615,21 @@ public static class InstructorEndpoints
             return Results.Ok(ApiResponse<AttendanceRosterDto>.Ok(dto));
         }).WithName("InstructorAttendanceRoster");
 
-        group.MapPost("/attendance/sessions/{sessionId:guid}", async (Guid sessionId, SaveAttendanceRequest req, AppDbContext db, CancellationToken ct) =>
+        group.MapPost("/attendance/sessions/{sessionId:guid}", async (Guid sessionId, SaveAttendanceRequest req, ICurrentUserService currentUser, AppDbContext db, CancellationToken ct) =>
         {
             var session = await db.Sessions.AsNoTracking().FirstOrDefaultAsync(s => s.Id == sessionId, ct);
             if (session is null) return Results.NotFound(ApiResponse<object>.Fail("Session not found"));
+
+            if (!await CanManageBatchAsync(session.BatchId, currentUser, db, ct)) return Results.Forbid();
+            if (req.Entries.Any(e => e is null))
+                return Results.BadRequest(ApiResponse<object>.Fail("Attendance entries cannot be empty."));
+            if (req.Entries.GroupBy(e => e.EnrollmentId).Any(g => g.Count() > 1))
+                return Results.BadRequest(ApiResponse<object>.Fail("Attendance entries must be unique."));
+            if (req.Entries.Any(e => !Enum.TryParse<AttendanceStatus>(e.Status, true, out var status) || !Enum.IsDefined(status)))
+                return Results.BadRequest(ApiResponse<object>.Fail("Select a valid attendance status."));
+            var validEnrollments = await db.Enrollments.Where(e => e.BatchId == session.BatchId && e.Status == EnrollmentStatus.Active).Select(e => e.Id).ToListAsync(ct);
+            if (req.Entries.Any(e => !validEnrollments.Contains(e.EnrollmentId)))
+                return Results.BadRequest(ApiResponse<object>.Fail("Attendance can only be saved for this batch's active roster."));
 
             var existing = await db.SessionAttendances
                 .Where(a => a.SessionId == sessionId)
@@ -649,6 +661,12 @@ public static class InstructorEndpoints
     }
 
     // ---------- ownership guards ----------
+
+    private static async Task<bool> CanManageBatchAsync(Guid batchId, ICurrentUserService user, AppDbContext db, CancellationToken ct)
+    {
+        if (user.IsInRole(RoleNames.Admin)) return true;
+        return await db.Batches.AsNoTracking().AnyAsync(b => b.Id == batchId && b.PrimaryInstructor != null && b.PrimaryInstructor.UserId == user.UserId, ct);
+    }
 
     private static async Task<bool> EnsureInstructorOwnsAssignmentSubmissionAsync(
         Guid submissionId, ICurrentUserService currentUser, AppDbContext db, CancellationToken ct)

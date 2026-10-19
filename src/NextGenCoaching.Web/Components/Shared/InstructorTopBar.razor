@@ -30,7 +30,7 @@
 
 @code {
     private bool _open;
-    private string Initial => (AuthState.Current?.FullName ?? "I").Substring(0, 1).ToUpperInvariant();
+    private string Initial => (AuthState.Current?.FullName ?? "U").Trim() is { Length: > 0 } name ? name[..1].ToUpperInvariant() : "U";
     private void ToggleMenu() => _open = !_open;
     private async Task LogoutAsync()
     {

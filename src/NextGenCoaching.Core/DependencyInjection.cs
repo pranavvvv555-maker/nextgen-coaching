@@ -1,4 +1,5 @@
 using System.Text;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,22 @@ public static class DependencyInjection
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(opts =>
             {
+                opts.Events = new JwtBearerEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var manager = context.HttpContext.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+                        var id = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                        var user = id is null ? null : await manager.FindByIdAsync(id);
+                        if (user is null || (user.LockoutEnabled && user.LockoutEnd > DateTimeOffset.UtcNow))
+                        {
+                            context.Fail("Account is unavailable."); return;
+                        }
+                        var currentRoles = await manager.GetRolesAsync(user);
+                        var tokenRoles = context.Principal!.FindAll(ClaimTypes.Role).Select(c => c.Value);
+                        if (tokenRoles.Any(role => !currentRoles.Contains(role))) context.Fail("Account permissions changed. Sign in again.");
+                    }
+                };
                 opts.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,

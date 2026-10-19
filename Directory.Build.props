@@ -7,20 +7,8 @@
     <LangVersion>latest</LangVersion>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
 
-    <!--
-      NU1902: MailKit / MimeKit carry moderate-severity advisories
-      (GHSA-9j88-vvj5-vhgr, GHSA-g7hc-96xr-gvvx) across the version range
-      we've evaluated, with no clean patched release available yet.
-
-      NU1903: System.Security.Cryptography.Xml 10.0.0 carries high-severity advisories
-      (GHSA-37gx-xxp4-5rgx, GHSA-w3x6-4m5h-cxqf). The package is pulled in transitively
-      by ASP.NET Identity / token validation. The vulnerable code paths involve XML
-      signature verification against attacker-controlled XML, which we do NOT do —
-      we sign and verify JWTs with HMAC-SHA256, not XML signatures.
-
-      Both are suppressed deliberately. Re-evaluate when patched versions ship,
-      or when adding any feature that processes XML signatures (SAML SSO, etc.).
-    -->
-    <NoWarn>$(NoWarn);NU1902;NU1903</NoWarn>
+    <!-- Keep package vulnerability warnings visible during restore and build. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
   </PropertyGroup>
 </Project>

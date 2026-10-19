@@ -29,7 +29,7 @@ else
         <div class="card p-5 lg:col-span-2 space-y-4">
             <div>
                 <h2 class="text-h3 mb-2">Resume file</h2>
-                <a href="@_data.FileUrl" target="_blank" class="text-sm text-brand-primary break-all">📄 @_data.FileUrl</a>
+                <ResumeDownload Id="@_data.Id" Extension="@System.IO.Path.GetExtension(_data.FileUrl)" />
                 <div class="text-meta text-text-muted mt-1">Opens in a new tab.</div>
             </div>
 

@@ -22,6 +22,8 @@ if (builder.Environment.IsDevelopment())
         .AddCommandLine(args);
 }
 
+builder.ValidateDeployment();
+
 // ---------- Logging (Serilog) ----------
 builder.Host.UseSerilog((ctx, services, cfg) => cfg
     .ReadFrom.Configuration(ctx.Configuration)
@@ -75,10 +77,10 @@ builder.Services.AddRateLimiter(opts =>
 {
     opts.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     opts.AddPolicy("public-post", context => RateLimitPartition.GetFixedWindowLimiter(
-        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        partitionKey: ProductionConfiguration.ClientPartition(context, builder.Configuration),
         factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     opts.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
-        partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        partitionKey: ProductionConfiguration.ClientPartition(context, builder.Configuration),
         factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 
@@ -87,6 +89,12 @@ var app = builder.Build();
 // ---------- Pipeline ----------
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["Cache-Control"] = "no-store";
+    await next();
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -98,12 +106,8 @@ var storageSection = builder.Configuration["Storage:LocalRoot"];
 var uploadRoot = !string.IsNullOrWhiteSpace(storageSection)
     ? storageSection
     : Path.Combine(AppContext.BaseDirectory, "uploads");
+// Resumes are private: do not expose the upload directory as public static files.
 Directory.CreateDirectory(uploadRoot);
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadRoot),
-    RequestPath = "/uploads"
-});
 
 app.UseCors("Web");
 app.UseAuthentication();
@@ -113,6 +117,7 @@ app.UseRateLimiter();
 // Validate the shared request DTOs on every API route.
 var api = app.MapGroup(string.Empty).AddEndpointFilter<RequestValidationFilter>();
 api.MapPublicEndpoints();
+api.MapResumeFileEndpoints();
 api.MapAuthEndpoints();
 api.MapAdminLeadsEndpoints();
 api.MapAdminWebinarsEndpoints();

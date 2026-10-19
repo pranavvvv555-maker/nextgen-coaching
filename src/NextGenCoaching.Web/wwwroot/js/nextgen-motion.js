@@ -462,6 +462,13 @@
 })();
 
 
+window.downloadNextGenFile = async (name, stream) => {
+  const data = await stream.arrayBuffer();
+  const url = URL.createObjectURL(new Blob([data], {type:'application/octet-stream'}));
+  const link = document.createElement('a');link.href=url;link.download=name;
+  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+
 // Keep the selected recommendation visible beneath the sticky navigation.
 window.revealNextGenDirection = () => {
   const card = document.querySelector('#recommended-direction');

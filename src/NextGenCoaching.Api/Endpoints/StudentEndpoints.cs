@@ -923,7 +923,14 @@ public static class StudentEndpoints
 
             string url;
             await using (var stream = file.OpenReadStream())
-                url = await storage.UploadAsync(stream, file.FileName, file.ContentType, ct);
+            {
+                using var buffer = new MemoryStream();
+                await stream.CopyToAsync(buffer, ct);
+                if (!NextGenCoaching.Core.Services.Storage.ResumeFileValidation.IsSupported(buffer.ToArray(), ext))
+                    return Results.BadRequest(ApiResponse<object>.Fail("The file content does not match a supported PDF or Word document."));
+                buffer.Position = 0;
+                url = await storage.UploadAsync(buffer, file.FileName, file.ContentType, ct);
+            }
 
             var maxVersion = await db.Resumes.Where(r => r.StudentProfileId == profile.Id).MaxAsync(r => (int?)r.Version, ct) ?? 0;
 

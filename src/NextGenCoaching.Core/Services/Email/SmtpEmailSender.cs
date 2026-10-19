@@ -43,13 +43,17 @@ public class SmtpEmailSender : IEmailSender
         }.ToMessageBody();
 
         var secureOptions = cfg.UseStartTls
-            ? SecureSocketOptions.StartTlsWhenAvailable
+            ? SecureSocketOptions.StartTls
             : SecureSocketOptions.Auto;
 
         using var smtp = new SmtpClient();
         await smtp.ConnectAsync(cfg.SmtpHost, cfg.SmtpPort, secureOptions, ct);
         if (!string.IsNullOrEmpty(cfg.SmtpUser))
-            await smtp.AuthenticateAsync(cfg.SmtpUser, cfg.SmtpPassword, ct);
+        {
+            if (!smtp.IsSecure) throw new InvalidOperationException("SMTP authentication requires an encrypted connection.");
+            var password = cfg.SmtpPassword ?? throw new InvalidOperationException("Configure the SMTP password before enabling email.");
+            await smtp.AuthenticateAsync(cfg.SmtpUser, password, ct);
+        }
         await smtp.SendAsync(msg, ct);
         await smtp.DisconnectAsync(true, ct);
 

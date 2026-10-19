@@ -108,6 +108,16 @@ public class ApiClient
             return ApiResponse<TResponse>.Fail("Upload error. Please try again.");
         }
     }
+    public async Task<byte[]?> DownloadAsync(string path, CancellationToken ct = default)
+    {
+        try
+        {
+            using var response = await _http.GetAsync(path, ct);
+            return response.IsSuccessStatusCode ? await response.Content.ReadAsByteArrayAsync(ct) : null;
+        }
+        catch (Exception ex) { _logger.LogWarning(ex, "Download failed"); return null; }
+    }
+
     private static async Task<ApiResponse<T>> ReadResponseAsync<T>(HttpResponseMessage response, CancellationToken ct)
     {
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)

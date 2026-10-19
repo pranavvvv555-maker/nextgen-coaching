@@ -7,3 +7,13 @@
 **/node_modules
 cloudflared.exe
 *.log
+**/.local
+**/.env
+**/.env.*
+**/appsettings.Local.json
+**/appsettings.Production.json
+**/TestResults
+**/uploads
+**/.idea
+**/.codex
+**/.agents

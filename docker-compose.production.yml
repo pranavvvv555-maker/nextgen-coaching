@@ -1,0 +1,50 @@
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nextgen
+      POSTGRES_USER: nextgen
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in .env}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextgen -d nextgen"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__DefaultConnection: Host=database;Port=5432;Database=nextgen;Username=nextgen;Password=${DATABASE_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET:?Set JWT_SECRET}
+      Api__ProxyKey: ${API_PROXY_KEY:?Set API_PROXY_KEY}
+      Seed__AdminEmail: ${ADMIN_EMAIL:?Set ADMIN_EMAIL}
+      Seed__AdminPassword: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+    volumes:
+      - api-state:/app/state
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      Api__BaseUrl: http://api:8080
+      Api__ProxyKey: ${API_PROXY_KEY}
+      Hosting__HttpsRedirect: "false"
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - web-state:/app/state
+volumes:
+  database:
+  api-state:
+  web-state:

@@ -43,6 +43,12 @@ try {
         & node (Join-Path $taskRoot 'scripts/Verify-Backend.mjs')
         if ($LASTEXITCODE -ne 0) { throw 'Fresh database integration checks failed.' }
         Copy-Item (Join-Path $taskLocal 'backend-checks.json') (Join-Path $taskLocal 'fresh-database-checks.json')
+        $taskOldWorkflow = $env:NEXTGEN_ISOLATED_WORKFLOW
+        try {
+            $env:NEXTGEN_ISOLATED_WORKFLOW = 'true'
+            & node (Join-Path $taskRoot 'scripts/Verify-Workflow.cjs')
+            if ($LASTEXITCODE -ne 0) { throw 'Isolated learning workflow checks failed.' }
+        } finally { $env:NEXTGEN_ISOLATED_WORKFLOW = $taskOldWorkflow }
     } finally { $env:NEXTGEN_API_URL = $taskOldApiUrl }
     Write-Host 'Fresh database migrations, canonical catalogue, curriculum relationships and API integration checks passed.'
 } finally {

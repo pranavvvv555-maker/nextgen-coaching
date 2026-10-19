@@ -26,6 +26,8 @@ appsettings.Local.json
 appsettings.Production.json
 .env
 .env.local
+.env.*
+!.env.example
 .local/
 
 # OS

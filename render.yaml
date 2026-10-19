@@ -2,10 +2,42 @@ services:
   - type: web
     name: nextgen-coaching
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.web
     dockerContext: .
     plan: free
     region: singapore
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
+      - key: Api__BaseUrl
+        sync: false
+      - key: Api__ProxyKey
+        sync: false
+      - key: Hosting__HttpsRedirect
+        value: false
+      - key: DataProtection__KeyPath
+        value: /app/state/keys
+    healthCheckPath: /health/ready
+  - type: web
+    name: nextgen-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile.api
+    dockerContext: .
+    plan: free
+    region: singapore
+    healthCheckPath: /health/ready
+    envVars:
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: Jwt__Secret
+        generateValue: true
+      - key: Seed__AdminEmail
+        sync: false
+      - key: Seed__AdminPassword
+        sync: false
+      - key: Seed__IncludeDemoData
+        value: false
+      - key: Api__ProxyKey
+        sync: false
+      - key: DataProtection__KeyPath
+        value: /app/state/keys

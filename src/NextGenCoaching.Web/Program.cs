@@ -6,6 +6,7 @@ using NextGenCoaching.Web.Services;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.AddDeploymentServices();
 
 // ---------- Logging ----------
 builder.Host.UseSerilog((ctx, services, cfg) => cfg
@@ -36,8 +37,9 @@ var apiBaseUrl = builder.Configuration["Api:BaseUrl"] ?? "http://localhost:5101"
 builder.Services.AddHttpClient(TokenRefreshService.HttpClientName, c =>
 {
     c.BaseAddress = new Uri(apiBaseUrl);
-    c.Timeout = TimeSpan.FromSeconds(3);
+    c.Timeout = TimeSpan.FromSeconds(20);
 });
+builder.Services.AddHttpClient("backend-readiness", c => { c.BaseAddress = new Uri(apiBaseUrl); c.Timeout = TimeSpan.FromSeconds(4); });
 
 // One shared connection pool for all circuits (replaces IHttpClientFactory's pooling).
 builder.Services.AddSingleton(_ => new SocketsHttpHandler
@@ -62,9 +64,16 @@ builder.Services.AddScoped(sp =>
     var http = new HttpClient(authHandler, disposeHandler: false)
     {
         BaseAddress = new Uri(apiBaseUrl),
-        Timeout = TimeSpan.FromSeconds(3)
+        Timeout = TimeSpan.FromSeconds(20)
     };
 
+    var proxyKey = builder.Configuration["Api:ProxyKey"];
+    var caller = sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.Connection.RemoteIpAddress;
+    if (!string.IsNullOrWhiteSpace(proxyKey) && caller is not null)
+    {
+        http.DefaultRequestHeaders.Add("X-NextGen-Proxy-Key", proxyKey);
+        http.DefaultRequestHeaders.Add("X-NextGen-Client-IP", caller.ToString());
+    }
     return new ApiClient(http, sp.GetRequiredService<ILogger<ApiClient>>());
 });
 
@@ -81,15 +90,40 @@ builder.Services.AddScoped<HrApiClient>();
 builder.Services.AddScoped<PaymentApiClient>();
 
 var app = builder.Build();
+app.UseForwardedHeaders();
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    context.Response.Headers["Content-Security-Policy"] = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'";
+    await next();
+});
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
-    app.UseHttpsRedirection();
+    if (builder.Configuration.GetValue("Hosting:HttpsRedirect", true)) app.UseHttpsRedirection();
 }
 app.UseStaticFiles();
+app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseAntiforgery();
+app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));
+app.MapGet("/health/ready", async (IHttpClientFactory clients) =>
+{
+    try
+    {
+        using var response = await clients.CreateClient("backend-readiness").GetAsync("/health/ready");
+        return response.IsSuccessStatusCode ? Results.Ok(new { status = "ready" }) : Results.StatusCode(503);
+    }
+    catch (HttpRequestException) { return Results.StatusCode(503); }
+    catch (TaskCanceledException) { return Results.StatusCode(503); }
+});
+app.MapGet("/robots.txt", (IConfiguration configuration) => Results.Text(configuration.GetValue<bool>("Site:Indexable")
+    ? "User-agent: *\nDisallow: /admin\nDisallow: /student\nDisallow: /instructor\nDisallow: /hr\nDisallow: /enroll\nDisallow: /checkout\nDisallow: /login\nDisallow: /signup\n"
+    : "User-agent: *\nDisallow: /\n", "text/plain"));
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

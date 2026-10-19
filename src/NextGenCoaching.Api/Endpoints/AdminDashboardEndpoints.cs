@@ -49,11 +49,15 @@ public static class AdminDashboardEndpoints
                 .OrderBy(m => m.ScheduledAtUtc).Take(8)
                 .Select(m => new UpcomingMockInterviewItem(
                     m.Id,
-                    "Student",      // resolved properly once we join StudentProfile -> User in a follow-up
+                    m.Enrollment.StudentProfile.User != null ? m.Enrollment.StudentProfile.User.FullName : "Student",
                     m.Enrollment.Batch.Course.Title,
                     m.ScheduledAtUtc))
                 .ToListAsync(ct);
 
+            var start = new DateOnly(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1).AddMonths(-5);
+            var dates = await db.Placements.AsNoTracking().Where(p => p.PlacementDate >= start).Select(p => p.PlacementDate).ToListAsync(ct);
+            var trend = Enumerable.Range(0, 6).Select(i => start.AddMonths(i))
+                .Select(month => new PlacementMonthItem(month.ToString("MMM", System.Globalization.CultureInfo.InvariantCulture), dates.Count(d => d.Year == month.Year && d.Month == month.Month))).ToArray();
             return Results.Ok(ApiResponse<AdminDashboardStatsDto>.Ok(new AdminDashboardStatsDto
             {
                 TotalStudents = totalStudents,
@@ -61,6 +65,7 @@ public static class AdminDashboardEndpoints
                 TotalCourses = totalCourses,
                 PlacedStudents = placedStudents,
                 OpenLeads = openLeads,
+                PlacementTrend = trend,
                 LeadsByStatus = leadsByStatus,
                 RecentLeads = recentLeads,
                 UpcomingMockInterviews = upcomingMocks

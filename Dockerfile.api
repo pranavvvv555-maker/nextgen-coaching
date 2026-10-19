@@ -1,0 +1,20 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY Directory.Build.props ./
+COPY src/NextGenCoaching.Shared/NextGenCoaching.Shared.csproj src/NextGenCoaching.Shared/
+COPY src/NextGenCoaching.Core/NextGenCoaching.Core.csproj src/NextGenCoaching.Core/
+COPY src/NextGenCoaching.Api/NextGenCoaching.Api.csproj src/NextGenCoaching.Api/
+RUN dotnet restore src/NextGenCoaching.Api/NextGenCoaching.Api.csproj
+COPY src/NextGenCoaching.Shared/ src/NextGenCoaching.Shared/
+COPY src/NextGenCoaching.Core/ src/NextGenCoaching.Core/
+COPY src/NextGenCoaching.Api/ src/NextGenCoaching.Api/
+RUN dotnet publish src/NextGenCoaching.Api -c Release --no-restore -o /published
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /published .
+RUN mkdir -p /app/state/keys /app/state/uploads && chown -R $APP_UID:$APP_UID /app/state
+ENV ASPNETCORE_HTTP_PORTS=8080 ASPNETCORE_ENVIRONMENT=Production DataProtection__KeyPath=/app/state/keys Storage__LocalRoot=/app/state/uploads Seed__IncludeDemoData=false
+EXPOSE 8080
+USER $APP_UID
+ENTRYPOINT ["dotnet", "NextGenCoaching.Api.dll"]

@@ -23,7 +23,7 @@ public static class DbSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder");
 
         // Apply any pending EF Core migrations, then seed.
-        // Schema is now versioned via migrations (see Persistence/Migrations). Adding a table or
+        // Schema is versioned in Migrations and Persistence/Migrations. Adding a table or
         // column means `dotnet ef migrations add <Name>` — no more dropping the database.
         await ctx.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied (if any were pending).");
@@ -31,13 +31,13 @@ public static class DbSeeder
         await SeedRolesAsync(roleMgr);
         await SeedAdminAsync(userMgr, config, logger);
         await SeedCoursesAsync(ctx);
-        await SeedTestimonialsAsync(ctx);
         await SeedFaqsAsync(ctx);
         await SeedEmailTemplatesAsync(ctx);
         await SeedSmsTemplatesAsync(ctx);
         await SeedEmailSettingsAsync(ctx);
         if (config.GetValue<bool>("Seed:IncludeDemoData"))
         {
+            await SeedTestimonialsAsync(ctx);
             await SeedTestStudentAsync(userMgr, ctx, config, logger);
             await SeedTestInstructorAsync(userMgr, ctx, config, logger);
             await SeedTestHrAsync(userMgr, ctx, config, logger);
@@ -77,7 +77,7 @@ public static class DbSeeder
         if (!result.Succeeded)
         {
             logger.LogError("Admin seed failed: {Errors}", string.Join(", ", result.Errors.Select(e => e.Description)));
-            return;
+            throw new InvalidOperationException("Admin provisioning failed. Check the configured admin credentials.");
         }
         await userMgr.AddToRoleAsync(admin, RoleNames.Admin);
         logger.LogInformation("Seeded admin user: {Email}", email);
@@ -392,11 +392,11 @@ public static class DbSeeder
         if (await ctx.Faqs.AnyAsync()) return;
         ctx.Faqs.AddRange(
             new Faq { Category = "general",   Question = "Do I need a tech background to join?",       Answer = "No. Any graduate can join. We start from the basics.",                                                SortOrder = 1 },
-            new Faq { Category = "general",   Question = "Is this an online or offline program?",      Answer = "We run hybrid programs with live online sessions and optional offline labs at our centres.",          SortOrder = 2 },
-            new Faq { Category = "course",    Question = "What if I miss a session?",                  Answer = "Every session is recorded and available within 24 hours.",                                              SortOrder = 3 },
-            new Faq { Category = "course",    Question = "Will I get a certificate?",                  Answer = "Yes — on successful completion of all projects you receive an industry-recognised certificate.",        SortOrder = 4 },
-            new Faq { Category = "payment",   Question = "Do you offer EMI?",                          Answer = "Yes, no-cost EMI is available on most credit cards.",                                                   SortOrder = 5 },
-            new Faq { Category = "placement", Question = "What is your placement support?",            Answer = "Resume reviews, mock interviews, and direct connections to 200+ hiring partners until you're placed.", SortOrder = 6 }
+            new Faq { Category = "general", Question = "Can I learn from anywhere in India?", Answer = "Yes. NextGen classes are online, so you can join from your own space anywhere in India.", SortOrder = 2 },
+            new Faq { Category = "course", Question = "What if I miss a live session?", Answer = "Ask our team about recordings and catch-up resources for your chosen program.", SortOrder = 3 },
+            new Faq { Category = "course", Question = "Will I get a certificate?", Answer = "Ask admissions about completion requirements and the certificate available for your chosen program.", SortOrder = 4 },
+            new Faq { Category = "general", Question = "How do I enroll?", Answer = "Choose a program and submit the enrollment form. Admissions will contact you about the next steps.", SortOrder = 5 },
+            new Faq { Category = "placement", Question = "What is your career support?", Answer = "Explore resume reviews, mock interviews and mentor guidance. Available support depends on your program and does not guarantee employment or a salary.", SortOrder = 6 }
         );
         await ctx.SaveChangesAsync();
     }
@@ -615,7 +615,7 @@ public static class DbSeeder
         );
 
         await ctx.SaveChangesAsync();
-        logger.LogInformation("Seeded test student: {Email} (password: {Password})", email, password);
+        logger.LogInformation("Seeded test student: {Email} ", email);
     }
 
     // ---------- Test instructor (so the Instructor portal has grading work to do) ----------
@@ -669,7 +669,7 @@ public static class DbSeeder
             await ctx.SaveChangesAsync();
         }
 
-        logger.LogInformation("Seeded test instructor: {Email} (password: {Password})", email, password);
+        logger.LogInformation("Seeded test instructor: {Email} ", email);
     }
 
     // ---------- Test HR reviewer + sample resume/jobs/referral ----------
@@ -775,6 +775,6 @@ public static class DbSeeder
         }
 
         await ctx.SaveChangesAsync();
-        logger.LogInformation("Seeded test HR reviewer: {Email} (password: {Password})", email, password);
+        logger.LogInformation("Seeded test HR reviewer: {Email} ", email);
     }
 }

@@ -72,7 +72,7 @@ else
                         <td class="px-4 py-3 text-right">
                             @if (!string.IsNullOrEmpty(r.FileUrl))
                             {
-                                <a href="@r.FileUrl" target="_blank" class="text-brand-primary underline">@L["View"]</a>
+                                <ResumeDownload Id="@r.Id" Extension="@Path.GetExtension(r.FileUrl)" />
                             }
                         </td>
                     </tr>

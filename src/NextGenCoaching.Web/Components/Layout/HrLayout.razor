@@ -26,10 +26,11 @@ else if (!AuthState.IsInRole(RoleNames.HrReviewer) && !AuthState.IsInRole(RoleNa
 }
 else
 {
-    <div class="min-h-screen flex bg-surface-muted">
+    <div class="workspace-shell min-h-screen flex bg-surface-muted">
         <HrSidebar />
         <div class="flex-1 flex flex-col min-w-0">
             <HrTopBar />
+            <PortalMobileNav />
             <main class="flex-1 px-6 py-6 overflow-x-auto">
                 @Body
             </main>
