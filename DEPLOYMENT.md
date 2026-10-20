@@ -16,6 +16,8 @@ Use `./run.ps1 -Mobile` from this folder. The current source runs on port 5102; 
 
 The web container builds Tailwind during its build. Both containers run as a non-root user. Production API startup refuses default secrets, short admin passwords and enabled demo accounts. Keys must remain available across restarts and across replicas; a single-instance deployment is the supported baseline.
 
+Shared asset compression, responsive artwork and caching are configured in the application and included in Release/container builds. After publishing, run `node scripts/check-asset-delivery.mjs https://your-site.example` and perform the phone checks in [PERFORMANCE.md](PERFORMANCE.md). Keep WebSockets enabled and avoid overriding dynamic responses with public cache headers at the proxy.
+
 ## Render preview blueprint
 
 `render.yaml` defines separate web and API services. Supply a persistent PostgreSQL connection string (Npgsql format), admin credentials and the **same** `Api__ProxyKey` on both services. Set the website's `Api__BaseUrl` to the deployed API's HTTPS origin. The database is deliberately not provisioned as an expiring free instance.

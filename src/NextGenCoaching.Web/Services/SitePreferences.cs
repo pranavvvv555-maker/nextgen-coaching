@@ -10,16 +10,28 @@ namespace NextGenCoaching.Web.Services;
 public sealed class SitePreferences(IJSRuntime js)
 {
     private static readonly Dictionary<string, string[]> Translations = LoadTranslations();
+    private readonly Dictionary<string, string> _translationCache = new(StringComparer.Ordinal);
     private Task? _initialization;
     public string Language { get; private set; } = "en";
     public string Theme { get; private set; } = "light";
     public int Revision { get; private set; }
     public event Action? Changed;
+    public event Action? ThemeChanged;
     public string this[string? source] => Translate(source);
 
     public string Translate(string? source)
     {
         if (string.IsNullOrEmpty(source)) return string.Empty;
+        if (Language == "en") return WebUtility.HtmlDecode(source);
+        if (_translationCache.TryGetValue(source, out var cached)) return cached;
+        var translated = TranslateUncached(source);
+        // Bound circuit memory when user-supplied labels or server errors vary over time.
+        if (_translationCache.Count < 2048) _translationCache[source] = translated;
+        return translated;
+    }
+
+    private string TranslateUncached(string source)
+    {
         var key = Regex.Replace(WebUtility.HtmlDecode(source), @"\s+", " ").Trim();
         if (Language != "en" && Translations.TryGetValue(key, out var values))
             return values[Language == "mr" ? 0 : 1];
@@ -37,14 +49,22 @@ public sealed class SitePreferences(IJSRuntime js)
     private async Task RestoreAsync()
     {
         var saved = await js.InvokeAsync<PreferenceSnapshot>("nextgenPreferences.read");
-        Language = ValidLanguage(saved.Language);
-        Theme = saved.Theme == "dark" ? "dark" : "light";
-        Notify();
+        var language = ValidLanguage(saved.Language);
+        var theme = saved.Theme == "dark" ? "dark" : "light";
+        var languageChanged = Language != language;
+        var themeChanged = Theme != theme;
+        Language = language;
+        Theme = theme;
+        if (languageChanged) { _translationCache.Clear(); Notify(); }
+        else if (themeChanged) ThemeChanged?.Invoke();
     }
 
     public async Task SetLanguageAsync(string? language)
     {
-        Language = ValidLanguage(language);
+        var nextLanguage = ValidLanguage(language);
+        if (Language == nextLanguage) return;
+        Language = nextLanguage;
+        _translationCache.Clear();
         await js.InvokeVoidAsync("nextgenPreferences.setLanguage", Language);
         Notify();
     }
@@ -53,7 +73,7 @@ public sealed class SitePreferences(IJSRuntime js)
     {
         Theme = Theme == "dark" ? "light" : "dark";
         await js.InvokeVoidAsync("nextgenPreferences.setTheme", Theme);
-        Notify();
+        ThemeChanged?.Invoke();
     }
 
     private void Notify() { Revision++; Changed?.Invoke(); }

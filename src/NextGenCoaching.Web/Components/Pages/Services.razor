@@ -23,13 +23,13 @@
             <svg class="career-hero-path" viewBox="0 0 600 500" fill="none" aria-hidden="true"><path d="M60 380C-40 180 340 440 450 190S610 20 540 70" stroke="#b7c8ec" stroke-width="2" stroke-dasharray="5 8" /></svg>
             <div class="career-hero-main-enter" data-hero-enter>
                 <figure class="career-hero-main-card" data-hero-float="8">
-                    <img src="images/career/career-progress.jpg" alt="@L["A student climbing learning milestones towards a career goal, supported by a coach and a skills dashboard."]" width="2752" height="1536" fetchpriority="high" decoding="async" />
+                    <ResponsiveImage Source="images/career/career-progress.jpg" Alt="@L["A student climbing learning milestones towards a career goal, supported by a coach and a skills dashboard."]" Width="2752" Height="1536" Priority="true" Sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 900px) 560px, (max-width: 1199px) 50vw, 680px" />
                     <figcaption class="sr-only">@L["Your future, moving forward."]</figcaption>
                 </figure>
             </div>
             <div class="career-hero-mentor-enter" data-hero-enter>
                 <figure class="career-hero-mentor-card" data-hero-float="5">
-                    <img src="images/career/industry-mentorship.jpg" alt="@L["An experienced engineer helping a junior developer plan his next steps."]" width="2752" height="1536" decoding="async" />
+                    <ResponsiveImage Source="images/career/industry-mentorship.jpg" Alt="@L["An experienced engineer helping a junior developer plan his next steps."]" Width="2752" Height="1536" Sizes="(max-width: 767px) 180px, 320px" />
                     <figcaption><i aria-hidden="true"></i> @L["A mentor in your corner."]</figcaption>
                 </figure>
             </div>
@@ -75,7 +75,7 @@
         {
             <article @key="s.Id" data-motion="fade-up" class="career-service-card" data-service-id="@s.Id">
                 <div class="career-service-image">
-                    <img src="images/career/@s.ImageFile" alt="@s.ImageAlt" width="2752" height="1536" loading="lazy" decoding="async" />
+                    <ResponsiveImage Source="@($"images/career/{s.ImageFile}")" Alt="@s.ImageAlt" Width="2752" Height="1536" Sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1023px) 46vw, 430px" />
                 </div>
                 <div class="career-service-content">
                     <div class="career-service-heading">

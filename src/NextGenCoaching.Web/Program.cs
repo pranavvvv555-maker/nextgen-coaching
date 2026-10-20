@@ -4,9 +4,22 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NextGenCoaching.Web.Components;
 using NextGenCoaching.Web.Services;
 using Serilog;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddDeploymentServices();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<AssetVersions>();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(["image/svg+xml"]);
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
 
 // ---------- Logging ----------
 builder.Host.UseSerilog((ctx, services, cfg) => cfg
@@ -107,7 +120,21 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
     if (builder.Configuration.GetValue("Hosting:HttpsRedirect", true)) app.UseHttpsRedirection();
 }
-app.UseStaticFiles();
+// Compress public assets only: authenticated HTML, API responses and SignalR remain outside this branch.
+app.UseWhen(context => context.Request.Path.StartsWithSegments("/css")
+    || context.Request.Path.StartsWithSegments("/js")
+    || context.Request.Path.StartsWithSegments("/images")
+    || context.Request.Path.StartsWithSegments("/_framework"), branch => branch.UseResponseCompression());
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        // Only fingerprinted files are immutable. Other assets revalidate after an hour.
+        context.Context.Response.Headers.CacheControl = context.Context.Request.Query.ContainsKey("v")
+            ? "public,max-age=31536000,immutable"
+            : "public,max-age=3600";
+    }
+});
 app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseAntiforgery();
 app.MapGet("/health/live", () => Results.Ok(new { status = "live" }));

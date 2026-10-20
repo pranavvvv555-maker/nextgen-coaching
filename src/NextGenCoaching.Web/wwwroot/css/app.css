@@ -1185,6 +1185,23 @@ html[data-theme=dark] .enroll-page{--surface:#17243a;--surface-muted:#101b2d;--b
 .about-page [data-statistics] .journey-stat>div>span{font-size:12px;line-height:1.5}
 .journey-stat-mint{background:#e5f6ef;color:#149b86}.journey-stat-mint .journey-stat-icon{color:#149b86}
 html[data-theme=dark] .journey-stat-mint{background:#193b38}.journey-stat-mint svg{filter:drop-shadow(0 4px 5px #149b8620)}
+/* Keep scrolling on the compositor and avoid blurring the moving page behind the sticky header. */
+.site-nav{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-theme=dark] .site-nav{background:#111d30}
+#nextgen-scroll-progress{transition:none}
+@supports(animation-timeline:scroll()){
+    #nextgen-scroll-progress{animation:nextgen-scroll-fill linear both;animation-timeline:scroll(root block)}
+    @keyframes nextgen-scroll-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+.company-track{will-change:auto}
+[data-company-ribbons][data-playing=true] .company-track{will-change:transform}
+.galaxy-core{animation:none}
+.galaxy-core::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:0 0 30px 12px #ff986a80;opacity:.25;animation:galaxy-soft-glow 4s ease-in-out infinite}
+@keyframes galaxy-soft-glow{50%{opacity:.8}}
+[data-skill-galaxy]:not([data-playing=true]) .galaxy-core::after{animation-play-state:paused}
+html[data-page-hidden] *,html[data-page-hidden] *::before,html[data-page-hidden] *::after{animation-play-state:paused!important}
+:is(.page-intro-art,.motion-scene,.tech-marquee):not(.art-visible),:is(.page-intro-art,.motion-scene,.tech-marquee):not(.art-visible) *{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.galaxy-core::after{animation:none;opacity:.3}}
 @media(min-width:901px) and (max-width:1199px){.about-page [data-statistics] .journey-stat{flex-direction:column;align-items:flex-start;padding:20px 16px;gap:10px}.about-page [data-statistics] strong{font-size:30px}}
 @media(max-width:900px){.about-page .journey-stats[data-statistics]{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.about-page [data-statistics] .journey-stat{padding:22px;gap:16px}.about-page [data-statistics] .journey-stat:last-child{grid-column:1/-1;justify-content:center;align-items:center;flex-direction:row}.about-page [data-statistics] strong{font-size:34px}.about-page [data-statistics] .journey-stat>div>span{font-size:13px}}
 @media(max-width:540px){.about-page .journey-stats[data-statistics]{gap:12px}.about-page [data-statistics] .journey-stat{flex-direction:column;align-items:flex-start;padding:16px;gap:10px;min-height:140px}.about-page [data-statistics] strong{font-size:clamp(26px,7vw,32px);line-height:1.25}.about-page [data-statistics] .journey-stat-icon{width:32px;height:32px;flex-basis:32px}.about-page [data-statistics] .journey-stat>div>span{font-size:12px;line-height:1.5}.about-page [data-statistics] .journey-stat:last-child{min-height:104px;gap:16px}}

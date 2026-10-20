@@ -1,0 +1,15 @@
+@inject AssetVersions AssetVersions
+<img src="@Variant(1280)" srcset="@SourceSet" sizes="@Sizes" alt="@Alt" width="@Width" height="@Height"
+     loading="@(Priority ? "eager" : "lazy")" fetchpriority="@(Priority ? "high" : "auto")" decoding="async" @attributes="AdditionalAttributes" />
+
+@code {
+    [Parameter, EditorRequired] public string Source { get; set; } = string.Empty;
+    [Parameter] public string Alt { get; set; } = string.Empty;
+    [Parameter] public int Width { get; set; }
+    [Parameter] public int Height { get; set; }
+    [Parameter] public bool Priority { get; set; }
+    [Parameter] public string Sizes { get; set; } = "(max-width: 767px) calc(100vw - 40px), (max-width: 1199px) 50vw, 680px";
+    [Parameter(CaptureUnmatchedValues = true)] public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+    private string Variant(int width) => AssetVersions.Url($"images/optimized/{System.IO.Path.GetFileNameWithoutExtension(Source)}-{width}.webp");
+    private string SourceSet => $"{Variant(480)} 480w, {Variant(800)} 800w, {Variant(1280)} 1280w";
+}

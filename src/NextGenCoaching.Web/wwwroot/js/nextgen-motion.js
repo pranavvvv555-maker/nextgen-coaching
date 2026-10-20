@@ -5,9 +5,14 @@
   const revealed = new WeakSet();
   const bound = new WeakSet();
   const artworkBound = new WeakSet();
+  const artworkRoots = new Set();
+  const pendingReveals = new Set();
   const artworkObserver = new IntersectionObserver(entries => {
-    entries.forEach(entry => entry.target.classList.toggle('art-visible', entry.isIntersecting));
-  }, { threshold: 0.01 });
+    entries.forEach(entry => {
+      entry.target.dataset.inView = String(entry.isIntersecting);
+      entry.target.classList.toggle('art-visible', entry.isIntersecting && !document.hidden);
+    });
+  }, { threshold: 0.01, rootMargin: '-90px 0px 0px 0px' });
   let queued = false;
   let progress;
   const revealObserver = new IntersectionObserver(entries => {
@@ -16,6 +21,7 @@
       entry.target.classList.remove('motion-pending');
       entry.target.classList.add('motion-visible');
       revealObserver.unobserve(entry.target);
+      pendingReveals.delete(entry.target);
     });
   }, { threshold: 0.04, rootMargin: '0px 0px -20px 0px' });
   function reveal(el) {
@@ -24,6 +30,7 @@
     if (reduced.matches || el.getBoundingClientRect().top < window.innerHeight - 30) { el.classList.add('motion-visible'); return; }
     el.style.transitionDelay = `${Math.min(Number(el.dataset.delay) || 0, 240)}ms`;
     el.classList.add('motion-pending');
+    pendingReveals.add(el);
     revealObserver.observe(el);
   }
   function bindPointer(el) {
@@ -34,6 +41,7 @@
       if (reduced.matches || !finePointer.matches || frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
+        if (!el.isConnected || document.hidden) return;
         const rect = el.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
@@ -54,10 +62,30 @@
       ['--scene-x', '--scene-y', '--tilt-x', '--tilt-y'].forEach(key => el.style.setProperty(key, '0deg'));
     });
   }
+  let scrollRange = 0, navigation, chromeScrolled;
+  const nativeScrollProgress = CSS.supports('animation-timeline: scroll()');
   function updateChrome() {
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    if (progress) progress.style.transform = `scaleX(${max > 0 ? Math.min(window.scrollY / max, 1) : 0})`;
-    document.querySelector('.site-nav')?.classList.toggle('is-scrolled', window.scrollY > 15);
+    const offset = window.scrollY;
+    if (progress && !nativeScrollProgress) progress.style.transform = `scaleX(${scrollRange > 0 ? Math.min(offset / scrollRange, 1) : 0})`;
+    const scrolled = offset > 15;
+    if (chromeScrolled !== scrolled) { navigation?.classList.toggle('is-scrolled', scrolled); chromeScrolled = scrolled; }
+  }
+  function refreshChromeMetrics() {
+    scrollRange = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    navigation = document.querySelector('.site-nav');
+    chromeScrolled = undefined;
+    updateChrome();
+  }
+  // SVG geometry is sampled once. Frames interpolate numbers instead of recalculating paths.
+  function sampleMotionPath(path) {
+    const length = path.getTotalLength(), segments = 160;
+    const points = Array.from({length: segments + 1}, (_, i) => path.getPointAtLength(length * i / segments));
+    return { length, point(distance) {
+      const position = Math.max(0, Math.min(1, distance / length)) * segments;
+      const index = Math.min(segments - 1, Math.floor(position)), fraction = position - index;
+      const a = points[index], b = points[index + 1];
+      return {x: a.x + (b.x - a.x) * fraction, y: a.y + (b.y - a.y) * fraction};
+    }};
   }
   // Count each statistic once when its card becomes visible, including on phones.
   const statistics = new Map();
@@ -189,6 +217,7 @@
       if (root.isConnected) return;
       state.timeline.stop(); state.observer.disconnect();
       state.toggle?.removeEventListener('click', state.onToggle);
+      state.image?.removeEventListener('load', state.onImageLoad);
       dataAiScenes.delete(root);
     });
     if (!window.Motion) return;
@@ -211,16 +240,22 @@
       const scan=find('ai-scan'),scanSoft=find('ai-scan-soft'),cloudRing=find('cloud-ring'),cloudCheck=find('cloud-check');
       const seal=root.querySelector('.data-ai-seal>span');
       root.dataset.motionReady='true';
-      const paths = new Map([input, cloud, output, arrow,...signalPaths].map(path => [path, path.getTotalLength()]));
+      const paths = new Map([input, cloud, output, arrow,...signalPaths].map(path => [path, sampleMotionPath(path)]));
+      const cloudPacket = find('cloud-packet'), chartPacket = find('chart-packet');
       const clamp = v => Math.max(0, Math.min(1, v));
       const range = (p, a, b) => clamp((p-a)/(b-a));
       const smooth = v => v*v*(3-2*v);
       const packet = (element, path, amount, visible) => {
-        const point = path.getPointAtLength(paths.get(path)*clamp(amount));
+        const sample = paths.get(path), point = sample.point(sample.length*clamp(amount));
         element.setAttribute('transform', 'translate(' + point.x.toFixed(2) + ' ' + point.y.toFixed(2) + ')');
         element.setAttribute('opacity', visible ? String(Math.min(1, amount*12, (1-amount)*14)) : '0');
       };
       const state = {root, inView:false, manualPause:false, timeline:null, toggle:root.parentElement.querySelector('[data-ai-motion-toggle]')};
+      // Reuse the browser-selected responsive image for every animated cutout.
+      state.image = root.querySelector('.data-ai-image');
+      state.onImageLoad = () => root.querySelector('#data-ai-art').setAttribute('href', state.image.currentSrc || state.image.src);
+      state.image.addEventListener('load', state.onImageLoad);
+      if (state.image.currentSrc) state.onImageLoad();
       state.render = (p, still=false) => {
         if (!root.isConnected) return;
         packet(sqlPackets[0],input,range(p,.02,.23),!still&&p>.02&&p<.23);
@@ -235,8 +270,8 @@
           node.setAttribute('opacity',!still&&t>0&&t<1?(.62*Math.sin(t*Math.PI)*(.65+.35*Math.sin(p*55-index))).toFixed(3):'0');
           node.setAttribute('r',String(26+(!still?response*4:0)));
         });
-        packet(find('cloud-packet'),cloud,range(p,.46,.67),!still&&p>.46&&p<.67);
-        packet(find('chart-packet'),output,range(p,.5,.64),!still&&p>.5&&p<.64);
+        packet(cloudPacket,cloud,range(p,.46,.67),!still&&p>.46&&p<.67);
+        packet(chartPacket,output,range(p,.5,.64),!still&&p>.5&&p<.64);
         const climb=still?1:smooth(range(p,.62,.94));
         const breathe=still?0:Math.sin(p*Math.PI*2);
         networkLayer.setAttribute('transform',still?'':'translate(500 422) scale(1 '+(1+.014*breathe).toFixed(4)+') rotate('+(.55*breathe).toFixed(2)+') translate(-500 -422)');
@@ -261,9 +296,9 @@
         const positions=[[220,430],[772,248],[958,280],[308,505],[915,555],[83,527],[745,112]];
         sparkles.forEach((star,i)=>{const t=p*Math.PI*2+i*.8;star.setAttribute('transform','translate('+(positions[i][0]+Math.sin(t)*5).toFixed(2)+' '+(positions[i][1]+Math.cos(t)*10).toFixed(2)+') rotate('+(still?0:Math.sin(t)*22).toFixed(2)+')');star.setAttribute('opacity',still?'.35':(.18+.42*(1+Math.sin(t))/2).toFixed(3));});
         seal.style.transform=still?'none':'rotate('+(p*360).toFixed(2)+'deg)';
-        const length=paths.get(arrow),point=arrow.getPointAtLength(length*climb);
-        const ahead=arrow.getPointAtLength(Math.min(length,length*climb+2));
-        const behind=arrow.getPointAtLength(Math.max(0,length*climb-2));
+        const arrowSample=paths.get(arrow),length=arrowSample.length,point=arrowSample.point(length*climb);
+        const ahead=arrowSample.point(Math.min(length,length*climb+2));
+        const behind=arrowSample.point(Math.max(0,length*climb-2));
         const angle=Math.atan2(ahead.y-behind.y,ahead.x-behind.x)*180/Math.PI;
         trail.style.strokeDasharray=String(length);trail.style.strokeDashoffset=String(length*(1-climb));
         trail.style.opacity=still||p>.61?'1':'0';
@@ -311,14 +346,14 @@
     document.querySelectorAll('[data-career-journey]').forEach(root=>{
       if(careerJourneys.has(root))return;
       const find=name=>root.querySelector('[data-journey-'+name+']');
-      const input=find('input'),output=find('output'),inputLength=input.getTotalLength(),outputLength=output.getTotalLength();
+      const input=find('input'),output=find('output'),inputSample=sampleMotionPath(input),outputSample=sampleMotionPath(output),inputLength=inputSample.length,outputLength=outputSample.length;
       const inputs=[...root.querySelectorAll('[data-journey-input-packet]')],outputs=[...root.querySelectorAll('[data-journey-output-packet]')];
       const glow=find('ai-glow'),ring=find('ai-ring'),achievement=find('achievement-glow'),goldRing=find('achievement-ring'),mentor=find('mentor-ring'),climber=find('climber');
       const stage=root.querySelector('.journey-scene-stage'),sparkles=[...root.querySelectorAll('[data-journey-sparkle]')];
       const clamp=n=>Math.max(0,Math.min(1,n)),range=(p,a,b)=>clamp((p-a)/(b-a)),smooth=n=>n*n*(3-2*n);
       const pulse=(p,a,b)=>p>a&&p<b?Math.sin(range(p,a,b)*Math.PI):0;
       const packet=(el,path,length,t,still)=>{
-        const point=path.getPointAtLength(length*t);
+        const point=(path===input?inputSample:outputSample).point(length*t);
         el.setAttribute('transform','translate('+point.x.toFixed(2)+' '+point.y.toFixed(2)+')');
         el.setAttribute('opacity',still?'0':Math.min(1,t*14,(1-t)*14).toFixed(3));
       };
@@ -335,7 +370,7 @@
         goldRing.setAttribute('r',(63+success*18).toFixed(2));
         mentor.setAttribute('opacity',still?'0':(learning*.6).toFixed(3));
         mentor.setAttribute('r',(30+learning*15).toFixed(2));
-        const climb=smooth(range(p,.64,.94)),point=output.getPointAtLength(outputLength*climb);
+        const climb=smooth(range(p,.64,.94)),point=outputSample.point(outputLength*climb);
         climber.setAttribute('transform','translate('+point.x.toFixed(2)+' '+point.y.toFixed(2)+')');
         climber.setAttribute('opacity',still?'0':pulse(p,.64,.98).toFixed(3));
         input.style.strokeDashoffset=still?'0':String(-p*90);
@@ -392,9 +427,9 @@
       state.toggle.addEventListener('click', state.onToggle);
       state.rails.addEventListener('pointerenter', state.onEnter);
       state.rails.addEventListener('pointerleave', state.onLeave);
-      state.observer = new IntersectionObserver(entries => { state.inView = entries[0].isIntersecting; syncCompanyRibbon(state); }, { threshold:.03 });
+      state.observer = new IntersectionObserver(entries => { state.inView = entries[0].isIntersecting; syncCompanyRibbon(state); }, { threshold:.03, rootMargin:'-90px 0px 0px 0px' });
       companyRibbons.set(root, state);
-      state.observer.observe(root);
+      state.observer.observe(state.rails);
     });
   }
   document.addEventListener('visibilitychange', () => companyRibbons.forEach(syncCompanyRibbon));
@@ -425,7 +460,7 @@
       });
       state.onToggle = () => {state.paused=!state.paused;syncSkillGalaxy(state);};
       state.toggle.addEventListener('click',state.onToggle);
-      state.observer=new IntersectionObserver(entries=>{state.inView=entries[0].isIntersecting;syncSkillGalaxy(state);},{threshold:.05});
+      state.observer=new IntersectionObserver(entries=>{state.inView=entries[0].isIntersecting;syncSkillGalaxy(state);},{threshold:.05,rootMargin:'-90px 0px 0px 0px'});
       skillGalaxies.set(root,state);state.observer.observe(root);
     });
   }
@@ -452,11 +487,11 @@
       if (masterclassArt.has(root)) return;
       const state = {root, toggle:root.querySelector('[data-mc-toggle]'), paused:false, inView:false, animations:[]};
       if (window.Motion) {
-        const path = root.querySelector('[data-mc-path]'), length = path.getTotalLength();
+        const path = root.querySelector('[data-mc-path]'), sample = sampleMotionPath(path), length = sample.length;
         const packets = [...root.querySelectorAll('[data-mc-packet]')];
         const flow = window.Motion.animate(0, 1, {duration:7, repeat:Infinity, ease:'linear', onUpdate:p => {
           packets.forEach((packet,i) => {
-            const t = (p + i * .13) % 1, point = path.getPointAtLength(length * t);
+            const t = (p + i * .13) % 1, point = sample.point(length * t);
             packet.setAttribute('transform', `translate(${point.x} ${point.y})`);
           });
           const stage = p > .19 && p < .45 ? 'ai' : 'flow';
@@ -475,7 +510,7 @@
         syncMasterclassArt(state);
       };
       state.toggle.addEventListener('click',state.onToggle);
-      state.observer = new IntersectionObserver(entries => {state.inView=entries[0].isIntersecting;syncMasterclassArt(state);},{threshold:.05});
+      state.observer = new IntersectionObserver(entries => {state.inView=entries[0].isIntersecting;syncMasterclassArt(state);},{threshold:.05,rootMargin:'-90px 0px 0px 0px'});
       masterclassArt.set(root,state);state.observer.observe(root);
     });
   }
@@ -483,6 +518,8 @@
   reduced.addEventListener('change',() => masterclassArt.forEach(syncMasterclassArt));
 
   function init() {
+    artworkRoots.forEach(el => { if (!el.isConnected) { artworkObserver.unobserve(el); artworkRoots.delete(el); } });
+    pendingReveals.forEach(el => { if (!el.isConnected) { revealObserver.unobserve(el); pendingReveals.delete(el); } });
     initStatisticCounters();
     initMasterclassArt();
     initSkillGalaxies();
@@ -491,9 +528,10 @@
     initDataAiScenes();
     initCareerHeroes();
     if (!progress) { progress = document.createElement('div'); progress.id = 'nextgen-scroll-progress'; progress.setAttribute('aria-hidden', 'true'); document.body.appendChild(progress); }
-    document.querySelectorAll('.course-art, .learning-universe, .contact-advisor-scene, .project-demo').forEach(el => {
+    document.querySelectorAll('.course-art, .learning-universe, .contact-advisor-scene, .project-demo, .page-intro-art, .motion-scene, .tech-marquee').forEach(el => {
       if (artworkBound.has(el)) return;
       artworkBound.add(el);
+      artworkRoots.add(el);
       artworkObserver.observe(el);
     });
     document.querySelectorAll('[data-motion]').forEach(reveal);
@@ -502,16 +540,41 @@
       if (link.pathname === location.pathname || (link.pathname !== '/' && location.pathname.startsWith(link.pathname + '/'))) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
-    updateChrome();
+    refreshChromeMetrics();
   }
   function scheduleInit() { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; init(); }); }
   let scrollFrame = 0;
   window.addEventListener('scroll', () => { if (scrollFrame) return; scrollFrame = requestAnimationFrame(() => { scrollFrame = 0; updateChrome(); }); }, { passive: true });
-  window.addEventListener('resize', updateChrome, { passive: true });
-  reduced.addEventListener('change', () => { document.querySelectorAll('.motion-pending').forEach(el => { el.classList.remove('motion-pending'); el.classList.add('motion-visible'); revealObserver.unobserve(el); }); });
+  window.addEventListener('resize', refreshChromeMetrics, { passive: true });
+  // A fragment-only href otherwise resolves against <base href="/"> on nested pages.
+  // Handle these local controls immediately, without a server navigation or round trip.
+  document.addEventListener('click', event => {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (!event.target.closest?.('a[href="#main-content"]')) return;
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    event.preventDefault();
+    main.focus({preventScroll:true});
+    main.scrollIntoView({behavior:reduced.matches ? 'instant' : 'smooth', block:'start'});
+  }, {capture:true});
+  reduced.addEventListener('change', () => { document.querySelectorAll('.motion-pending').forEach(el => { el.classList.remove('motion-pending'); el.classList.add('motion-visible'); revealObserver.unobserve(el); }); pendingReveals.clear(); });
+  document.addEventListener('visibilitychange', () => {
+    document.documentElement.toggleAttribute('data-page-hidden', document.hidden);
+    artworkRoots.forEach(el => el.classList.toggle('art-visible', el.dataset.inView === 'true' && !document.hidden));
+  });
   window.initNextGenMotion = scheduleInit;
   window.fireConfetti = () => { if (!reduced.matches && typeof window.confetti === 'function') window.confetti({ particleCount: 35, spread: 45, colors: ['#4263f5', '#9bb1ff', '#51b999'], disableForReducedMotion: true }); };
-  function start() { init(); const observer = new MutationObserver(records => { if (records.some(record => [...record.addedNodes, ...record.removedNodes].some(node => node.nodeType === 1))) scheduleInit(); }); observer.observe(document.body, { childList: true, subtree: true }); }
+  const motionSelector = '[data-motion],[data-statistics],[data-masterclass-art],[data-skill-galaxy],[data-company-ribbons],[data-career-journey],[data-data-ai-scene],[data-career-hero],[data-learning-hero],.course-art,.learning-universe,.contact-advisor-scene,.project-demo,.page-intro-art,.motion-scene,.tech-marquee,.spotlight-card,[data-tilt],[data-scene-tilt],.site-nav';
+  function start() {
+    init();
+    const layoutObserver = new ResizeObserver(refreshChromeMetrics);
+    layoutObserver.observe(document.body);
+    const observer = new MutationObserver(records => {
+      if (records.some(record => [...record.addedNodes, ...record.removedNodes].some(node =>
+        node.nodeType === 1 && (node.matches(motionSelector) || node.querySelector(motionSelector))))) scheduleInit();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();
 })();
 

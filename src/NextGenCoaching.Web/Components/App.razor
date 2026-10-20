@@ -1,5 +1,7 @@
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment HostingEnvironment
 @inject IConfiguration Configuration
+@inject AssetVersions AssetVersions
+@inject IHttpContextAccessor HttpContextAccessor
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,31 +22,22 @@
 <body>
     <SitePreferencesProvider @rendermode="@(new InteractiveServerRenderMode(prerender: false))" />
     <script src="_framework/blazor.web.js"></script>
-    <script src="js/confetti.browser.min.js"></script>
-    <script src="js/vendor/motion-14.1.0.js"></script>
-    <script src="@MotionScriptUrl"></script>
-    <script src="js/razorpay-interop.js"></script>
+    <script src="@AssetVersions.Url("js/confetti.browser.min.js")" defer></script>
+    <script src="@AssetVersions.Url("js/vendor/motion-14.1.0.js")" defer></script>
+    <script src="@MotionScriptUrl" defer></script>
+    <script src="@AssetVersions.Url("js/razorpay-interop.js")" defer></script>
+    @if (HostingEnvironment.IsDevelopment() && HttpContextAccessor.HttpContext?.Request.Query.ContainsKey("perf") == true)
+    {
+        <script src="@AssetVersions.Url("js/performance-probe.js")" defer></script>
+    }
 </body>
 </html>
 
 
 
 @code {
-    private string _preferencesVersion = string.Empty;
-    private string PreferencesScriptUrl => $"/js/site-preferences.js?v={_preferencesVersion}";
-    private string _cssVersion = string.Empty;
-    private string _motionVersion = string.Empty;
-    private string MotionScriptUrl => $"js/nextgen-motion.js?v={_motionVersion}";
-    private string StylesheetUrl => $"{Assets["css/app.output.css"]}?v={_cssVersion}";
-
-    protected override void OnInitialized()
-    {
-        using var preferencesScript = HostingEnvironment.WebRootFileProvider.GetFileInfo("js/site-preferences.js").CreateReadStream();
-        _preferencesVersion = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(preferencesScript))[..16];
-        using var stylesheet = HostingEnvironment.WebRootFileProvider.GetFileInfo("css/app.output.css").CreateReadStream();
-        _cssVersion = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(stylesheet))[..16];
-        using var motionScript = HostingEnvironment.WebRootFileProvider.GetFileInfo("js/nextgen-motion.js").CreateReadStream();
-        _motionVersion = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(motionScript))[..16];
-    }
+    private string PreferencesScriptUrl => AssetVersions.Url("js/site-preferences.js");
+    private string MotionScriptUrl => AssetVersions.Url("js/nextgen-motion.js");
+    private string StylesheetUrl => AssetVersions.Url("css/app.output.css");
 }
 
