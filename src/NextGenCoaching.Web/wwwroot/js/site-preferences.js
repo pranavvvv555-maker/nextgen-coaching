@@ -6,7 +6,7 @@
   try { saved = JSON.parse(localStorage.getItem(key) || '{}') || {}; } catch { saved = {}; }
   let current = {
     language: language(saved.language),
-    theme: ['dark', 'light'].includes(saved.theme) ? saved.theme : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    theme: ['dark', 'light'].includes(saved.theme) ? saved.theme : 'light'
   };
   function apply() {
     document.documentElement.dataset.theme = current.theme;
