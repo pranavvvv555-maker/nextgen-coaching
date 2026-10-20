@@ -59,6 +59,59 @@
     if (progress) progress.style.transform = `scaleX(${max > 0 ? Math.min(window.scrollY / max, 1) : 0})`;
     document.querySelector('.site-nav')?.classList.toggle('is-scrolled', window.scrollY > 15);
   }
+  // Count each statistic once when its card becomes visible, including on phones.
+  const statistics = new Map();
+  function finishStatistic(state) {
+    cancelAnimationFrame(state.frame);
+    state.frame = 0;
+    state.value.textContent = state.format.format(state.target);
+    state.card.dataset.countState = 'complete';
+    statisticObserver.unobserve(state.card);
+  }
+  function animateStatistic(state) {
+    if (!state || state.card.dataset.countState !== 'waiting') return;
+    statisticObserver.unobserve(state.card);
+    if (reduced.matches || document.hidden) { finishStatistic(state); return; }
+    state.card.dataset.countState = 'running';
+    state.value.textContent = state.format.format(0);
+    const started = performance.now();
+    const tick = now => {
+      if (!state.card.isConnected) { statistics.delete(state.card); return; }
+      const progress = Math.min(1, (now - started) / 1600);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      state.value.textContent = state.format.format(state.target * eased);
+      if (progress >= 1) { finishStatistic(state); return; }
+      state.frame = requestAnimationFrame(tick);
+    };
+    state.frame = requestAnimationFrame(tick);
+  }
+  const statisticObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => { if (entry.isIntersecting) animateStatistic(statistics.get(entry.target)); });
+  }, { threshold: .45, rootMargin: '0px 0px -12px 0px' });
+  function initStatisticCounters() {
+    statistics.forEach((state, card) => {
+      if (card.isConnected) return;
+      cancelAnimationFrame(state.frame);
+      statisticObserver.unobserve(card);
+      statistics.delete(card);
+    });
+    document.querySelectorAll('[data-statistics] [data-stat-count]').forEach(value => {
+      const card = value.closest('.journey-stat');
+      const target = Number(value.dataset.statCount);
+      if (!card || statistics.has(card) || !Number.isFinite(target)) return;
+      const decimals = Math.max(0, Math.min(2, Number(value.dataset.statDecimals) || 0));
+      const state = { card, value, target, frame: 0, format: new Intl.NumberFormat('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) };
+      statistics.set(card, state);
+      card.dataset.countState = 'waiting';
+      if (reduced.matches) finishStatistic(state);
+      else statisticObserver.observe(card);
+    });
+  }
+  reduced.addEventListener('change', () => { if (reduced.matches) statistics.forEach(finishStatistic); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) statistics.forEach(state => { if (state.card.dataset.countState === 'running') finishStatistic(state); });
+  });
+
   // Motion's JavaScript runtime works with Blazor-rendered elements and internal navigation.
   const careerHeroes = new Map();
   function syncCareerHero(state) {
@@ -430,6 +483,7 @@
   reduced.addEventListener('change',() => masterclassArt.forEach(syncMasterclassArt));
 
   function init() {
+    initStatisticCounters();
     initMasterclassArt();
     initSkillGalaxies();
     initCompanyRibbons();

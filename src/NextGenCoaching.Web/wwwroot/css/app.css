@@ -1176,3 +1176,15 @@ html[data-theme=dark] .enroll-page{--surface:#17243a;--surface-muted:#101b2d;--b
  body>div:not(.site-shell) main{min-width:0}.portal-mobile-nav~main{padding:20px!important;overflow-x:auto}.portal-mobile-nav~main :is(input,textarea,select){font-size:16px;min-height:44px;max-width:100%}.portal-mobile-nav~main :is(button,.btn-primary,.btn-outline){min-height:44px;white-space:normal}.portal-mobile-nav~main :is(h1,h2,h3){overflow-wrap:anywhere}.portal-mobile-nav~main .flex.items-end{flex-wrap:wrap}
  .guides-page{padding-block:38px 50px}.guides-grid{grid-template-columns:1fr;gap:18px}.guide-card summary{min-height:180px}.guide-card h2{font-size:23px}.not-found-page{padding-block:50px}
 }
+
+/* Five aligned statistics with one-time, accessible count-up values. */
+.about-page .journey-stats[data-statistics]{grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;scroll-margin-top:110px}
+.about-page [data-statistics] .journey-stat{padding:22px 18px;gap:12px;min-width:0;min-height:118px}
+.about-page [data-statistics] .journey-stat-icon{width:34px;height:34px;flex:0 0 34px}
+.about-page [data-statistics] strong{font-size:clamp(28px,2.45vw,36px);font-variant-numeric:tabular-nums}
+.about-page [data-statistics] .journey-stat>div>span{font-size:12px;line-height:1.5}
+.journey-stat-mint{background:#e5f6ef;color:#149b86}.journey-stat-mint .journey-stat-icon{color:#149b86}
+html[data-theme=dark] .journey-stat-mint{background:#193b38}.journey-stat-mint svg{filter:drop-shadow(0 4px 5px #149b8620)}
+@media(min-width:901px) and (max-width:1199px){.about-page [data-statistics] .journey-stat{flex-direction:column;align-items:flex-start;padding:20px 16px;gap:10px}.about-page [data-statistics] strong{font-size:30px}}
+@media(max-width:900px){.about-page .journey-stats[data-statistics]{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:auto}.about-page [data-statistics] .journey-stat{padding:22px;gap:16px}.about-page [data-statistics] .journey-stat:last-child{grid-column:1/-1;justify-content:center;align-items:center;flex-direction:row}.about-page [data-statistics] strong{font-size:34px}.about-page [data-statistics] .journey-stat>div>span{font-size:13px}}
+@media(max-width:540px){.about-page .journey-stats[data-statistics]{gap:12px}.about-page [data-statistics] .journey-stat{flex-direction:column;align-items:flex-start;padding:16px;gap:10px;min-height:140px}.about-page [data-statistics] strong{font-size:clamp(26px,7vw,32px);line-height:1.25}.about-page [data-statistics] .journey-stat-icon{width:32px;height:32px;flex-basis:32px}.about-page [data-statistics] .journey-stat>div>span{font-size:12px;line-height:1.5}.about-page [data-statistics] .journey-stat:last-child{min-height:104px;gap:16px}}
