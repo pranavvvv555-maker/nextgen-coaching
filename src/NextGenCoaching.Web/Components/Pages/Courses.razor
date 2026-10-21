@@ -8,7 +8,7 @@
         <div class="programs-galaxy-copy" data-motion="fade-up">
             <span class="eyebrow"><i class="status-dot"></i>@L["FIND YOUR NEXT CHAPTER"]</span>
             <h1 id="programs-title">@L["New skills."]<br /><span>@L["New possibilities."]</span></h1>
-            <p>@L["Six practical programs in data, analytics, and cloud engineering. Find the right focus for your next step."]</p>
+            <p>@L["Explore hands-on programs in data, AI, analytics and cloud engineering. Find the right focus for your next step."]</p>
             <div class="program-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="6" /><path d="m15 15 5 5" /></svg><input @bind="_searchQuery" @bind:event="oninput" aria-label="@L["Search programs"]" placeholder="@L["Find your focus. Try Python, SQL, or cloud..."]" /></div>
             <span class="programs-search-hint">@L["Search a skill and watch it light up."]</span>
         </div>
@@ -23,12 +23,12 @@
         <div class="flex flex-wrap items-center gap-2 mb-10 pb-4 border-b border-border-base">
             <span class="text-xs font-bold uppercase tracking-wider text-text-muted mr-2">@L["Filter By:"]</span>
             <button @onclick="() => Filter(null)" class="@FilterBtnClass(null)">
-                @L["All Programs"] (@(_courses?.Count ?? 6))
+                @L["All Programs"] (@_courses.Count)
             </button>
             @foreach (var cat in _categories)
             {
                 <button @onclick="() => Filter(cat)" class="@FilterBtnClass(cat)">
-                    <span class="capitalize">@L[cat]</span>
+                    <span>@L[CategoryLabel(cat)]</span>
                 </button>
             }
         </div>
@@ -93,6 +93,12 @@
 
     private static IReadOnlyList<string> CategoriesFrom(IReadOnlyList<CourseSummaryDto> courses) =>
         courses.Select(c => c.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c!).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+
+    private static string CategoryLabel(string category) => category.ToLowerInvariant() switch
+    {
+        "ai" => "AI & ML", "data" => "Data & Analytics", "cloud" => "Cloud & Engineering",
+        "bi" => "Business Intelligence", _ => category
+    };
 
     private string FilterBtnClass(string? cat) =>
         cat == _activeCategory

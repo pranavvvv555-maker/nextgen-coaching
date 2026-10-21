@@ -8,6 +8,9 @@
         "azure-data-factory"  => "course-icon--blue",
         "python"              => "course-icon--emerald",
         "power-bi"            => "course-icon--amber",
+        "machine-learning"    => "course-icon--emerald",
+        "agentic-ai"          => "course-icon--blue",
+        "databricks"          => "course-icon--amber",
         _                     => "course-icon--purple"
     };
 
@@ -19,6 +22,11 @@
         "power-bi"            => "BI",
         "snowflake"           => "SF",
         "azure-data-factory"  => "Az",
+        "advanced-ai"         => "AI",
+        "machine-learning"    => "ML",
+        "generative-ai"       => "Gen",
+        "agentic-ai"          => "AI",
+        "databricks"          => "DB",
         _                     => "↗"
     };
 
@@ -30,6 +38,11 @@
         "power-bi" => new[] { "DAX", "Power Query", "Data Modeling" },
         "snowflake" => new[] { "Warehousing", "Time Travel", "Zero-Copy" },
         "azure-data-factory" => new[] { "Pipelines", "Mapping Flows", "Triggers" },
+        "advanced-ai" => new[] { "Python", "Deep Learning", "RAG", "MLOps" },
+        "machine-learning" => new[] { "scikit-learn", "TensorFlow", "PyTorch", "NLP" },
+        "generative-ai" => new[] { "LLMs", "LangChain", "RAG", "Vector Search" },
+        "agentic-ai" => new[] { "LangGraph", "CrewAI", "MCP", "AI Agents" },
+        "databricks" => new[] { "PySpark", "Delta Lake", "Unity Catalog", "Auto Loader" },
         _ => new[] { "Live Sessions", "Mentor Support" }
     };
 
@@ -41,9 +54,15 @@
         "power-bi" => "Make your data tell a story.",
         "snowflake" => "Build your world in the cloud.",
         "azure-data-factory" => "Connect data. Create momentum.",
+        "advanced-ai" => "From foundations to intelligent systems.",
+        "machine-learning" => "Find patterns. Build predictions.",
+        "generative-ai" => "Turn ideas into AI applications.",
+        "agentic-ai" => "Give intelligence a workflow.",
+        "databricks" => "Build the lakehouse. Unlock your data.",
         _ => "Build skills for your next chapter."
     };
-    private string DurationText => Course.DurationMonths > 0
+    private NextGenCoaching.Shared.Dtos.CourseDetailDto? Specialist => NextGenCoaching.Shared.Catalog.SpecialistPrograms.All.FirstOrDefault(c => c.Slug == Course.Slug);
+    private string DurationText => NextGenCoaching.Shared.Catalog.SpecialistPrograms.DurationLabel(Course.Slug) is { } label ? L[label] : Course.DurationMonths > 0
         ? L.Format(Course.DurationMonths == 1 ? "{0} Month Intensive" : "{0} Months Intensive", Course.DurationMonths)
         : L["60+ Hours Live"];
 }
@@ -60,16 +79,23 @@
         }
         else
         {
-            <span class="pill-category">@L[Course.Category ?? "PROGRAM"]</span>
+            <span class="pill-category">@L[Course.Category == "ai" ? "AI & MACHINE LEARNING" : Course.Category ?? "PROGRAM"]</span>
         }
     </div>
     <span class="course-kicker">@L[CourseHook]</span>
     <h3><a href="/courses/@Course.Slug" class="course-card-title-link">@L[Course.Title]</a></h3>
     <p>@L[Course.Tagline]</p>
+    @if (Specialist is { } specialist)
+    {
+        <span class="course-audience">@L["For working professionals"]</span>
+        <ul class="course-card-highlights">
+            @foreach (var feature in specialist.Features) { <li><span aria-hidden="true">✓</span>@L[feature.Label]</li> }
+        </ul>
+    }
     <div class="course-tags">
         @foreach (var tag in Highlights.Take(4))
         {
-            <span>@L[tag]</span>
+            <span class="course-tool-tag"><ToolLogo Name="@tag" ShowFallback="false" Decorative="true" />@L[tag]</span>
         }
     </div>
     <div class="course-meta"><span>@DurationText</span><span aria-hidden="true">/</span><span>@L[Course.Mode.Replace("-", " ")]</span></div>

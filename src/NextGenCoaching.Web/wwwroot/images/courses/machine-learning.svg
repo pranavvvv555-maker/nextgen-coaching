@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" width="360" height="200"><rect width="360" height="200" fill="#f0faf5"/>        <circle cx="180" cy="97" r="81" fill="#d9f0e5" />
+        <circle cx="53" cy="42" r="4" fill="#6eb59b" opacity=".25" />
+        <circle cx="306" cy="137" r="6" fill="#6eb59b" opacity=".18" />
+        <path d="M292 37v12m-6-6h12M65 139v10m-5-5h10" stroke="#6eb59b" stroke-width="2" stroke-linecap="round" opacity=".45" />
+        <ellipse cx="180" cy="180" rx="101" ry="8" fill="#6eb59b" opacity=".08" />
+<g fill="none" stroke="#4a948b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <g class="art-float art-float--late">
+                        <rect x="49" y="69" width="52" height="64" rx="11" fill="#fff" stroke="#b9ded3" />
+                        <path d="M59 84h32m-32 13h32m-32 13h32m-22-26v39m12-39v39" stroke="#c5e6dd" />
+                        <circle cx="63" cy="116" r="3" fill="#84c8ae" stroke="none" /><circle cx="86" cy="101" r="3" fill="#84c8ae" stroke="none" />
+                    </g>
+                    <path class="art-dash" d="M104 103h18m113 0h18" stroke="#a0cec4" />
+                    <g class="art-bob">
+                        <rect x="123" y="57" width="112" height="95" rx="17" fill="#fff" stroke-width="2.5" />
+                        <path d="M124 78h110" stroke="#c5e6dd" /><circle cx="135" cy="68" r="2.5" fill="#9dd5c2" stroke="none" /><path d="M146 68h23" stroke="#b6dacc" />
+                        <path d="m143 99 35-10 33 12m-68-2 35 22 33-20m-68 29 35-9m-35-22v31m35-41v32m0 0 33 12m0-32v32" stroke="#a5d8cb" />
+                        <g fill="#a9d9c6" stroke="#6caf98"><circle cx="143" cy="99" r="5" /><circle cx="143" cy="130" r="5" /><circle cx="178" cy="89" r="5" /><circle class="art-pulse" cx="178" cy="121" r="5" /><circle cx="211" cy="101" r="5" /><circle cx="211" cy="133" r="5" /></g>
+                        <path d="M118 157h122l-9 9H127Z" fill="#c5e6dd" stroke="#83bbaa" />
+                    </g>
+                    <g class="art-float">
+                        <rect x="257" y="69" width="55" height="64" rx="11" fill="#fff" stroke="#b9ded3" />
+                        <path d="M268 110V83m0 27h34" stroke="#c5e6dd" />
+                        <path class="art-dash" d="M272 104q8 0 12-10t15-11" stroke="#63b295" stroke-width="2.5" />
+                        <g fill="#b4dfcb" stroke="none"><circle cx="274" cy="97" r="2.5" /><circle cx="282" cy="105" r="2.5" /><circle cx="290" cy="87" r="2.5" /><circle cx="300" cy="93" r="2.5" /></g>
+                        <g class="art-eyes" fill="#518d80" stroke="none"><circle cx="279" cy="120" r="2" /><circle cx="293" cy="120" r="2" /></g><path d="M282 125q4 3 8 0" />
+                    </g>
+                </g></svg>

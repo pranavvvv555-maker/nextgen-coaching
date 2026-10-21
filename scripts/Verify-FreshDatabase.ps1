@@ -32,7 +32,7 @@ try {
     }
     if (!$taskReady) { throw 'The fresh database API did not become ready.' }
     $taskCourses = (Invoke-RestMethod 'http://127.0.0.1:5111/api/v1/public/courses').data
-    if ($taskCourses.Count -ne 6 -or $taskCourses[0].id -ne '11111111-1111-1111-1111-111111111111' -or ($taskCourses | Where-Object {$_.mode -ne 'live-online'})) { throw 'Fresh catalogue did not match the approved seed.' }
+    if ($taskCourses.Count -ne 11 -or $taskCourses[0].id -ne '11111111-1111-1111-1111-111111111111' -or ($taskCourses | Where-Object {$_.mode -ne 'live-online'})) { throw 'Fresh catalogue did not match the approved seed.' }
     foreach ($taskCourse in $taskCourses) {
         $taskDetail = (Invoke-RestMethod "http://127.0.0.1:5111/api/v1/public/courses/$($taskCourse.slug)").data
         if ($taskDetail.journeySteps.Count -eq 0 -or $taskDetail.tools.Count -eq 0) { throw 'A fresh course is missing curriculum relationships.' }

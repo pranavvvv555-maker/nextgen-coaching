@@ -85,7 +85,7 @@ public static class DbSeeder
 
     private static async Task SeedCoursesAsync(AppDbContext ctx)
     {
-        if (await ctx.Courses.AnyAsync()) return;
+        var existingSlugs = (await ctx.Courses.Select(c => c.Slug).ToListAsync()).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var courses = new List<Course>
         {
@@ -96,6 +96,19 @@ public static class DbSeeder
             BuildSnowflake(),
             BuildAzureDataFactory()
         };
+
+        courses.AddRange(NextGenCoaching.Shared.Catalog.SpecialistPrograms.All.Select(initial => new Course
+        {
+            Slug = initial.Slug, Description = initial.Description, IsPublished = true,
+            HeroImageUrl = initial.HeroImageUrl, SeoTitle = initial.SeoTitle, SeoDescription = initial.SeoDescription,
+            Tools = initial.Tools.Select(t => new CourseTool { ToolName = t.ToolName, Description = t.Description, SortOrder = t.SortOrder }).ToList(),
+            Features = initial.Features.Select(f => new CourseFeature { Label = f.Label, SortOrder = f.SortOrder }).ToList(),
+            JourneySteps = initial.JourneySteps.Select(s => new CourseJourneyStep { StepNumber = s.StepNumber, Title = s.Title, Description = s.Description }).ToList()
+        }));
+
+        // Append missing programs only. Never overwrite edits or republish existing courses.
+        courses = courses.Where(c => !existingSlugs.Contains(c.Slug)).ToList();
+        if (courses.Count == 0) return;
 
         foreach (var course in courses)
         {

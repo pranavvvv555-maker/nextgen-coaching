@@ -1,0 +1,203 @@
+{
+  "purpose": "Identify technologies taught in NextGen programs. Logos retain their original artwork and colors.",
+  "assets": [
+    {
+      "name": "azure",
+      "file": "azure.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/azure/azure-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 1713
+    },
+    {
+      "name": "postgresql",
+      "file": "postgresql.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/postgresql/postgresql-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 9178
+    },
+    {
+      "name": "mysql",
+      "file": "mysql.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/mysql/mysql-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 2765
+    },
+    {
+      "name": "pandas",
+      "file": "pandas.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/pandas/pandas-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 462
+    },
+    {
+      "name": "numpy",
+      "file": "numpy.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/numpy/numpy-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 758
+    },
+    {
+      "name": "scikitlearn",
+      "file": "scikitlearn.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/scikitlearn/scikitlearn-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 4664
+    },
+    {
+      "name": "tensorflow",
+      "file": "tensorflow.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/tensorflow/tensorflow-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 291
+    },
+    {
+      "name": "pytorch",
+      "file": "pytorch.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/pytorch/pytorch-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 404
+    },
+    {
+      "name": "docker",
+      "file": "docker.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/docker/docker-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 4452
+    },
+    {
+      "name": "fastapi",
+      "file": "fastapi.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/fastapi/fastapi-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 3065
+    },
+    {
+      "name": "apachespark",
+      "file": "apachespark.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/apachespark/apachespark-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 1423
+    },
+    {
+      "name": "matplotlib",
+      "file": "matplotlib.svg",
+      "url": "https://raw.githubusercontent.com/devicons/devicon/master/icons/matplotlib/matplotlib-original.svg",
+      "collection": "Devicon (MIT; marks belong to their owners)",
+      "bytes": 23506
+    },
+    {
+      "name": "snowflake",
+      "file": "snowflake.svg",
+      "url": "https://cdn.simpleicons.org/snowflake",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 2474
+    },
+    {
+      "name": "databricks",
+      "file": "databricks.svg",
+      "url": "https://cdn.simpleicons.org/databricks",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 437
+    },
+    {
+      "name": "langchain",
+      "file": "langchain.svg",
+      "url": "https://cdn.simpleicons.org/langchain",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 542
+    },
+    {
+      "name": "langgraph",
+      "file": "langgraph.svg",
+      "url": "https://cdn.simpleicons.org/langgraph",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 217
+    },
+    {
+      "name": "crewai",
+      "file": "crewai.svg",
+      "url": "https://cdn.simpleicons.org/crewai",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 771
+    },
+    {
+      "name": "huggingface",
+      "file": "huggingface.svg",
+      "url": "https://cdn.simpleicons.org/huggingface",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 3042
+    },
+    {
+      "name": "mlflow",
+      "file": "mlflow.svg",
+      "url": "https://cdn.simpleicons.org/mlflow",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 368
+    },
+    {
+      "name": "modelcontextprotocol",
+      "file": "modelcontextprotocol.svg",
+      "url": "https://cdn.simpleicons.org/modelcontextprotocol",
+      "collection": "Simple Icons (CC0; marks belong to their owners)",
+      "bytes": 954
+    },
+    {
+      "name": "power-bi",
+      "file": "power-bi.svg",
+      "url": "https://raw.githubusercontent.com/microsoft/PowerBI-Icons/main/SVG/Power-BI.svg",
+      "collection": "Microsoft Power BI Icons (CC BY 4.0)",
+      "bytes": 4988
+    },
+    {
+      "name": "delta-lake",
+      "file": "delta-lake.svg",
+      "url": "https://delta.io/_astro/delta-lake-logo.Dx7tzbyv_1OsUys.svg",
+      "collection": "Delta Lake official website",
+      "bytes": 16767
+    },
+    {
+      "name": "unity-catalog",
+      "file": "unity-catalog.png",
+      "url": "https://raw.githubusercontent.com/unitycatalog/unitycatalog/main/docs/assets/images/uc-logo.png",
+      "collection": "Unity Catalog project repository",
+      "bytes": 46967
+    },
+    {
+      "name": "Python",
+      "file": "python.webp",
+      "source": "User-provided Python-Symbol.png",
+      "processing": "Transparent margins trimmed; artwork and proportions preserved; resized for display."
+    },
+    {
+      "name": "azure-data-factory",
+      "file": "azure-data-factory.svg",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/icons/",
+      "archive": "Azure_Public_Service_Icons_V24.zip",
+      "entry": "Azure_Public_Service_Icons/Icons/analytics/10126-icon-service-Data-Factories.svg",
+      "collection": "Microsoft Azure Architecture Icons; unmodified artwork"
+    },
+    {
+      "name": "azure-sql",
+      "file": "azure-sql.svg",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/icons/",
+      "archive": "Azure_Public_Service_Icons_V24.zip",
+      "entry": "Azure_Public_Service_Icons/Icons/databases/10130-icon-service-SQL-Database.svg",
+      "collection": "Microsoft Azure Architecture Icons; unmodified artwork"
+    },
+    {
+      "name": "azure-storage",
+      "file": "azure-storage.svg",
+      "url": "https://learn.microsoft.com/en-us/azure/architecture/icons/",
+      "archive": "Azure_Public_Service_Icons_V24.zip",
+      "entry": "Azure_Public_Service_Icons/Icons/storage/10086-icon-service-Storage-Accounts.svg",
+      "collection": "Microsoft Azure Architecture Icons; unmodified artwork"
+    },
+    {
+      "name": "power-query",
+      "file": "power-query.svg",
+      "url": "https://raw.githubusercontent.com/microsoft/PowerBI-Icons/main/SVG/Power-Query-Colored.svg",
+      "collection": "Microsoft Power BI Icons (CC BY 4.0)",
+      "bytes": 4453
+    }
+  ]
+}

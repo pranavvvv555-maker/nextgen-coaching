@@ -27,7 +27,8 @@ public class CourseApiClient
         var res = await _api.GetAsync<CourseDetailDto>($"{ApiRoutes.Public.Courses}/{slug}", requestTimeout.Token);
         if (res is not null) return res;
 
-        var detail = FallbackDetails.FirstOrDefault(c => string.Equals(c.Slug, slug, StringComparison.OrdinalIgnoreCase));
+        var detail = NextGenCoaching.Shared.Catalog.SpecialistPrograms.All.Concat(FallbackDetails)
+            .FirstOrDefault(c => string.Equals(c.Slug, slug, StringComparison.OrdinalIgnoreCase));
         if (detail is not null) return detail;
         var summary = FallbackSummaries.FirstOrDefault(c => string.Equals(c.Slug, slug, StringComparison.OrdinalIgnoreCase));
         if (summary is null) return null;
@@ -46,7 +47,8 @@ public class CourseApiClient
         var res = await _api.GetAsync<IReadOnlyList<string>>($"{ApiRoutes.Public.Courses}/categories", ct);
         if (res is { Count: > 0 }) return res;
 
-        return new[] { "data", "cloud", "bi", "engineering" };
+        return FallbackSummaries.Select(c => c.Category).Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c!).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
     }
 
     public static IReadOnlyList<CourseSummaryDto> LocalCatalog => FallbackSummaries;

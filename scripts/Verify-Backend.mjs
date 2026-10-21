@@ -14,7 +14,8 @@ async function request(path,{method='GET',body,token,expected=200}={}){
 async function login(role){const result=await request('/api/v1/auth/login',{method:'POST',body:{email:config.Seed[role+'Email'],password:config.Seed[role+'Password']}});check(!!result.data?.accessToken,role+' login');return result.data;}
 try{
  check((await request('/health/ready')).status==='ready','Database ready');
- const courses=(await request('/api/v1/public/courses')).data;check(courses.length===6,'Six database courses');
+ const courses=(await request('/api/v1/public/courses')).data;check(courses.length>=11,'Original and specialist database courses');
+ for(const slug of ['advanced-ai','machine-learning','generative-ai','agentic-ai','databricks'])check(courses.some(c=>c.slug===slug),'Specialist course available: '+slug);
  for(const c of courses){const detail=(await request('/api/v1/public/courses/'+c.slug)).data;check(detail.id===c.id&&detail.journeySteps.length>0,'Course content '+c.slug)}
  await request('/api/v1/public/courses/not-a-real-course',{expected:404});await request('/api/v1/admin/leads/',{expected:401});
  admin=await login('Admin');const emailSettings=await request('/api/v1/admin/settings/email',{token:admin.accessToken});check(emailSettings.data.enabled===false,'Outbound email disabled for verification');

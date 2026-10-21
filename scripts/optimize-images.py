@@ -10,7 +10,7 @@ output = root / "optimized"
 output.mkdir(exist_ok=True)
 heroes = ["career-journey", "colour-pop-ai", "contact-advisor-branded",
           "home-online-classroom", "learning-universe", "masterclass-collage"]
-sources = [root / f"{name}.webp" for name in heroes] + sorted((root / "career").glob("*.jpg"))
+sources = [root / f"{name}.webp" for name in heroes] + sorted((root / "career").glob("*.jpg")) + sorted((root / "courses").glob("*.webp"))
 total_before = total_after = 0
 for source in sources:
     with Image.open(source) as original:

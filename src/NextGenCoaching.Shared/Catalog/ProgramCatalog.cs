@@ -103,5 +103,5 @@ public static class ProgramCatalog
             Category = "cloud",
             SortOrder = 6
         }
-    }.AsReadOnly();
+    }.Concat(SpecialistPrograms.All).ToList().AsReadOnly();
 }

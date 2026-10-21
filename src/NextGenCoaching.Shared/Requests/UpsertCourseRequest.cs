@@ -24,7 +24,8 @@ public class UpsertCourseRequest
     [Required] public string Level { get; set; } = "beginner";  // beginner / intermediate / advanced
     [Required] public string Mode { get; set; } = "hybrid";     // online / hybrid / onsite
 
-    [Url, StringLength(500)] public string? HeroImageUrl { get; set; }
+    [RegularExpression(@"^(?:https?://[^\s/]+(?:/\S*)?|/(?!/)\S*)$", ErrorMessage = "Use an http(s) image URL or a site-relative path starting with a single slash.")]
+    [StringLength(500)] public string? HeroImageUrl { get; set; }
     [Url, StringLength(500)] public string? BrochureUrl { get; set; }
 
     public bool IsPublished { get; set; }

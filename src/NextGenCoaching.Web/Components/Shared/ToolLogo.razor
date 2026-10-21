@@ -1,0 +1,34 @@
+@inject AssetVersions AssetVersioner
+
+@if (_logos.Length > 0)
+{
+    <span class="tool-logo @Class @(_logos.Length > 1 ? "tool-logo--pair" : null) @(_logos.Any(x => x.Brand.Wide) ? "tool-logo--wide" : null)"
+          role="@(Decorative ? null : "img")" aria-label="@(Decorative ? null : _label)"
+          aria-hidden="@(Decorative ? "true" : null)" title="@_label">
+        @foreach (var logo in _logos)
+        {
+            <img src="@logo.Url" class="@(logo.Brand.DarkBackdrop ? "tool-logo-on-dark" : null)" alt="" width="40" height="40" loading="lazy" decoding="async" />
+        }
+    </span>
+}
+else if (ShowFallback)
+{
+    <span class="tool-logo tool-logo--neutral @Class" aria-hidden="true"><ContactGlyph Name="@ToolBrandCatalog.NeutralIcon(Name)" /></span>
+}
+
+@code {
+    [Parameter] public string Name { get; set; } = string.Empty;
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public bool ShowFallback { get; set; } = true;
+    [Parameter] public bool Decorative { get; set; }
+
+    private (ToolBrand Brand, string Url)[] _logos = [];
+    private string _label = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        _logos = ToolBrandCatalog.FindAll(Name)
+            .Select(brand => (brand, AssetVersioner.Url($"images/tools/{brand.File}"))).ToArray();
+        _label = string.Join(" & ", _logos.Select(x => x.Brand.Name));
+    }
+}

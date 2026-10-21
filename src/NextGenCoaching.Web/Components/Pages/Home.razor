@@ -26,7 +26,7 @@
     <div class="ng-container home-skills-layout">
         <div><span class="eyebrow">@L["TOOLS FOR YOUR NEXT CHAPTER"]</span><h2 id="home-skills-title">@L["Skills that"]<br /><span>@L["connect."]</span></h2></div>
         <div class="home-skills-list">
-            @foreach (var skill in Skills) { <div class="home-skill"><span class="home-skill-icon home-skill-icon--@skill.Color"><ContactGlyph Name="@skill.Icon" /></span><strong>@skill.Name</strong><small>@L[skill.Description]</small></div> }
+            @foreach (var skill in Skills) { <div class="home-skill"><span class="home-skill-icon home-skill-icon--@skill.Color"><ToolLogo Name="@skill.Name" Decorative="true" /></span><strong>@skill.Name</strong><small>@L[skill.Description]</small></div> }
         </div>
     </div>
 </section>
@@ -36,7 +36,7 @@
         <div class="home-section-heading" data-motion="fade-up"><div><span class="eyebrow">@L["CHOOSE A PATH. BUILD WHAT’S NEXT."]</span><h2 id="home-programs-title">@L["Find your"] <span>@L["program."]</span></h2></div><a href="/courses" class="text-link">@L["Explore all programs"]<span aria-hidden="true">↗</span></a></div>
         <div class="home-program-grid">
             @foreach (var course in _courses.OrderBy(c => c.SortOrder)) {
-                <a href="/courses/@course.Slug" class="home-program-tile" data-home-course="@course.Slug" data-motion="fade-up"><div class="home-program-art"><CourseIllustration CourseSlug="@course.Slug" /></div><div><h3>@L[course.Title]</h3><p>@L[CourseFocus(course.Slug)]</p><span>@L["View program"] <span aria-hidden="true">↗</span></span></div></a>
+                <a href="/courses/@course.Slug" class="home-program-tile" data-home-course="@course.Slug" data-motion="fade-up"><div class="home-program-art"><CourseIllustration CourseSlug="@course.Slug" ImageSizes="120px" /></div><div><h3>@L[course.Title]</h3><p>@L[CourseFocus(course.Slug)]</p><span>@L["View program"] <span aria-hidden="true">↗</span></span></div></a>
             }
         </div>
     </div>
@@ -74,15 +74,20 @@
         "power-bi" => "Create dashboards that answer business questions.",
         "snowflake" => "Work with modern cloud data warehouses.",
         "azure-data-factory" => "Connect data sources and build cloud pipelines.",
+        "advanced-ai" => "Build applied AI, from foundations to deployment.",
+        "machine-learning" => "Train models that turn data into predictions.",
+        "generative-ai" => "Create grounded copilots and AI applications.",
+        "agentic-ai" => "Connect agents, tools and intelligent workflows.",
+        "databricks" => "Build governed lakehouse data pipelines.",
         _ => "Build practical skills for your next chapter."
     };
-    private record Skill(string Name, string Icon, string Color, string Description);
+    private record Skill(string Name, string Color, string Description);
     private static readonly Skill[] Skills = {
-        new("Python", "code", "blue", "Analyse. Automate. Build."),
-        new("SQL", "database", "blue", "Query. Transform. Explore."),
-        new("Power BI", "chart", "amber", "Visualise. Tell a story."),
-        new("Snowflake", "snow", "sky", "Work with cloud data."),
-        new("Azure", "cloud", "violet", "Build in the cloud.")
+        new("Python", "blue", "Analyse. Automate. Build."),
+        new("SQL", "blue", "Query. Transform. Explore."),
+        new("Power BI", "amber", "Visualise. Tell a story."),
+        new("Snowflake", "sky", "Work with cloud data."),
+        new("Azure", "violet", "Build in the cloud.")
     };
     private record FaqItem(string Question, string Answer);
     private static readonly FaqItem[] _faqs = {

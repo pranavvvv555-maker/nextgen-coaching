@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 200" width="360" height="200"><rect width="360" height="200" fill="#fff9ee"/>        <circle cx="180" cy="97" r="81" fill="#f3e7c9" />
+        <circle cx="53" cy="42" r="4" fill="#c3ab83" opacity=".25" />
+        <circle cx="306" cy="137" r="6" fill="#c3ab83" opacity=".18" />
+        <path d="M292 37v12m-6-6h12M65 139v10m-5-5h10" stroke="#c3ab83" stroke-width="2" stroke-linecap="round" opacity=".45" />
+        <ellipse cx="180" cy="180" rx="101" ry="8" fill="#c3ab83" opacity=".08" />
+<g fill="none" stroke="#a98561" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path class="art-dash" d="M102 123h26m97-25h27" stroke="#c7b89d" />
+                    <g class="art-float art-float--late">
+                        <rect x="48" y="94" width="54" height="51" rx="10" fill="#fff" stroke="#dbcebb" />
+                        <path d="M57 106h35m-35 11h35m-35 11h35m-23-22v33m12-33v33" stroke="#ddd3c2" />
+                    </g>
+                    <g class="art-bob">
+                        <path d="m128 75 50-30 50 30" fill="#fff" stroke="#bda783" stroke-width="2.5" />
+                        <path d="M139 75V66m77 9v-9" stroke="#d1c2a6" />
+                        <path d="M128 126v23c0 17 100 17 100 0v-23" fill="#d8b496" stroke="#b49274" stroke-width="2.5" /><ellipse cx="178" cy="126" rx="50" ry="13" fill="#f2e3d4" stroke="#b49274" />
+                        <path d="M128 101v23c0 17 100 17 100 0v-23" fill="#d3dce3" stroke="#9daebd" stroke-width="2.5" /><ellipse cx="178" cy="101" rx="50" ry="13" fill="#eef3f6" stroke="#9daebd" />
+                        <path d="M128 77v22c0 17 100 17 100 0V77" fill="#f2d68d" stroke="#c7a85e" stroke-width="2.5" /><ellipse cx="178" cy="77" rx="50" ry="13" fill="#fff3cf" stroke="#c7a85e" />
+                        <g class="art-eyes" fill="#8e7958" stroke="none"><circle cx="162" cy="96" r="3.5" /><circle cx="194" cy="96" r="3.5" /></g><path d="M171 104q7 5 14 0" stroke="#8e7958" />
+                        <path d="M141 119h16m43 0h13" stroke="#a9b8c5" /><path d="M141 145h16m43 0h13" stroke="#c29e80" />
+                    </g>
+                    <g class="art-float">
+                        <path d="M264 106c-23 0-29-28-10-34 5-20 31-25 41-8 22-5 35 23 17 32-2 12-23 10-48 10Z" fill="#fff" stroke="#a6cabb" />
+                        <path class="art-pulse" d="M282 71v24m-10-18 20 12m-20 0 20-12" stroke="#84b7a5" />
+                        <path d="m273 138 8 7 15-18" stroke="#94b8a6" stroke-width="3" />
+                    </g>
+                </g></svg>
